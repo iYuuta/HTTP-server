@@ -4,8 +4,8 @@ SRC = src/main.cpp src/configs/Server.cpp
 OBJS = ${SRC:.cpp=.o}
 NAME = bin
 HEADERS = includes/Config.hpp includes/Server.hpp includes/Size.hpp \
-			includes/Route.hpp includes/requests/HttpRequest.hpp includes/requests/Get.hpp \
-			includes/requests/Delete.hpp includes/requests/Post.hpp
+			includes/Route.hpp includes/methods/HttpRequestMethod.hpp includes/methods/Get.hpp \
+			includes/methods/Delete.hpp includes/methods/Post.hpp
 
 ${NAME}: ${OBJS}
 	${CPP} ${CFLAGS} ${OBJS} -o ${NAME}

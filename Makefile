@@ -1,9 +1,9 @@
 CPP = c++
 CFLAGS = -Wall -Wextra -Werror -std=c++98
-SRC = src/main.cpp src/AServer.cpp
+SRC = src/main.cpp src/configs/Server.cpp
 OBJS = ${SRC:.cpp=.o}
 NAME = bin
-HEADERS = includes/Config.hpp includes/Server.hpp includes/AServer.hpp
+HEADERS = includes/Config.hpp includes/Server.hpp includes/Server.hpp
 
 ${NAME}: ${OBJS}
 	${CPP} ${CFLAGS} ${OBJS} -o ${NAME}

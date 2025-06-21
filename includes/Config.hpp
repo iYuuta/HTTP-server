@@ -1,11 +1,11 @@
 # pragma once
 
-#include "AServer.hpp"
+# include "Server.hpp"
 # include <vector>
 
 class Config
 {
     private:
-        std::vector<AServer> servers;
+        std::vector<Server> servers;
 };
 

@@ -3,7 +3,9 @@ CFLAGS = -Wall -Wextra -Werror -std=c++98
 SRC = src/main.cpp src/configs/Server.cpp
 OBJS = ${SRC:.cpp=.o}
 NAME = bin
-HEADERS = includes/Config.hpp includes/Server.hpp includes/Server.hpp
+HEADERS = includes/Config.hpp includes/Server.hpp includes/Size.hpp \
+			includes/Route.hpp includes/requests/HttpRequest.hpp includes/requests/Get.hpp \
+			includes/requests/Delete.hpp includes/requests/Post.hpp
 
 ${NAME}: ${OBJS}
 	${CPP} ${CFLAGS} ${OBJS} -o ${NAME}

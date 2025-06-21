@@ -5,11 +5,6 @@ Server::Server()
 
 }
 
-Server::~Server()
-{
-
-}
-
 void Server::setHost(std::string host)
 {
     _host = host;

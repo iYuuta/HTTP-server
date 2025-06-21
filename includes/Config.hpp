@@ -6,8 +6,12 @@
 
 class Config
 {
+    public:
+        Config(std::string input);
     private:
+        short               _errorCode;
         std::vector<Server> _servers;
+        void    parseConfig(std::string input);
 };
 
 #endif

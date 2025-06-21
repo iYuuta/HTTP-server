@@ -2,6 +2,7 @@
 # include <iostream>
 # include <fstream>
 # include <stdexcept>
+# include "../../includes/utils.hpp"
 
 Config::Config(std::string input)
 {
@@ -12,13 +13,12 @@ Config::Config(std::string input)
 static bool operator>>(std::ifstream& in, Config conf)
 {
     Server server;
-    
-    std::string line;
-
-    std::getline(in, line);
-
-    std::cout << line << std::endl;
-    
+    std::string content;
+    in >> content;
+    std::vector<std::string> a = split(content);
+    for (size_t i = 0; i < a.size(); ++i) {
+        std::cout << a[i] << std::endl;
+    }
 	return (false);
 }
 

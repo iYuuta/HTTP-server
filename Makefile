@@ -1,11 +1,12 @@
 CPP = c++
 CFLAGS = -Wall -Wextra -Werror -std=c++98
-SRC = src/main.cpp src/configs/Server.cpp src/configs/Config.cpp
+SRC = src/main.cpp src/configs/Server.cpp src/configs/Config.cpp src/utils/ioutils.cpp \
+	src/utils/strutils.cpp
 OBJS = ${SRC:.cpp=.o}
 NAME = bin
 HEADERS = includes/Config.hpp includes/Server.hpp includes/Size.hpp \
 			includes/Route.hpp includes/methods/HttpRequestMethod.hpp includes/methods/Get.hpp \
-			includes/methods/Delete.hpp includes/methods/Post.hpp
+			includes/methods/Delete.hpp includes/methods/Post.hpp includes/utils.hpp
 
 ${NAME}: ${OBJS}
 	${CPP} ${CFLAGS} ${OBJS} -o ${NAME}

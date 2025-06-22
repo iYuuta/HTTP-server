@@ -6,6 +6,9 @@
 # include "Size.hpp"
 # include "Route.hpp"
 
+
+#define PORT_MAX_VALUE 65535
+
 class Server
 {
     private:
@@ -21,6 +24,7 @@ class Server
         void                setPort(int port);
         const std::string   &getHost( void );
         int                 getPort( void );
+        static bool         parseHostAndPort( std::vector<std::string> &content, size_t &i );
 };
 
 #endif

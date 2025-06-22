@@ -1,7 +1,7 @@
 # include "../../includes/Config.hpp"
 # include "../../includes/utils.hpp"
 
-static int getTagEnd(std::vector<std::string> content, size_t start)
+static int getTagEnd(std::vector<std::string> &content, size_t start)
 {
     int     end = start + 1;
     int     openings = 0;
@@ -23,24 +23,24 @@ static int getTagEnd(std::vector<std::string> content, size_t start)
     return (-1);
 }
 
-
-static bool parseOptionOneArg(std::vector<std::string> content, size_t &start, int optionIndex)
+static bool validateOptionOneArg(std::vector<std::string> &content, size_t &start, int optionIndex, Server &server)
 {
     if (content[start] == ";")
         return (std::cerr << "You forgot an argument for option '" << content[start - 1] << "'" << std::endl, false);
     if (content[start + 1] != ";")
         return (std::cerr << "Only one argument is allowed for option '" << content[start - 1] << "'" << std::endl, false);
-    
     return (true);
 }
 
-static bool parseOption(std::vector<std::string> content, size_t &start, int optionIndex)
+static bool parseOption(std::vector<std::string> &content, size_t &start, int optionIndex, Server &server)
 {
+    bool (*fn[])(std::vector<std::string> &, size_t &) = {Server::parseHostAndPort};
+    bool success = false;
     switch (optionIndex)
     {
         case 0:
         case 3:
-            parseOptionOneArg(content, start, optionIndex);
+            success = validateOptionOneArg(content, start, optionIndex, server);
             break;
         case 1:
         case 2:
@@ -52,10 +52,12 @@ static bool parseOption(std::vector<std::string> content, size_t &start, int opt
         default:
             return (false);
     }
-    return (true);
+    if (!success)
+        return (false);
+    return ((*fn[optionIndex])(content, start));
 }
 
-static bool parseServer(std::vector<std::string> content, size_t &i, Config &config)
+static bool parseServer(std::vector<std::string> &content, size_t &i, Config &config)
 {
     int end = getTagEnd(content, i);
     if (end == -1)
@@ -68,7 +70,7 @@ static bool parseServer(std::vector<std::string> content, size_t &i, Config &con
         int optionIndex = indexOf(keys, 5, content[i]);
         if (optionIndex == -1)
             return (std::cerr << "Invalid key '" << content[i] << "'" << std::endl, false);
-        if (!parseOption(content, ++i, optionIndex))
+        if (!parseOption(content, ++i, optionIndex, server))
             return (false);
         i++;
     }
@@ -80,7 +82,7 @@ bool parseServers(std::ifstream& in, Config &conf)
 {
     std::string content;
     in >> content;
-    std::vector<std::string> a = split(content);
+    std::vector<std::string> a = splitWhitespaces(content);
 
     for (size_t i = 0; i < a.size(); i++) {
         if (a[i] == "server")

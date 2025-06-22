@@ -34,8 +34,11 @@ bool parseMaxRequestSize( Server &server, std::vector<std::string> &content, siz
 {
     std::vector<std::string> list = splitNumber(content[i]);
     if (list.size() != 2)  
-        return (std::cerr << "client_max_body_size no valid" << std::endl, false);
-    std::cout << list[0] << "\n";
-    std::cout << list[1] << "\n";
+        return (std::cerr << "client_max_body_size not valid" << std::endl, false);
+    if (list[1] != "KB")
+        return (std::cerr << "Only KB is supported for client_max_body_size" << std::endl, false);
+    // TODO MAX SIZE OVERFLOW
+    Size size = Size(std::atoi(list[0].c_str()));
+    server.setMaxAllowedClientRequestSize(size);
     return (false);
 }

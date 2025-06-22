@@ -25,3 +25,8 @@ int Server::getPort( void )
 {
     return (_port);
 }
+
+void Server::setMaxAllowedClientRequestSize(Size &size)
+{
+    _maxAllowedClientRequestSize = size;
+}

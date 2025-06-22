@@ -29,6 +29,8 @@ std::vector<std::string> split(const std::string& s, char delimiter)
 std::vector<std::string> splitNumber(const std::string& s)
 {
     std::vector<std::string> tokens;
+    if (!std::isdigit(s[0]))
+        return (tokens);
     for (size_t i = 0; i < s.size(); ++i) {
         if (!std::isdigit(s[i])) {
             tokens.push_back(s.substr(0, i));

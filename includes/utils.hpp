@@ -10,5 +10,6 @@ bool operator>>(std::ifstream &in, std::string &out);
 std::vector<std::string> splitWhitespaces(const std::string& s);
 int indexOf(std::string arr[], size_t arrSize, std::string toFind);
 std::vector<std::string> split(const std::string& s, char delimiter);
+std::vector<std::string> splitNumber(const std::string& s);
 
 #endif

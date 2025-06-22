@@ -34,16 +34,16 @@ static bool validateOptionOneArg(std::vector<std::string> &content, size_t &star
 
 static bool parseOption(std::vector<std::string> &content, size_t &start, int optionIndex, Server &server)
 {
-    bool (*fn[])(std::vector<std::string> &, size_t &) = {Server::parseHostAndPort};
+    bool (*fn[])(Server &, std::vector<std::string> &, size_t &) = {::parseHostAndPort, ::parseMaxRequestSize};
     bool success = false;
     switch (optionIndex)
     {
         case 0:
-        case 3:
+        case 1:
             success = validateOptionOneArg(content, start, optionIndex, server);
             break;
-        case 1:
         case 2:
+        case 3:
             std::cout << "MULTI ARG\n";
             break;
         case 4:
@@ -54,7 +54,7 @@ static bool parseOption(std::vector<std::string> &content, size_t &start, int op
     }
     if (!success)
         return (false);
-    return ((*fn[optionIndex])(content, start));
+    return ((*fn[optionIndex])(server, content, start));
 }
 
 static bool parseServer(std::vector<std::string> &content, size_t &i, Config &config)
@@ -62,7 +62,7 @@ static bool parseServer(std::vector<std::string> &content, size_t &i, Config &co
     int end = getTagEnd(content, i);
     if (end == -1)
         return (false);
-    std::string keys[5] = {"listen", "server_name", "error_page", "client_max_body_size", "location"};
+    std::string keys[5] = {"listen", "client_max_body_size", "server_name", "error_page", "location"};
     Server server;
     i += 2;
     while (i < end - 1)

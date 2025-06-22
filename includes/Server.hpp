@@ -24,7 +24,9 @@ class Server
         void                setPort(int port);
         const std::string   &getHost( void );
         int                 getPort( void );
-        static bool         parseHostAndPort( std::vector<std::string> &content, size_t &i );
 };
+
+bool parseHostAndPort( Server &server, std::vector<std::string> &content, size_t &i );
+bool parseMaxRequestSize( Server &server, std::vector<std::string> &content, size_t &i );
 
 #endif

@@ -8,5 +8,6 @@
 
 bool operator>>(std::ifstream &in, std::string &out);
 std::vector<std::string> split(const std::string& s);
+int indexOf(std::string arr[], size_t arrSize, std::string toFind);
 
 #endif

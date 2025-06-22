@@ -21,3 +21,16 @@ void    Config::parseConfig(std::string input)
         _errorCode = 2;
     conf.close();
 }
+
+void    Config::addServer(Server server)
+{
+    _servers.push_back(server);
+}
+
+void    Config::test()
+{
+    for (size_t i = 0; i < _servers.size(); i++)
+    {
+        std::cout << _servers[i].getHost() << std::endl;
+    }
+}

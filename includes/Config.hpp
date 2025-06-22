@@ -4,18 +4,19 @@
 # include "Server.hpp"
 # include <vector>
 
-
 class Config
 {
     public:
         Config(std::string input);
+        void    addServer(Server server);
+        void    test();
     private:
         short               _errorCode;
         std::vector<Server> _servers;
         void    parseConfig(std::string input);
 };
 
-bool parseServers(std::ifstream& in, Config conf);
+bool parseServers(std::ifstream& in, Config &conf);
 
 
 #endif

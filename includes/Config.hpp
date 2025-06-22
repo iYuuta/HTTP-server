@@ -4,6 +4,7 @@
 # include "Server.hpp"
 # include <vector>
 
+
 class Config
 {
     public:
@@ -13,5 +14,8 @@ class Config
         std::vector<Server> _servers;
         void    parseConfig(std::string input);
 };
+
+bool parseServers(std::ifstream& in, Config conf);
+
 
 #endif

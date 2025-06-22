@@ -1,7 +1,7 @@
 CPP = c++
 CFLAGS = -Wall -Wextra -Werror -std=c++98
 SRC = src/main.cpp src/configs/Server.cpp src/configs/Config.cpp src/utils/ioutils.cpp \
-	src/utils/strutils.cpp
+	src/utils/strutils.cpp src/configs/parser.cpp
 OBJS = ${SRC:.cpp=.o}
 NAME = bin
 HEADERS = includes/Config.hpp includes/Server.hpp includes/Size.hpp \

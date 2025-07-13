@@ -9,12 +9,16 @@ class Token
 {
     public:
         Token(const std::string &key);
+        const std::string &getKey() const;
+        const int &getToken() const;
+        void setToken(const int &token);
     private:
         std::string _key;
-        int         token;
+        int         _token;
 };
 
-std::vector<Token>  splitTokens(const std::string &s);
+std::vector<Token> splitTokens(const std::string &s);
+bool tokenization(std::vector<Token> &tokens);
 
 
 #endif

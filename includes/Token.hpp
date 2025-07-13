@@ -29,6 +29,7 @@ class Token
 
 std::vector<Token> splitTokens(const std::string& s);
 void tokenization(std::vector<Token>& tokens);
+bool validateTokens(std::vector<Token>& tokens);
 
 
 #endif

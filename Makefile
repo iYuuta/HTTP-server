@@ -1,6 +1,6 @@
 CPP = c++
 CFLAGS = -Wall -Wextra -Werror -std=c++98
-SRC = src/main.cpp src/configs/Server.cpp src/configs/Config.cpp src/utils/io_utils.cpp \
+SRC = src/main.cpp src/configs/Server.cpp src/configs/Config.cpp \
 	src/utils/str_utils.cpp src/parsing/parser.cpp src/utils/arr_utils.cpp \
 	src/configs/Size.cpp src/parsing/Token.cpp
 OBJS = ${SRC:.cpp=.o}

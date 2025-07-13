@@ -53,3 +53,35 @@ void tokenization(std::vector<Token>& tokens)
 		++it;
 	}
 }
+
+
+bool validateTokens(std::vector<Token>& tokens)
+{
+	if (tokens.empty())
+		return (std::cerr << "Empty configs!!" << std::endl, false);
+	std::vector<Token>::iterator it = tokens.begin();
+	std::vector<Token>::iterator end = tokens.end();
+	ssize_t						brackets = 0;
+	if (it->getToken() != Key)
+		return (std::cerr << "Invalid config start: " << it->getKey() << std::endl, false);
+	while (it != end)
+	{
+		std::vector<Token>::iterator prev = it - 1;
+		std::vector<Token>::iterator next = it + 1;
+
+		if (it->getToken() == BracketStart && prev->getToken() != Key && prev->getToken() != Value)
+			return (std::cerr << "Invalid brackets start after: " << prev->getKey() << std::endl, false);
+		if (it->getToken() == Semicolon && prev->getToken() != Value)
+			return (std::cerr << "Invalid value for key: " << prev->getKey() << std::endl, false);
+		if (it->getToken() == Key && next == end)
+			return (std::cerr << "Invalid value for key: " << it->getKey() << std::endl, false);
+		if (it->getToken() == BracketStart)
+			brackets++;
+		else if (it->getToken() == BracketEnd)
+			brackets--;
+		++it;
+	}
+	if (brackets != 0)
+		return (std::cerr << "Invalid brackets start/end" << std::endl, false);
+	return (true);
+}

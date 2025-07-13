@@ -33,15 +33,23 @@ void Token::setToken(const int& token)
 }
 
 
-/**
- *
- * @return Returns true on success; if it returns false, an error message will be printed to stderr to indicate the issue.
- */
-bool tokenization(std::vector<Token>& tokens)
+void tokenization(std::vector<Token>& tokens)
 {
-	for (std::vector<Token>::iterator i = tokens.begin(); i != tokens.end(); ++i)
-	{
+	std::vector<Token>::iterator start = tokens.begin();
+	std::vector<Token>::iterator it = start;
 
+	while (it != tokens.end())
+	{
+		if (it->getKey() == "{")
+			it->setToken(BracketStart);
+		else if (it->getKey() == "}")
+			it->setToken(BracketEnd);
+		else if (it->getKey() == ";")
+			it->setToken(Semicolon);
+		else if (it != start && ((it - 1)->getToken() == Key || (it - 1)->getToken() == Value))
+			it->setToken(Value);
+		else
+			it->setToken(Key);
+		++it;
 	}
-	return (true);
 }

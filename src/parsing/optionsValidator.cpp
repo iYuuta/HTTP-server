@@ -8,7 +8,15 @@ bool validateOneArg(const std::vector<Token>::iterator& it)
 	return (false);
 }
 
-bool  isValidPort(const std::string &str, int &port)
+bool validateArgBody(const std::vector<Token>::iterator& it)
+{
+	if ((it + 1)->getToken() == BracketStart)
+		return (true);
+	std::cerr << "key: " << (it - 1)->getKey() << " should have a body" << std::endl;
+	return (false);
+}
+
+bool isValidPort(const std::string& str, int& port)
 {
 	if (str.empty() || str.size() > 5)
 		return (false);
@@ -25,7 +33,7 @@ bool  isValidPort(const std::string &str, int &port)
 
 bool validateMultiArgs(const std::vector<Token>::iterator& it, int args)
 {
-	int	size = 1;
+	int size = 1;
 
 	while ((it + size)->getToken() != Semicolon)
 		size++;

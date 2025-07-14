@@ -39,3 +39,8 @@ void Server::setMaxAllowedClientRequestSize(const Size &size)
 {
     _maxAllowedClientRequestSize = size;
 }
+
+void Server::addLocation(const Location &location)
+{
+    _locations.push_back(location);
+}

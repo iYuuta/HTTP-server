@@ -38,7 +38,7 @@ bool parseClientMaxBodySize(Server& server, std::vector<Token>::iterator& it)
 		const unsigned long value = atoiul(s.at(0));
 		server.setMaxAllowedClientRequestSize(Size(value));
 	}
-	catch (std::exception& e)
+	catch (std::exception& _)
 	{
 		return (std::cerr << "Invalid value " << s.at(0) << std::endl, false);
 	}
@@ -56,10 +56,52 @@ bool parseErrorPage(Server& server, std::vector<Token>::iterator& it)
 			return (std::cerr << "Invalid http error code " << value << std::endl, false);
 		server.addErrorPage(value, (++it++)->getKey());
 	}
-	catch (std::exception& e)
+	catch (std::exception& _)
 	{
 		return (std::cerr << "Invalid http code " << it->getKey() << std::endl, false);
 	}
-	// server.setName(it->getKey());
+	return (true);
+}
+
+static bool parseLocationOption(Location& location, std::vector<Token>::iterator& it)
+{
+	const std::string keys[5] = {"methods", "root", "autoindex", "index"};
+	bool (*fn[5])(Location&, std::vector<Token>::iterator&) = {
+		::parseLocationMethods, ::parseLocationMethods, ::parseLocationMethods, ::parseLocationMethods
+	};
+	for (size_t i = 0; i < 5; i++)
+	{
+		if (keys[i] == it->getKey())
+			return (fn[i](location, ++it));
+	}
+	std::cerr << "Unknown key: " << it->getKey() << std::endl;
+	return (false);
+}
+
+bool parseLocation(Server& server, std::vector<Token>::iterator& it)
+{
+	Location location;
+	size_t brackets = 1;
+
+	if (!validateArgBody(it))
+		return (false);
+	location.setUrl(it++->getKey());
+	server.addLocation(location);
+	++it;
+	while (brackets)
+	{
+		if (it->getToken() == Key)
+		{
+			if (!parseLocationOption(location, it))
+				return (false);
+			continue ;
+		}
+		if (it->getToken() == BracketStart)
+			brackets++;
+		else if (it->getToken() == BracketEnd)
+			brackets--;
+		++it;
+	}
+	server.addLocation(location);
 	return (true);
 }

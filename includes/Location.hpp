@@ -1,0 +1,25 @@
+# ifndef LOCATION_HPP
+# define LOCATION_HPP
+
+# include <iostream>
+
+#include "HttpRequestMethod.hpp"
+
+class Location
+{
+	private:
+		std::string						_url;
+		std::vector<HttpRequestMethod>	_methods;
+		std::string						_route;
+		bool							_autoindex;
+		std::string						_index;
+	public:
+		Location();
+		void setUrl(const std::string &url);
+		void addMethod(const HttpRequestMethod &method);
+		void setRoute(const std::string &route);
+		void setAutoIndex(const bool &autoindex);
+		void setIndex(const std::string &index);
+};
+
+#endif

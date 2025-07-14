@@ -3,8 +3,9 @@
 
 # include <iostream>
 # include <vector>
+
+# include "Location.hpp"
 # include "Size.hpp"
-# include "Route.hpp"
 
 #define PORT_MAX_VALUE 65535
 
@@ -16,7 +17,7 @@ class Server
         std::string                              _name;
         std::vector<std::pair<int, std::string> > _errorPages;
         Size                                     _maxAllowedClientRequestSize;
-        std::vector<Route>                       _routes;
+        std::vector<Location>                    _locations;
     public:
         Server( );
         void                setHost(const std::string &host);
@@ -26,6 +27,7 @@ class Server
         const std::string   &getHost() const;
         const int           &getPort() const;
         void                setMaxAllowedClientRequestSize(const Size &size);
+        void                addLocation(const Location &location);
 };
 
 bool parseHostAndPort( Server &server, std::vector<std::string> &content, size_t &i );

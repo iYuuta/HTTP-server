@@ -3,16 +3,16 @@
 
 Size::Size()
 {
-    _size = 0;
+	_size = 0;
 }
 
-Size::Size( size_t size )
+Size::Size(unsigned long size)
 {
-    _size = size;
+	_size = size;
 }
 
-Size &Size::operator=(const Size &other)
+Size& Size::operator=(const Size& other)
 {
-    _size = other._size;
-    return (*this);
+	_size = other._size;
+	return (*this);
 }

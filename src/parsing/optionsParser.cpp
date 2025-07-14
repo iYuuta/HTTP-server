@@ -38,3 +38,21 @@ bool parseListen(Server& server, std::vector<Token>::iterator& it)
 	server.setPort(port);
 	return (true);
 }
+
+bool parseClientMaxBodySize(Server& server, std::vector<Token>::iterator& it)
+{
+	if (!validateOneArg(it))
+		return (false);
+	const std::vector<std::string> s = splitNumber(it->getKey());
+	if (s.size() != 2)
+		return (std::cerr << "Invalid " << (it - 1)->getKey() << std::endl, false);
+	if (s.at(1) != "KB")
+		return (std::cerr << (it - 1)->getKey() << " must be in KB" << std::endl, false);
+	errno = 0;
+	char *ptr;
+	const unsigned long value = std::strtoul(s.at(0).c_str(), &ptr, 10);
+	if (errno != 0 || *ptr != '\0')
+		return (errno = 0, std::cerr << "Invalid value " << s.at(0) << std::endl, false);
+	server.setMaxAllowedClientRequestSize(Size(value));
+	return (true);
+}

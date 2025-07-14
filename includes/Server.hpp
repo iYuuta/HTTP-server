@@ -6,21 +6,22 @@
 # include "Size.hpp"
 # include "Route.hpp"
 
-
 #define PORT_MAX_VALUE 65535
 
 class Server
 {
     private:
-        std::string                 _host;
-        int                         _port;
-        std::vector<std::string>    _names;
-        std::string                 _errorPage;
-        Size                        _maxAllowedClientRequestSize;
-        std::vector<Route>          _routes;
+        std::string                              _host;
+        int                                      _port;
+        std::string                              _name;
+        std::vector<std::pair<int, std::string> > _errorPages;
+        Size                                     _maxAllowedClientRequestSize;
+        std::vector<Route>                       _routes;
     public:
         Server( );
         void                setHost(const std::string &host);
+        void                setName(const std::string &name);
+        void                addErrorPage(const int &code, const std::string &page);
         void                setPort(const int &port);
         const std::string   &getHost() const;
         const int           &getPort() const;

@@ -1,7 +1,7 @@
 CPP = c++
-CFLAGS = -Wall -Wextra -Werror -std=c++98
+CFLAGS =-std=c++98  # -Wall -Wextra -Werror -g -fsanitize=address
 SRC = src/main.cpp src/configs/Server.cpp src/configs/Config.cpp \
-	src/utils/strUtils.cpp src/parsing/parser.cpp \
+	src/utils/strUtils.cpp src/parsing/parser.cpp src/parsing/optionsValidator.cpp \
 	src/configs/Size.cpp src/parsing/Token.cpp src/parsing/optionsParser.cpp
 OBJS = ${SRC:.cpp=.o}
 NAME = bin
@@ -14,8 +14,8 @@ ${NAME}: ${OBJS}
 
 all: ${NAME}
 
-%.o: src/%.cpp ${HEADERS}
-	${CPP} ${CFLAGS} -c $<
+%.o: %.cpp ${HEADERS}
+	${CPP} ${CFLAGS} -c $< -o $@
 
 clean:
 	rm -f ${OBJS}

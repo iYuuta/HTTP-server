@@ -1,29 +1,6 @@
 #include "../../includes/parser.hpp"
 #include "../../includes/utils.hpp"
 
-static bool validateOneArg(std::vector<Token>::iterator& it)
-{
-	if ((it + 1)->getToken() == Semicolon)
-		return (true);
-	std::cerr << "Unsupported multiple arguments for key: " << (it - 1)->getKey() << std::endl;
-	return (false);
-}
-
-static bool  isValidPort(const std::string &str, int &port)
-{
-	if (str.empty() || str.size() > 5)
-		return (false);
-	if (str[0] == '0')
-		return (!str[1]);
-	for (size_t i = 0; i < str.size(); i++)
-	{
-		if (!std::isdigit(str[i]))
-			return (false);
-	}
-	port = std::atoi(str.c_str());
-	return (port <= PORT_MAX_VALUE);
-}
-
 bool parseListen(Server& server, std::vector<Token>::iterator& it)
 {
 	int port;
@@ -39,6 +16,14 @@ bool parseListen(Server& server, std::vector<Token>::iterator& it)
 	return (true);
 }
 
+bool parseServerName(Server& server, std::vector<Token>::iterator& it)
+{
+	if (!validateOneArg(it))
+		return (false);
+	server.setName(it->getKey());
+	return (true);
+}
+
 bool parseClientMaxBodySize(Server& server, std::vector<Token>::iterator& it)
 {
 	if (!validateOneArg(it))
@@ -48,11 +33,33 @@ bool parseClientMaxBodySize(Server& server, std::vector<Token>::iterator& it)
 		return (std::cerr << "Invalid " << (it - 1)->getKey() << std::endl, false);
 	if (s.at(1) != "KB")
 		return (std::cerr << (it - 1)->getKey() << " must be in KB" << std::endl, false);
-	errno = 0;
-	char *ptr;
-	const unsigned long value = std::strtoul(s.at(0).c_str(), &ptr, 10);
-	if (errno != 0 || *ptr != '\0')
-		return (errno = 0, std::cerr << "Invalid value " << s.at(0) << std::endl, false);
-	server.setMaxAllowedClientRequestSize(Size(value));
+	try
+	{
+		const unsigned long value = atoiul(s.at(0));
+		server.setMaxAllowedClientRequestSize(Size(value));
+	}
+	catch (std::exception& e)
+	{
+		return (std::cerr << "Invalid value " << s.at(0) << std::endl, false);
+	}
+	return (true);
+}
+
+bool parseErrorPage(Server& server, std::vector<Token>::iterator& it)
+{
+	if (!validateMultiArgs(it, 2))
+		return (false);
+	try
+	{
+		const unsigned long value = atoiul(it->getKey());
+		if (value >= 600 || value < 400)
+			return (std::cerr << "Invalid http error code " << value << std::endl, false);
+		server.addErrorPage(value, (++it++)->getKey());
+	}
+	catch (std::exception& e)
+	{
+		return (std::cerr << "Invalid http code " << it->getKey() << std::endl, false);
+	}
+	// server.setName(it->getKey());
 	return (true);
 }

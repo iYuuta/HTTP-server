@@ -30,7 +30,7 @@ static bool parseOption(std::vector<Token>::iterator& it, Server& server)
 {
 	const std::string keys[5] = {"listen", "client_max_body_size", "server_name", "error_page", "location"};
 	bool (*fn[5])(Server& server, std::vector<Token>::iterator& it) = {
-		::parseListen, ::parseListen, ::parseListen, ::parseListen, ::parseListen
+		::parseListen
 	};
 	for (size_t i = 0; i < 5; i++)
 	{
@@ -80,5 +80,6 @@ bool parseServers(std::ifstream& in, Config& conf)
 		if (!parseServer(it, conf))
 			return (false);
 	}
+	conf.test();
 	return (true);
 }

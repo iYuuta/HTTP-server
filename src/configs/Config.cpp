@@ -30,6 +30,6 @@ void    Config::test()
 {
     for (auto & _server : _servers)
     {
-        std::cout << _server.getPort() << std::endl;
+        std::cout << _server.getHost() << std::endl;
     }
 }

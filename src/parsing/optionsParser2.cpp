@@ -38,7 +38,6 @@ bool parseLocationAutoindex(Location& location, std::vector<Token>::iterator& it
 	return (true);
 }
 
-
 bool parseLocationIndex(Location& location, std::vector<Token>::iterator& it)
 {
 	if (!validateOneArg(it))
@@ -46,3 +45,12 @@ bool parseLocationIndex(Location& location, std::vector<Token>::iterator& it)
 	location.setIndex(it->getKey());
 	return (true);
 }
+
+bool parseLocationUploadStore(Location& location, std::vector<Token>::iterator& it)
+{
+	if (!validateOneArg(it))
+		return (false);
+	location.setUploadStore(it->getKey());
+	return (true);
+}
+

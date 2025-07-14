@@ -18,5 +18,6 @@ bool parseLocationMethods(Location& location, std::vector<Token>::iterator& it);
 bool parseLocationRoot(Location& location, std::vector<Token>::iterator& it);
 bool parseLocationAutoindex(Location& location, std::vector<Token>::iterator& it);
 bool parseLocationIndex(Location& location, std::vector<Token>::iterator& it);
+bool parseLocationUploadStore(Location& location, std::vector<Token>::iterator& it);
 
 #endif

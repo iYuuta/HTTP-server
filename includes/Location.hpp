@@ -13,6 +13,7 @@ class Location
 		std::string						_route;
 		bool							_autoindex;
 		std::string						_index;
+		std::string						_uploadStore;
 	public:
 		Location();
 		void setUrl(const std::string &url);
@@ -20,6 +21,7 @@ class Location
 		void setRoute(const std::string &route);
 		void setAutoIndex(const bool &autoindex);
 		void setIndex(const std::string &index);
+		void setUploadStore(const std::string &store);
 };
 
 #endif

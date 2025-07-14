@@ -28,3 +28,8 @@ void Location::setIndex(const std::string& index)
 {
 	_index = index;
 }
+
+void Location::setUploadStore(const std::string& store)
+{
+	_uploadStore = store;
+}

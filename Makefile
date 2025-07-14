@@ -2,7 +2,7 @@ CPP = c++
 CFLAGS = -Wall -Wextra -Werror -std=c++98
 SRC = src/main.cpp src/configs/Server.cpp src/configs/Config.cpp \
 	src/utils/str_utils.cpp src/parsing/parser.cpp src/utils/arr_utils.cpp \
-	src/configs/Size.cpp src/parsing/Token.cpp
+	src/configs/Size.cpp src/parsing/Token.cpp src/parsing/optionsParser.cpp
 OBJS = ${SRC:.cpp=.o}
 NAME = bin
 HEADERS = includes/Config.hpp includes/Server.hpp includes/Size.hpp \

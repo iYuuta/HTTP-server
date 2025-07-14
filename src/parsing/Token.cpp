@@ -60,7 +60,7 @@ bool validateTokens(std::vector<Token>& tokens)
 	if (tokens.empty())
 		return (std::cerr << "Empty configs!!" << std::endl, false);
 	std::vector<Token>::iterator it = tokens.begin();
-	std::vector<Token>::iterator end = tokens.end();
+	const std::vector<Token>::iterator end = tokens.end();
 	ssize_t						brackets = 0;
 	if (it->getToken() != Key)
 		return (std::cerr << "Invalid config start: " << it->getKey() << std::endl, false);

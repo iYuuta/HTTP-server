@@ -19,12 +19,12 @@ class Server
         Size                        _maxAllowedClientRequestSize;
         std::vector<Route>          _routes;
     public:
-        Server( void );
-        void                setHost(std::string host);
-        void                setPort(int port);
-        const std::string   &getHost( void );
-        int                 getPort( void );
-        void                setMaxAllowedClientRequestSize(Size &size);
+        Server( );
+        void                setHost(const std::string &host);
+        void                setPort(const int &port);
+        const std::string   &getHost() const;
+        const int           &getPort() const;
+        void                setMaxAllowedClientRequestSize(const Size &size);
 };
 
 bool parseHostAndPort( Server &server, std::vector<std::string> &content, size_t &i );

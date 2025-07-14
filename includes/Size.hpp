@@ -8,7 +8,7 @@ class Size
     private:
         size_t  _size;
     public:
-        Size( void );
+        Size();
         Size( size_t size );
         Size &operator=(const Size &other);
 };

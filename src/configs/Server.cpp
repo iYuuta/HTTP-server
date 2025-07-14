@@ -1,32 +1,31 @@
 #include "../../includes/Server.hpp"
 #include "../../includes/utils.hpp"
 
-Server::Server()
+Server::Server(): _port(-1)
 {
-
 }
 
-void Server::setHost(std::string host)
+void Server::setHost(const std::string &host)
 {
     _host = host;
 }
 
-void Server::setPort(int port)
+void Server::setPort(const int &port)
 {
     _port = port;
 }
 
-const std::string &Server::getHost( void )
+const std::string   &Server::getHost() const
 {
     return (_host);
 }
 
-int Server::getPort( void )
+const int &Server::getPort() const
 {
     return (_port);
 }
 
-void Server::setMaxAllowedClientRequestSize(Size &size)
+void Server::setMaxAllowedClientRequestSize(const Size &size)
 {
     _maxAllowedClientRequestSize = size;
 }

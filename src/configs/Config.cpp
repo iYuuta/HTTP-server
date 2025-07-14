@@ -28,8 +28,8 @@ void    Config::addServer(const Server &server)
 
 void    Config::test()
 {
-    for (size_t i = 0; i < _servers.size(); i++)
+    for (auto & _server : _servers)
     {
-        std::cout << _servers[i].getHost() << std::endl;
+        std::cout << _server.getPort() << std::endl;
     }
 }

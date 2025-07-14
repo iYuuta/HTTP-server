@@ -1,7 +1,7 @@
 #include "../../includes/Size.hpp"
 
 
-Size::Size( void )
+Size::Size()
 {
     _size = 0;
 }

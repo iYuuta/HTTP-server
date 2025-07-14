@@ -67,7 +67,7 @@ static bool parseLocationOption(Location& location, std::vector<Token>::iterator
 {
 	const std::string keys[5] = {"methods", "root", "autoindex", "index"};
 	bool (*fn[5])(Location&, std::vector<Token>::iterator&) = {
-		::parseLocationMethods, ::parseLocationMethods, ::parseLocationMethods, ::parseLocationMethods
+		::parseLocationMethods, ::parseLocationRoot, ::parseLocationAutoindex, ::parseLocationIndex
 	};
 	for (size_t i = 0; i < 5; i++)
 	{

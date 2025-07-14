@@ -65,10 +65,10 @@ bool parseErrorPage(Server& server, std::vector<Token>::iterator& it)
 
 static bool parseLocationOption(Location& location, std::vector<Token>::iterator& it)
 {
-	const std::string keys[10] = {"methods", "root", "autoindex", "index", "upload_store", "return"};
+	const std::string keys[10] = {"methods", "root", "autoindex", "index", "upload_store", "return", "cgi_ext"};
 	bool (*fn[10])(Location&, std::vector<Token>::iterator&) = {
 		::parseLocationMethods, ::parseLocationRoot, ::parseLocationAutoindex, ::parseLocationIndex,
-		::parseLocationUploadStore, ::parseLocationReturn
+		::parseLocationUploadStore, ::parseLocationReturn, ::parseLocationCgiExt
 	};
 	for (size_t i = 0; i < 10; i++)
 	{

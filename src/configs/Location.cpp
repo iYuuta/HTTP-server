@@ -38,3 +38,8 @@ void Location::setReturn(const int& code, const std::string& page)
 {
 	this->_return = std::make_pair(code, page);
 }
+
+void Location::setCgiExt(const std::string& ext)
+{
+	_cgiExt = ext;
+}

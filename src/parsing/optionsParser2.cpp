@@ -55,6 +55,14 @@ bool parseLocationUploadStore(Location& location, std::vector<Token>::iterator& 
 	return (true);
 }
 
+bool parseLocationCgiExt(Location& location, std::vector<Token>::iterator& it)
+{
+	if (!validateOneArg(it))
+		return (false);
+	location.setCgiExt(it->getKey());
+	return (true);
+}
+
 bool parseLocationReturn(Location& location, std::vector<Token>::iterator& it)
 {
 	if (!validateMultiArgs(it, 2))

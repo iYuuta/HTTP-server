@@ -14,6 +14,7 @@ class Location
 		bool							_autoindex;
 		std::string						_index;
 		std::string						_uploadStore;
+		std::pair<int, std::string>		_return;
 	public:
 		Location();
 		void setUrl(const std::string &url);
@@ -22,6 +23,7 @@ class Location
 		void setAutoIndex(const bool &autoindex);
 		void setIndex(const std::string &index);
 		void setUploadStore(const std::string &store);
+		void setReturn(const int &code, const std::string &page);
 };
 
 #endif

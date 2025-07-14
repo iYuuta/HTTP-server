@@ -33,3 +33,8 @@ void Location::setUploadStore(const std::string& store)
 {
 	_uploadStore = store;
 }
+
+void Location::setReturn(const int& code, const std::string& page)
+{
+	this->_return = std::make_pair(code, page);
+}

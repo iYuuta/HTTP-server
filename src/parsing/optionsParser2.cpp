@@ -1,4 +1,5 @@
 #include "../../includes/parser.hpp"
+#include "../../includes/utils.hpp"
 
 bool parseLocationMethods(Location& location, std::vector<Token>::iterator& it)
 {
@@ -54,3 +55,20 @@ bool parseLocationUploadStore(Location& location, std::vector<Token>::iterator& 
 	return (true);
 }
 
+bool parseLocationReturn(Location& location, std::vector<Token>::iterator& it)
+{
+	if (!validateMultiArgs(it, 2))
+		return (false);
+	try
+	{
+		const unsigned long value = atoiul(it->getKey());
+		if (value >= 600 || value < 100)
+			return (std::cerr << "Invalid http code " << value << std::endl, false);
+		location.setReturn(value, (++it++)->getKey());
+	}
+	catch (std::exception& _)
+	{
+		return (std::cerr << "Invalid http code " << it->getKey() << std::endl, false);
+	}
+	return (true);
+}

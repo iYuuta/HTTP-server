@@ -12,7 +12,7 @@ void Server::setHost(const std::string &host)
 
 void Server::addErrorPage(const int &code, const std::string &page)
 {
-    _errorPages.emplace_back(code, page);
+    _errorPages.push_back(std::make_pair(code, page));
 }
 
 void Server::setName(const std::string &name)

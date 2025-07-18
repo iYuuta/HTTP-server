@@ -9,7 +9,7 @@ Config::Config(const std::string &input) : _errorCode(0)
 
 void    Config::parseConfig(const std::string &input)
 {
-    std::ifstream conf(input);
+    std::ifstream conf(input.c_str());
 
     if (conf.fail())
     {
@@ -28,8 +28,8 @@ void    Config::addServer(const Server &server)
 
 void    Config::test()
 {
-    for (auto & _server : _servers)
-    {
-        std::cout << _server.getHost() << std::endl;
-    }
+//     for (auto & _server : _servers)
+//     {
+//         std::cout << _server.getHost() << std::endl;
+//     }
 }

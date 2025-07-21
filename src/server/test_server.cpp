@@ -27,7 +27,7 @@ int tempserver(void) {
     while (true) {
         client_fd = accept(server_fd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
         if (client_fd > 0) {
-            char buffer[8192] = {0};
+            char buffer[BUFFER_SIZE] = {0};
             int bytes_read = read(client_fd, buffer, sizeof(buffer) - 1);
             if (bytes_read > 0) {
                 std::cout << "---- Received Data ----\n";

@@ -3,31 +3,36 @@
 
 # include <iostream>
 # include <vector>
+# include <map>
 
 # include "Location.hpp"
 # include "Size.hpp"
+# include "Client.hpp"
 
 #define PORT_MAX_VALUE 65535
 
 class Server
 {
-    private:
-        std::string                              _host;
-        int                                      _port;
-        std::string                              _name;
-        std::vector<std::pair<int, std::string> > _errorPages;
-        Size                                     _maxAllowedClientRequestSize;
-        std::vector<Location>                    _locations;
-    public:
-        Server( );
-        void                setHost(const std::string &host);
-        void                setName(const std::string &name);
-        void                addErrorPage(const int &code, const std::string &page);
-        void                setPort(const int &port);
-        const std::string   &getHost() const;
-        const int           &getPort() const;
-        void                setMaxAllowedClientRequestSize(const Size &size);
-        void                addLocation(const Location &location);
+	private:
+		std::string							  		_host;
+		int									  		_port;
+		int									  		_fd;
+		std::string							  		_name;
+		std::vector<std::pair<int, std::string> >	_errorPages;
+		std::map<int, Client>						_clients;
+		std::vector<int>							_client_fds;
+		Size										_maxAllowedClientRequestSize;
+		std::vector<Location>						_locations;
+	public:
+		Server( );
+		void				setHost(const std::string &host);
+		void				setName(const std::string &name);
+		void				addErrorPage(const int &code, const std::string &page);
+		void				setPort(const int &port);
+		const std::string   &getHost() const;
+		const int		   &getPort() const;
+		void				setMaxAllowedClientRequestSize(const Size &size);
+		void				addLocation(const Location &location);
 };
 
 bool parseHostAndPort( Server &server, std::vector<std::string> &content, size_t &i );

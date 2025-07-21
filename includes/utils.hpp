@@ -7,6 +7,20 @@
 # include <sstream>
 # include <cstdlib>
 
+enum  enums
+{
+	nothing,
+	Get,
+	Delete,
+	Post,
+	RequestLine,
+	Headers,
+	Body,
+	Read,
+	write,
+	closed
+};
+
 std::vector<std::string> split(const std::string& s, char delimiter);
 std::vector<std::string> splitNumber(const std::string& s);
 unsigned long atoiul(const std::string& s);

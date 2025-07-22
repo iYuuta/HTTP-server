@@ -6,11 +6,11 @@ bool parseLocationMethods(Location& location, std::vector<Token>::iterator& it)
 	while (it->GetToken() != Semicolon)
 	{
 		if (it->GetKey() == "GET")
-			location.addMethod(Get);
+			location.addMethod(GET);
 		else if (it->GetKey() == "DELETE")
-			location.addMethod(Delete);
+			location.addMethod(DELETE);
 		else if (it->GetKey() == "POST")
-			location.addMethod(Post);
+			location.addMethod(POST);
 		else
 			return (std::cerr << "Unknown method: " << it->GetKey() << std::endl, false);
 		++it;

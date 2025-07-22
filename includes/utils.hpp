@@ -8,18 +8,18 @@
 # include <cstdlib>
 
 enum  enums {
-	nothing,
-	Get,
-	Delete,
-	Post,
-	Unsupported,
-	RequestLine,
-	Headers,
-	Body,
-	Read,
-	Write,
-	Done,
-	Closed
+	NOTHING,
+	GET,
+	DELETE,
+	POST,
+	UNSUPPORTED,
+	REQUESLINE,
+	HEADERS,
+	BODY,
+	READ,
+	WRITE,
+	DONE,
+	CLOSED
 };
 
 std::vector<std::string> split(const std::string& s, char delimiter);

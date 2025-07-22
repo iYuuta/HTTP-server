@@ -8,7 +8,7 @@ Client::~Client() {}
 
 void Client::GetData(char *buffer, size_t len) {
 	request.ParseData(buffer, len);
-	if (request.GetParseState() == Done) {
+	if (request.GetParseState() == DONE) {
 		_request_done = true;
 		std::cout << request << std::endl;
 	}
@@ -24,9 +24,9 @@ std::ostream& operator<<(std::ostream& os, Request& req) {
 
     // Method
     switch (req.GetMeth()) {
-        case Get: os << "Method: GET\n"; break;
-        case Post: os << "Method: POST\n"; break;
-        case Delete: os << "Method: DELETE\n"; break;
+        case GET: os << "Method: GET\n"; break;
+        case POST: os << "Method: POST\n"; break;
+        case DELETE: os << "Method: DELETE\n"; break;
         default: os << "Method: Unsupported\n"; break;
     }
 

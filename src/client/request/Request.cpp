@@ -2,7 +2,7 @@
 
 Request::Request() {};
 
-Request::Request(int fd): _fd(fd), _method(nothing), _parse_state(RequestLine), _content_len(0), _received_bytes(0) {
+Request::Request(int fd): _fd(fd), _method(NOTHING), _parse_state(REQUESLINE), _content_len(0), _received_bytes(0) {
 	_buffer.clear();
 	_path.clear();
 	_version.clear();
@@ -14,19 +14,19 @@ Request::~Request() {}
 void Request::ParseData(const char *data, size_t len) {
 	_buffer.append(data, len);
 	while (!_buffer.empty()) {
-		if (_parse_state == RequestLine) {
+		if (_parse_state == REQUESLINE) {
 			size_t pos = _buffer.find("\r\n");
 
 			if (pos != std::string::npos) {
 				std::string request_line = _buffer.substr(0, pos);
 				_buffer.erase(0, pos + 2);
 				AddRequestLine(request_line);
-				_parse_state = Headers;
+				_parse_state = HEADERS;
 			}
 			else
 				break ;
 		}
-		else if (_parse_state == Headers) {
+		else if (_parse_state == HEADERS) {
 			size_t pos = _buffer.find("\r\n");
 
 			if (pos == std::string::npos)
@@ -36,14 +36,14 @@ void Request::ParseData(const char *data, size_t len) {
 			_buffer.erase(0, pos + 2);
 			if (header_line.empty()) {
 				if (_content_len > 0)
-					_parse_state = Body;
+					_parse_state = BODY;
 				else
-					_parse_state = Done;
+					_parse_state = DONE;
 			}
 			else
 				AddHeaders(header_line);
 		}
-		else if (_parse_state == Body) {
+		else if (_parse_state == BODY) {
 			size_t LeftOver = _content_len - _received_bytes;
 			size_t ReadLen = std::min(LeftOver, _buffer.size());
 
@@ -51,12 +51,12 @@ void Request::ParseData(const char *data, size_t len) {
 			_buffer.erase(0, ReadLen);
 			_received_bytes += ReadLen;
 			if (_received_bytes >= _content_len) {
-				_parse_state = Done;
+				_parse_state = DONE;
 				_body.close();
 			}
 			break ;
 		}
-		if (_parse_state == Done) {
+		if (_parse_state == DONE) {
 			std::cout << _headers["Content-Length"] << std::endl << _content_len << std::endl;
 			break ;
 		}
@@ -70,13 +70,13 @@ void Request::AddRequestLine(std::string buff) {
 	if (!(parser >> method >> _path >> _version))
 		throw InvalidRequestLine();
 	if (method == "GET")
-		_method = Get;
+		_method = GET;
 	else if (method == "POST")
-		_method = Post;
+		_method = POST;
 	else if (method == "DELETE")
-		_method = Delete;
+		_method = DELETE;
 	else
-		_method = Unsupported;
+		_method = UNSUPPORTED;
 }
 
 static std::string trim(const std::string& s) {

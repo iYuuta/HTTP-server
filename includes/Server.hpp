@@ -19,20 +19,22 @@ class Server
 		int									  		_fd;
 		std::string							  		_name;
 		std::vector<std::pair<int, std::string> >	_errorPages;
-		std::map<int, Client>						_clients;
-		std::vector<int>							_client_fds;
-		Size										_maxAllowedClientRequestSize;
+		size_t										_maxAllowedClientRequestSize;
 		std::vector<Location>						_locations;
 	public:
+		std::vector<int>							_client_fds;
+		std::map<int, Client*>						_clients;
 		Server( );
-		void				setHost(const std::string &host);
-		void				setName(const std::string &name);
-		void				addErrorPage(const int &code, const std::string &page);
-		void				setPort(const int &port);
-		const std::string   &getHost() const;
-		const int		   &getPort() const;
-		void				setMaxAllowedClientRequestSize(const Size &size);
-		void				addLocation(const Location &location);
+		void				SetHost(const std::string &host);
+		void				SetName(const std::string &name);
+		void				AddErrorPage(const int &code, const std::string &page);
+		void				SetPort(const int &port);
+		const std::string   &GetHost() const;
+		const int			&GetPort() const;
+		void				SetMaxAllowedClientRequestSize(size_t size);
+		void				AddLocation(const Location &location);
+	
+		void tempserver(void);
 };
 
 bool parseHostAndPort( Server &server, std::vector<std::string> &content, size_t &i );

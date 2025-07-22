@@ -7,18 +7,19 @@
 # include <sstream>
 # include <cstdlib>
 
-enum  enums
-{
+enum  enums {
 	nothing,
 	Get,
 	Delete,
 	Post,
+	Unsupported,
 	RequestLine,
 	Headers,
 	Body,
 	Read,
-	write,
-	closed
+	Write,
+	Done,
+	Closed
 };
 
 std::vector<std::string> split(const std::string& s, char delimiter);

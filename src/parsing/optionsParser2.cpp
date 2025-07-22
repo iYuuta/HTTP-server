@@ -3,16 +3,16 @@
 
 bool parseLocationMethods(Location& location, std::vector<Token>::iterator& it)
 {
-	while (it->getToken() != Semicolon)
+	while (it->GetToken() != Semicolon)
 	{
-		if (it->getKey() == "GET")
+		if (it->GetKey() == "GET")
 			location.addMethod(Get);
-		else if (it->getKey() == "DELETE")
+		else if (it->GetKey() == "DELETE")
 			location.addMethod(Delete);
-		else if (it->getKey() == "POST")
+		else if (it->GetKey() == "POST")
 			location.addMethod(Post);
 		else
-			return (std::cerr << "Unknown method: " << it->getKey() << std::endl, false);
+			return (std::cerr << "Unknown method: " << it->GetKey() << std::endl, false);
 		++it;
 	}
 	return (true);
@@ -22,7 +22,7 @@ bool parseLocationRoot(Location& location, std::vector<Token>::iterator& it)
 {
 	if (!validateOneArg(it))
 		return (false);
-	location.setRoute(it->getKey());
+	location.SetRoute(it->GetKey());
 	return (true);
 }
 
@@ -30,12 +30,12 @@ bool parseLocationAutoindex(Location& location, std::vector<Token>::iterator& it
 {
 	if (!validateOneArg(it))
 		return (false);
-	if (it->getKey() == "on")
-		location.setAutoIndex(true);
-	else if (it->getKey() == "off")
-		location.setAutoIndex(false);
+	if (it->GetKey() == "on")
+		location.SetAutoIndex(true);
+	else if (it->GetKey() == "off")
+		location.SetAutoIndex(false);
 	else
-		return (std::cerr << "Unknown value " << it->getKey() << " for key " << (it - 1)->getKey() << std::endl, false);
+		return (std::cerr << "Unknown value " << it->GetKey() << " for key " << (it - 1)->GetKey() << std::endl, false);
 	return (true);
 }
 
@@ -43,7 +43,7 @@ bool parseLocationIndex(Location& location, std::vector<Token>::iterator& it)
 {
 	if (!validateOneArg(it))
 		return (false);
-	location.setIndex(it->getKey());
+	location.SetIndex(it->GetKey());
 	return (true);
 }
 
@@ -51,7 +51,7 @@ bool parseLocationUploadStore(Location& location, std::vector<Token>::iterator& 
 {
 	if (!validateOneArg(it))
 		return (false);
-	location.setUploadStore(it->getKey());
+	location.SetUploadStore(it->GetKey());
 	return (true);
 }
 
@@ -59,7 +59,7 @@ bool parseLocationCgiExt(Location& location, std::vector<Token>::iterator& it)
 {
 	if (!validateOneArg(it))
 		return (false);
-	location.setCgiExt(it->getKey());
+	location.SetCgiExt(it->GetKey());
 	return (true);
 }
 
@@ -69,14 +69,14 @@ bool parseLocationReturn(Location& location, std::vector<Token>::iterator& it)
 		return (false);
 	try
 	{
-		const unsigned long value = atoiul(it->getKey());
+		const unsigned long value = atoiul(it->GetKey());
 		if (value >= 600 || value < 100)
 			return (std::cerr << "Invalid http code " << value << std::endl, false);
-		location.setReturn(value, (++it++)->getKey());
+		location.SetReturn(value, (++it++)->GetKey());
 	}
 	catch (std::exception& _)
 	{
-		return (std::cerr << "Invalid http code " << it->getKey() << std::endl, false);
+		return (std::cerr << "Invalid http code " << it->GetKey() << std::endl, false);
 	}
 	return (true);
 }

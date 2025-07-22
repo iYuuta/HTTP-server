@@ -20,9 +20,9 @@ class Token
 {
 	public:
 		Token(const std::string& key);
-		const std::string& getKey() const;
-		const int& getToken() const;
-		void setToken(const int& token);
+		const std::string& GetKey() const;
+		const int& GetToken() const;
+		void SetToken(const int& token);
 
 	private:
 		std::string _key;

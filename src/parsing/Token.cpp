@@ -17,17 +17,17 @@ std::vector<Token> splitTokens(const std::string& s)
 	return tokens;
 }
 
-const std::string& Token::getKey() const
+const std::string& Token::GetKey() const
 {
 	return (_key);
 }
 
-const int& Token::getToken() const
+const int& Token::GetToken() const
 {
 	return (_token);
 }
 
-void Token::setToken(const int& token)
+void Token::SetToken(const int& token)
 {
 	_token = token;
 }
@@ -40,16 +40,16 @@ void tokenization(std::vector<Token>& tokens)
 
 	while (it != tokens.end())
 	{
-		if (it->getKey() == "{")
-			it->setToken(BracketStart);
-		else if (it->getKey() == "}")
-			it->setToken(BracketEnd);
-		else if (it->getKey() == ";")
-			it->setToken(Semicolon);
-		else if (it != start && ((it - 1)->getToken() == Key || (it - 1)->getToken() == Value))
-			it->setToken(Value);
+		if (it->GetKey() == "{")
+			it->SetToken(BracketStart);
+		else if (it->GetKey() == "}")
+			it->SetToken(BracketEnd);
+		else if (it->GetKey() == ";")
+			it->SetToken(Semicolon);
+		else if (it != start && ((it - 1)->GetToken() == Key || (it - 1)->GetToken() == Value))
+			it->SetToken(Value);
 		else
-			it->setToken(Key);
+			it->SetToken(Key);
 		++it;
 	}
 }
@@ -62,22 +62,22 @@ bool validateTokens(std::vector<Token>& tokens)
 	std::vector<Token>::iterator it = tokens.begin();
 	const std::vector<Token>::iterator end = tokens.end();
 	ssize_t						brackets = 0;
-	if (it->getToken() != Key)
-		return (std::cerr << "Invalid config start: " << it->getKey() << std::endl, false);
+	if (it->GetToken() != Key)
+		return (std::cerr << "Invalid config start: " << it->GetKey() << std::endl, false);
 	while (it != end)
 	{
 		std::vector<Token>::iterator prev = it - 1;
 		std::vector<Token>::iterator next = it + 1;
 
-		if (it->getToken() == BracketStart && prev->getToken() != Key && prev->getToken() != Value)
-			return (std::cerr << "Invalid brackets start after: " << prev->getKey() << std::endl, false);
-		if (it->getToken() == Semicolon && prev->getToken() != Value)
-			return (std::cerr << "Invalid value for key: " << prev->getKey() << std::endl, false);
-		if (it->getToken() == Key && next == end)
-			return (std::cerr << "Invalid value for key: " << it->getKey() << std::endl, false);
-		if (it->getToken() == BracketStart)
+		if (it->GetToken() == BracketStart && prev->GetToken() != Key && prev->GetToken() != Value)
+			return (std::cerr << "Invalid brackets start after: " << prev->GetKey() << std::endl, false);
+		if (it->GetToken() == Semicolon && prev->GetToken() != Value)
+			return (std::cerr << "Invalid value for key: " << prev->GetKey() << std::endl, false);
+		if (it->GetToken() == Key && next == end)
+			return (std::cerr << "Invalid value for key: " << it->GetKey() << std::endl, false);
+		if (it->GetToken() == BracketStart)
 			brackets++;
-		else if (it->getToken() == BracketEnd)
+		else if (it->GetToken() == BracketEnd)
 			brackets--;
 		++it;
 	}

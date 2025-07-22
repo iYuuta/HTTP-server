@@ -21,15 +21,16 @@ void    Config::parseConfig(const std::string &input)
     conf.close();
 }
 
-void    Config::addServer(const Server &server)
+void    Config::addServer(Server &server)
 {
     _servers.push_back(server);
+    server.tempserver();
 }
 
 void    Config::test()
 {
 //     for (auto & _server : _servers)
 //     {
-//         std::cout << _server.getHost() << std::endl;
+//         std::cout << _server.GetHost() << std::endl;
 //     }
 }

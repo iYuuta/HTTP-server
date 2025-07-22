@@ -8,7 +8,7 @@ class Config
 {
     public:
         Config(const std::string &input);
-        void    addServer(const Server &server);
+        void    addServer(Server &server);
         void    test();
     private:
         short               _errorCode;

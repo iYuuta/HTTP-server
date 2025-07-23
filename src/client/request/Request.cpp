@@ -2,31 +2,31 @@
 
 Request::Request() {};
 
-Request::Request(int fd): _fd(fd), _method(NOTHING), _parse_state(REQUESLINE), _content_len(0), _received_bytes(0) {
+Request::Request(size_t maxBodySize, std::vector<Location>& it): _maxBodySize(maxBodySize), _locations(it), _method(NOTHING), _parseState(REQUESLINE), _contentLen(0), _receivedBytes(0) {
 	_buffer.clear();
 	_path.clear();
 	_version.clear();
-	_body_file.clear();
+	_bodyFileName.clear();
 }
 
 Request::~Request() {}
 
-void Request::ParseData(const char *data, size_t len) {
+void Request::parseData(const char *data, size_t len) {
 	_buffer.append(data, len);
 	while (!_buffer.empty()) {
-		if (_parse_state == REQUESLINE) {
+		if (_parseState == REQUESLINE) {
 			size_t pos = _buffer.find("\r\n");
 
 			if (pos != std::string::npos) {
 				std::string request_line = _buffer.substr(0, pos);
 				_buffer.erase(0, pos + 2);
-				AddRequestLine(request_line);
-				_parse_state = HEADERS;
+				addRequestLine(request_line);
+				_parseState = HEADERS;
 			}
 			else
 				break ;
 		}
-		else if (_parse_state == HEADERS) {
+		else if (_parseState == HEADERS) {
 			size_t pos = _buffer.find("\r\n");
 
 			if (pos == std::string::npos)
@@ -35,35 +35,34 @@ void Request::ParseData(const char *data, size_t len) {
 
 			_buffer.erase(0, pos + 2);
 			if (header_line.empty()) {
-				if (_content_len > 0)
-					_parse_state = BODY;
+				if (_contentLen > 0)
+					_parseState = BODY;
 				else
-					_parse_state = DONE;
+					_parseState = DONE;
 			}
 			else
-				AddHeaders(header_line);
+				addHeaders(header_line);
 		}
-		else if (_parse_state == BODY) {
-			size_t LeftOver = _content_len - _received_bytes;
+		else if (_parseState == BODY) {
+			size_t LeftOver = _contentLen - _receivedBytes;
 			size_t ReadLen = std::min(LeftOver, _buffer.size());
 
-			AddBody(_buffer.substr(0, ReadLen), ReadLen);
+			addBody(_buffer.substr(0, ReadLen), ReadLen);
 			_buffer.erase(0, ReadLen);
-			_received_bytes += ReadLen;
-			if (_received_bytes >= _content_len) {
-				_parse_state = DONE;
-				_body.close();
+			_receivedBytes += ReadLen;
+			if (_receivedBytes >= _contentLen) {
+				_parseState = DONE;
+				_bodyOut.close();
 			}
 			break ;
 		}
-		if (_parse_state == DONE) {
-			std::cout << _headers["Content-Length"] << std::endl << _content_len << std::endl;
+		if (_parseState == DONE) {
 			break ;
 		}
 	}
 }
 
-void Request::AddRequestLine(std::string buff) {
+void Request::addRequestLine(std::string buff) {
 	std::istringstream	parser(buff);
 	std::string			method;
 
@@ -79,22 +78,7 @@ void Request::AddRequestLine(std::string buff) {
 		_method = UNSUPPORTED;
 }
 
-static std::string trim(const std::string& s) {
-	size_t start = 0;
-
-	while (start < s.size() && (s[start] == ' ' || s[start] == '\t'))
-		++start;
-	if (start == s.size())
-		return "";
-
-	size_t end = s.size() - 1;
-
-	while (end > start && (s[end] == ' ' || s[end] == '\t'))
-		--end;
-	return s.substr(start, end - start + 1);
-}
-
-void Request::AddHeaders(std::string buff) {
+void Request::addHeaders(std::string buff) {
 	size_t pos = buff.find(":");
 	if (pos == std::string::npos)
 		throw InvalidHeader();
@@ -105,60 +89,60 @@ void Request::AddHeaders(std::string buff) {
 		if (value.empty())
 			throw InvalidHeader();
 		char* endptr = NULL;
-		unsigned long long parsed = std::strtoull(value.c_str(), &endptr, 10);
+		unsigned long long len = std::strtoull(value.c_str(), &endptr, 10);
 		if (endptr == value.c_str() || *endptr != '\0')
 			throw InvalidHeader();
-		if (parsed > static_cast<unsigned long long>(SIZE_MAX))
+		if (len > static_cast<unsigned long long>(SIZE_MAX))
 			throw InvalidHeader();
-		_content_len = static_cast<size_t>(parsed);
+		_contentLen = static_cast<size_t>(len);
 	}
 }
 
-void Request::AddBody(const std::string& buff, size_t len) {
-	if (!_body.is_open()) {
-    _body_file = "/tmp/body_" + std::to_string(_fd) + ".tmp";
-    _body.open(_body_file.c_str(), std::ios::binary | std::ios::out);
-    if (!_body)
+void Request::addBody(const std::string& buff, size_t len) {
+	if (!_bodyOut.is_open()) {
+    _bodyFileName = "/tmp/." + generateRandomName();
+    _bodyOut.open(_bodyFileName.c_str(), std::ios::binary | std::ios::out);
+    if (!_bodyOut)
       throw OpenFailed();
 	}
-	_body.write(buff.data(), len);
-	if (!_body)
+	_bodyOut.write(buff.data(), len);
+	if (!_bodyOut)
 		throw WriteError();
 }
 
-enums Request::GetMeth() const {
+enums Request::getMeth() const {
 	return _method;
 }
 
-enums Request::GetParseState() const {
-	return _parse_state;
+enums Request::getParseState() const {
+	return _parseState;
 }
 
-const std::string& Request::GetPath() const {
+const std::string& Request::getPath() const {
 	return _path;
 }
 
-const std::string& Request::GetVersion() const {
+const std::string& Request::getVersion() const {
 	return _version;
 }
 
-size_t Request::GetContentLen() const {
-	return _content_len;
+size_t Request::getContentLen() const {
+	return _contentLen;
 }
 
-size_t Request::GetReceivedBytes() const {
-	return _received_bytes;
+size_t Request::getReceivedBytes() const {
+	return _receivedBytes;
 }
 
-const std::string Request::GetHeader(const std::string& key) {
+const std::string Request::getHeader(const std::string& key) {
 	return _headers[key];
 }
 
-const std::ifstream& Request::GetBodyFile() {
-	_body_in.open(_body_file, std::ios::binary);
-	if (!_body_in.is_open())
+const std::ifstream& Request::getBodyFile() {
+	_bodyIn.open(_bodyFileName, std::ios::binary);
+	if (!_bodyIn.is_open())
 		throw OpenFailed();
-	return _body_in;
+	return _bodyIn;
 }
 
 const char *Request::InvalidRequestLine::what() const throw() {
@@ -177,10 +161,6 @@ const char *Request::WriteError::what() const throw() {
 	return "write failed";
 }
 
-int	Request::GetFd() const {
-	return _fd;
-}
-
-std::map<std::string, std::string> Request::GetHeaders() const {
+std::map<std::string, std::string> Request::getHeaders() const {
 	return _headers;
 }

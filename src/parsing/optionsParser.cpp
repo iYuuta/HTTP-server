@@ -6,13 +6,13 @@ bool parseListen(Server& server, std::vector<Token>::iterator& it)
 	int port;
 	if (!validateOneArg(it))
 		return (false);
-	const std::vector<std::string> s = split(it->GetKey(), ':');
+	const std::vector<std::string> s = split(it->getKey(), ':');
 	if (s.size() != 2)
 		return (std::cerr << "interface:port required for the listen value" << std::endl, false);
 	if (!isValidPort(s.at(1), port))
 		return (std::cerr << "Invalid port: " << s.at(1) << std::endl, false);
-	server.SetHost(s.at(0));
-	server.SetPort(port);
+	server.setHost(s.at(0));
+	server.setPort(port);
 	return (true);
 }
 
@@ -20,7 +20,7 @@ bool parseServerName(Server& server, std::vector<Token>::iterator& it)
 {
 	if (!validateOneArg(it))
 		return (false);
-	server.SetName(it->GetKey());
+	server.setName(it->getKey());
 	return (true);
 }
 
@@ -28,15 +28,15 @@ bool parseClientMaxBodySize(Server& server, std::vector<Token>::iterator& it)
 {
 	if (!validateOneArg(it))
 		return (false);
-	const std::vector<std::string> s = splitNumber(it->GetKey());
+	const std::vector<std::string> s = splitNumber(it->getKey());
 	if (s.size() != 2)
-		return (std::cerr << "Invalid " << (it - 1)->GetKey() << std::endl, false);
+		return (std::cerr << "Invalid " << (it - 1)->getKey() << std::endl, false);
 	if (s.at(1) != "KB")
-		return (std::cerr << (it - 1)->GetKey() << " must be in KB" << std::endl, false);
+		return (std::cerr << (it - 1)->getKey() << " must be in KB" << std::endl, false);
 	try
 	{
 		const unsigned long value = atoiul(s.at(0));
-		server.SetMaxAllowedClientRequestSize(value);
+		server.setMaxAllowedClientRequestSize(value);
 	}
 	catch (std::exception& _)
 	{
@@ -51,14 +51,14 @@ bool parseErrorPage(Server& server, std::vector<Token>::iterator& it)
 		return (false);
 	try
 	{
-		const unsigned long value = atoiul(it->GetKey());
+		const unsigned long value = atoiul(it->getKey());
 		if (value >= 600 || value < 400)
 			return (std::cerr << "Invalid http error code " << value << std::endl, false);
-		server.AddErrorPage(value, (++it++)->GetKey());
+		server.addErrorPage(value, (++it++)->getKey());
 	}
 	catch (std::exception& _)
 	{
-		return (std::cerr << "Invalid http code " << it->GetKey() << std::endl, false);
+		return (std::cerr << "Invalid http code " << it->getKey() << std::endl, false);
 	}
 	return (true);
 }
@@ -72,10 +72,10 @@ static bool parseLocationOption(Location& location, std::vector<Token>::iterator
 	};
 	for (size_t i = 0; i < 10; i++)
 	{
-		if (keys[i] == it->GetKey())
+		if (keys[i] == it->getKey())
 			return (fn[i](location, ++it));
 	}
-	std::cerr << "Unknown key: " << it->GetKey() << std::endl;
+	std::cerr << "Unknown key: " << it->getKey() << std::endl;
 	return (false);
 }
 
@@ -86,23 +86,23 @@ bool parseLocation(Server& server, std::vector<Token>::iterator& it)
 
 	if (!validateArgBody(it))
 		return (false);
-	location.SetUrl(it++->GetKey());
-	server.AddLocation(location);
+	location.setUrl(it++->getKey());
+	server.addLocation(location);
 	++it;
 	while (brackets)
 	{
-		if (it->GetToken() == Key)
+		if (it->getToken() == Key)
 		{
 			if (!parseLocationOption(location, it))
 				return (false);
 			continue ;
 		}
-		if (it->GetToken() == BracketStart)
+		if (it->getToken() == BracketStart)
 			brackets++;
-		else if (it->GetToken() == BracketEnd)
+		else if (it->getToken() == BracketEnd)
 			brackets--;
 		++it;
 	}
-	server.AddLocation(location);
+	server.addLocation(location);
 	return (true);
 }

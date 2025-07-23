@@ -19,14 +19,17 @@ class Location
 		std::pair<int, std::string>		_return;
 	public:
 		Location();
-		void SetUrl(const std::string &url);
-		void addMethod(const enums &method);
-		void SetRoute(const std::string &route);
-		void SetAutoIndex(const bool &autoindex);
-		void SetIndex(const std::string &index);
-		void SetUploadStore(const std::string &store);
-		void SetReturn(const int &code, const std::string &page);
-		void SetCgiExt(const std::string &ext);
+		void				setUrl(const std::string &url);
+		void				addMethod(const enums &method);
+		void				setRoute(const std::string &route);
+		void				setAutoIndex(const bool &autoindex);
+		void				setIndex(const std::string &index);
+		void				setUploadStore(const std::string &store);
+		void				setReturn(const int &code, const std::string &page);
+		void				setCgiExt(const std::string &ext);
+		bool				isMethodValid(enums method);
+		const std::string&	getUrl();
+		void				printMethods();
 };
 
 #endif

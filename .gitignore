@@ -1,6 +1,7 @@
 webserv
 # Prerequisites
 *.d
+*.o
 
 .vscode
 

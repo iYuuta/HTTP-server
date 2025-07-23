@@ -1,49 +1,50 @@
 #include "../../includes/Client.hpp"
 
-Client::Client(std::vector<Location>* locations, size_t MaxRequestSize, int fd): _fd(fd), _MaxRequestSize(MaxRequestSize), _response_done(false), _request_done(false), _ActiveCgi(false), _error_code(-1), request(fd){}
+Client::Client(std::vector<Location> locations, size_t maxRequestSize, int fd): _fd(fd), _maxRequestSize(maxRequestSize), _responseDone(false), _requestDone(false), _activeCgi(false), _errorCode(-1), _locations(locations), request(fd, _locations) {}
 
 std::ostream& operator<<(std::ostream& os, Request& req);
 
 Client::~Client() {}
 
-void Client::GetData(char *buffer, size_t len) {
-	request.ParseData(buffer, len);
-	if (request.GetParseState() == DONE) {
-		_request_done = true;
+void Client::getData(char *buffer, size_t len) {
+	request.parseData(buffer, len);
+	if (request.getParseState() == DONE) {
+        _requestDone = true;
 		std::cout << request << std::endl;
+        if (request.isTargetValid())
+            request.isMethodValid();
 	}
 }
 
-bool	Client::IsRequestDone() {
-	return _request_done;
+bool	Client::isRequestDone() {
+	return _requestDone;
 }
 
 
 std::ostream& operator<<(std::ostream& os, Request& req) {
     os << "=== HTTP Request ===\n";
 
-    // Method
-    switch (req.GetMeth()) {
+    switch (req.getMeth()) {
         case GET: os << "Method: GET\n"; break;
         case POST: os << "Method: POST\n"; break;
         case DELETE: os << "Method: DELETE\n"; break;
         default: os << "Method: Unsupported\n"; break;
     }
 
-    os << "FD: " << req.GetFd() << "\n";
-    os << "Path: " << req.GetPath() << "\n";
-    os << "Version: " << req.GetVersion() << "\n";
+    os << "Path: " << req.getPath() << "\n";
+    os << "Version: " << req.getVersion() << "\n";
 
     os << "\nHeaders:\n";
-    for (const auto& header : req.GetHeaders()) {
+    for (const auto& header : req.getHeaders()) {
         os << header.first << ": " << header.second << "\n";
     }
 
-    os << "\nBody File Content:\n";
-    os << req.GetBodyFile().rdbuf();
-
-	os << "\nContent-Length: " << req.GetContentLen() << "\n";
-	os << "Received Bytes: " << req.GetReceivedBytes() << "\n";
+    if (req.getContentLen() > 0) {
+        os << "\nBody File Content:\n";
+        os << req.getBodyFile().rdbuf();
+	    os << "\nContent-Length: " << req.getContentLen() << "\n";
+	    os << "Received Bytes: " << req.getReceivedBytes() << "\n";
+    }
     os << "====================\n";
     return os;
 }

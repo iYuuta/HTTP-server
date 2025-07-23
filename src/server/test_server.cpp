@@ -24,14 +24,14 @@ void Server::tempserver(void) {
     while (true) {
     client_fd = accept(server_fd, (struct sockaddr*)&address, (socklen_t*)&addrlen);
     if (client_fd > 0) {
-        _clients[client_fd] = new Client(&_locations, _maxAllowedClientRequestSize,client_fd);
+        _clients[client_fd] = new Client(_locations, _maxAllowedClientRequestSize,client_fd);
 
         char buffer[BUFFER_SIZE];
         int bytes_read;
         bool request_done = false;
         while (!request_done && (bytes_read = read(client_fd, buffer, sizeof(buffer))) > 0) {
-            _clients[client_fd]->GetData(buffer, bytes_read);
-            if (_clients[client_fd]->IsRequestDone()) {
+            _clients[client_fd]->getData(buffer, bytes_read);
+            if (_clients[client_fd]->isRequestDone()) {
                 request_done = true;
             }
         }

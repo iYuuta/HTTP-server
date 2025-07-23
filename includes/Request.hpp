@@ -4,44 +4,51 @@
 #include <map>
 #include <string>
 #include <exception>
+#include <ctime>
 #include <sys/socket.h>
 #include <fcntl.h>
 
 #include"utils.hpp"
+#include"Location.hpp"
 
 #define BUFFER_SIZE 4096
 
 class Request {
 	private:
 		enums								_method;
-		int									_fd;
-		enums								_parse_state;
+		enums								_parseState;
+		size_t								_maxBodySize;
+		size_t								_contentLen;
+		size_t								_receivedBytes;
 		std::string							_buffer;
 		std::string							_path;
 		std::string							_version;
 		std::map<std::string, std::string>	_headers;
-		std::string							_body_file;
-		std::ofstream						_body;
-		std::ifstream						_body_in;
-		size_t								_content_len;
-		size_t								_received_bytes;
+		std::string							_bodyFileName;
+		std::ofstream						_bodyOut;
+		std::ifstream						_bodyIn;
+		std::vector<Location>::iterator 	_locationIter;
+		std::vector<Location>			 	_locations;
 	public:
 		Request();
-		Request(int fd);
+		Request(size_t maxBody, std::vector<Location>& it);
 		~Request();
 
-		void					ParseData(const char *data, size_t len);
-		void					AddRequestLine(std::string buff);
-		void					AddHeaders(std::string buff);
-		void					AddBody(const std::string& buff, size_t len);
-		enums					GetMeth() const ;
-		enums					GetParseState() const ;
-		const std::string&		GetPath() const ;
-		const std::string&		GetVersion() const ;
-		size_t					GetContentLen()	const ;
-		size_t					GetReceivedBytes()	const ;
-		const std::string		GetHeader(const std::string& key) ;
-		const std::ifstream&	GetBodyFile();
+		void					parseData(const char *data, size_t len);
+		void					addRequestLine(std::string buff);
+		void					addHeaders(std::string buff);
+		void					addBody(const std::string& buff, size_t len);
+		enums					getMeth() const ;
+		enums					getParseState() const ;
+		const std::string&		getPath() const ;
+		const std::string&		getVersion() const ;
+		size_t					getContentLen()	const ;
+		size_t					getReceivedBytes()	const ;
+		const std::string		getHeader(const std::string& key) ;
+		const std::ifstream&	getBodyFile();
+		bool					isTargetValid();
+		bool					isMethodValid();
+		bool					isBodySizeValid();
 		
 	class InvalidRequestLine : public std::exception {
 		public :
@@ -60,9 +67,11 @@ class Request {
 			const char *what() const throw() ;
 	};
 
-	int									GetFd() const ;
-	std::map<std::string, std::string>	GetHeaders() const ;
+	std::map<std::string, std::string>	getHeaders() const ;
 
 };
+
+std::string trim(const std::string& s);
+std::string generateRandomName();
 
 #endif

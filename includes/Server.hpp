@@ -25,14 +25,14 @@ class Server
 		std::vector<int>							_client_fds;
 		std::map<int, Client*>						_clients;
 		Server( );
-		void				SetHost(const std::string &host);
-		void				SetName(const std::string &name);
-		void				AddErrorPage(const int &code, const std::string &page);
-		void				SetPort(const int &port);
-		const std::string   &GetHost() const;
-		const int			&GetPort() const;
-		void				SetMaxAllowedClientRequestSize(size_t size);
-		void				AddLocation(const Location &location);
+		void				setHost(const std::string &host);
+		void				setName(const std::string &name);
+		void				addErrorPage(const int &code, const std::string &page);
+		void				setPort(const int &port);
+		const std::string   &getHost() const;
+		const int			&getPort() const;
+		void				setMaxAllowedClientRequestSize(size_t size);
+		void				addLocation(const Location &location);
 	
 		void tempserver(void);
 };

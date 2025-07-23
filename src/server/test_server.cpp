@@ -29,7 +29,7 @@ void Server::tempserver(void) {
         char buffer[BUFFER_SIZE];
         int bytes_read;
         bool request_done = false;
-        while (!request_done && (bytes_read = read(client_fd, buffer, sizeof(buffer))) > 0) {
+        while (!request_done && (bytes_read = read(_maxAllowedClientRequestSize, buffer, sizeof(buffer))) > 0) {
             _clients[client_fd]->getData(buffer, bytes_read);
             if (_clients[client_fd]->isRequestDone()) {
                 request_done = true;

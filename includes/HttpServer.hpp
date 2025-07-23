@@ -7,10 +7,13 @@ class HttpServer
 {
 	private:
 		Config& _config;
+
+		void clean();
+		void listen();
 	public:
 		HttpServer(Config& config);
 
-		void startAll() const;
+		bool startAll();
 };
 
 #endif

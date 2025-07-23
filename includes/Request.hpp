@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include <exception>
+#include <iostream>
 #include <fstream>
 
 #include"utils.hpp"

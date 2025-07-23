@@ -3,10 +3,11 @@
 #include "../../includes/Config.hpp"
 #include "../../includes/Token.hpp"
 #include "../../includes/utils.hpp"
+# include <iostream>
 
 static std::string readConfig(std::ifstream& in)
 {
-	std::string out = "";
+	std::string out;
 	const std::string special = "{};";
 	char ch;
 	while (in.get(ch))
@@ -80,6 +81,5 @@ bool parseServers(std::ifstream& in, Config& conf)
 		if (!parseServer(it, conf))
 			return (false);
 	}
-	conf.test();
 	return (true);
 }

@@ -8,8 +8,7 @@ class Config
 {
     public:
         Config(const std::string &input);
-        void    addServer(Server &server);
-        void    test();
+        void    addServer(const Server &server);
     private:
         short               _errorCode;
         std::vector<Server> _servers;

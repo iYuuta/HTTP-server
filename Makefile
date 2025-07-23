@@ -1,9 +1,9 @@
 CPP = c++
 CFLAGS =-std=c++98  # -Wall -Wextra -Werror -g -fsanitize=address
-SRC = src/main.cpp src/configs/Server.cpp src/configs/Config.cpp \
+SRC = src/main.cpp src/server/Server.cpp src/configs/Config.cpp \
 	src/utils/strUtils.cpp src/parsing/parser.cpp src/parsing/optionsValidator.cpp \
 	src/configs/Size.cpp src/parsing/Token.cpp src/parsing/optionsParser.cpp src/configs/Location.cpp \
-	src/parsing/optionsParser2.cpp src/server/test_server.cpp src/client/Client.cpp \
+	src/parsing/optionsParser2.cpp  src/client/Client.cpp \
 	src/client/request/Request.cpp src/client/response/Response.cpp \
 	src/client/request/requestHelpers.cpp src/client/request/validRequest.cpp
 	

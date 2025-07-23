@@ -21,7 +21,6 @@ class Server
 		Size										_maxAllowedClientRequestSize;
 		std::vector<Location>						_locations;
 
-
 		int									  		_fd;
 	public:
 		std::vector<int>							_client_fds;
@@ -35,8 +34,6 @@ class Server
 		const int			&getPort() const;
 		void				setMaxAllowedClientRequestSize(size_t size);
 		void				addLocation(const Location &location);
-	
-		void tempserver(void);
 };
 
 bool parseHostAndPort( Server &server, std::vector<std::string> &content, size_t &i );

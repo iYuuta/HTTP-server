@@ -3,8 +3,6 @@
 
 # include "Server.hpp"
 # include "Token.hpp"
-# include <errno.h>
-# include <cstdlib>
 
 bool isValidPort(const std::string &str, int &port);
 bool validateOneArg(const std::vector<Token>::iterator& it);

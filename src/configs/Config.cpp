@@ -1,5 +1,4 @@
 # include "../../includes/Config.hpp"
-# include <iostream>
 # include <fstream>
 
 Config::Config(const std::string &input) : _errorCode(0)
@@ -21,16 +20,7 @@ void    Config::parseConfig(const std::string &input)
     conf.close();
 }
 
-void    Config::addServer(Server &server)
+void    Config::addServer(const Server &server)
 {
     _servers.push_back(server);
-    server.tempserver();
-}
-
-void    Config::test()
-{
-//     for (auto & _server : _servers)
-//     {
-//         std::cout << _server.getHost() << std::endl;
-//     }
 }

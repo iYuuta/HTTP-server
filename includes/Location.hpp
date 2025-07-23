@@ -2,6 +2,7 @@
 # define LOCATION_HPP
 
 # include <vector>
+# include <iostream>
 
 #include "utils.hpp"
 #include "HttpRequestMethod.hpp"

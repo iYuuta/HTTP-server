@@ -54,7 +54,7 @@ bool parseErrorPage(Server& server, std::vector<Token>::iterator& it)
 		const unsigned long value = atoiul(it->getKey());
 		if (value >= 600 || value < 400)
 			return (std::cerr << "Invalid http error code " << value << std::endl, false);
-		server.addErrorPage(value, (++it++)->getKey());
+		server.addErrorPage(static_cast<int>(value), (++it++)->getKey());
 	}
 	catch (std::exception& _)
 	{
@@ -65,12 +65,12 @@ bool parseErrorPage(Server& server, std::vector<Token>::iterator& it)
 
 static bool parseLocationOption(Location& location, std::vector<Token>::iterator& it)
 {
-	const std::string keys[10] = {"methods", "root", "autoindex", "index", "upload_store", "return", "cgi_ext"};
-	bool (*fn[10])(Location&, std::vector<Token>::iterator&) = {
+	const std::string keys[7] = {"methods", "root", "autoindex", "index", "upload_store", "return", "cgi_ext"};
+	bool (*fn[7])(Location&, std::vector<Token>::iterator&) = {
 		::parseLocationMethods, ::parseLocationRoot, ::parseLocationAutoindex, ::parseLocationIndex,
 		::parseLocationUploadStore, ::parseLocationReturn, ::parseLocationCgiExt
 	};
-	for (size_t i = 0; i < 10; i++)
+	for (size_t i = 0; i < 7; i++)
 	{
 		if (keys[i] == it->getKey())
 			return (fn[i](location, ++it));

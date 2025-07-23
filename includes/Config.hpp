@@ -6,17 +6,18 @@
 
 class Config
 {
-    public:
-        Config(const std::string &input);
-        void    addServer(Server &server);
-        void    test();
-    private:
-        short               _errorCode;
-        std::vector<Server> _servers;
-        void    parseConfig(const std::string &input);
+	public:
+		Config(const std::string& input);
+		void addServer(const Server& server);
+		std::vector<Server>& getServers();
+
+	private:
+		short _errorCode;
+		std::vector<Server> _servers;
+		void parseConfig(const std::string& input);
 };
 
-bool parseServers(std::ifstream& in, Config &conf);
+bool parseServers(std::ifstream& in, Config& conf);
 
 
 #endif

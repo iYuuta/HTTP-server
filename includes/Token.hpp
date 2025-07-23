@@ -6,7 +6,6 @@
 # include <sstream>
 # include <cstdlib>
 
-
 enum Tokens
 {
 	BracketStart,

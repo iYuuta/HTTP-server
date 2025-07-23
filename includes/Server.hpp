@@ -16,11 +16,13 @@ class Server
 	private:
 		std::string							  		_host;
 		int									  		_port;
-		int									  		_fd;
 		std::string							  		_name;
-		std::vector<std::pair<int, std::string> >	_errorPages;
-		size_t										_maxAllowedClientRequestSize;
+		std::map<int, std::string>					_errorPages;
+		Size										_maxAllowedClientRequestSize;
 		std::vector<Location>						_locations;
+
+
+		int									  		_fd;
 	public:
 		std::vector<int>							_client_fds;
 		std::map<int, Client*>						_clients;

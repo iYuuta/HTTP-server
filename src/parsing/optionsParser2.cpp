@@ -6,11 +6,11 @@ bool parseLocationMethods(Location& location, std::vector<Token>::iterator& it)
 	while (it->getToken() != Semicolon)
 	{
 		if (it->getKey() == "GET")
-			location.addMethod(GET);
+			location.addMethod(Get);
 		else if (it->getKey() == "DELETE")
-			location.addMethod(DELETE);
+			location.addMethod(Delete);
 		else if (it->getKey() == "POST")
-			location.addMethod(POST);
+			location.addMethod(Post);
 		else
 			return (std::cerr << "Unknown method: " << it->getKey() << std::endl, false);
 		++it;
@@ -72,7 +72,7 @@ bool parseLocationReturn(Location& location, std::vector<Token>::iterator& it)
 		const unsigned long value = atoiul(it->getKey());
 		if (value >= 600 || value < 100)
 			return (std::cerr << "Invalid http code " << value << std::endl, false);
-		location.setReturn(value, (++it++)->getKey());
+		location.setReturn(static_cast<int>(value), (++it++)->getKey());
 	}
 	catch (std::exception& _)
 	{

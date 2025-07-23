@@ -4,9 +4,7 @@
 #include <map>
 #include <string>
 #include <exception>
-#include <ctime>
-#include <sys/socket.h>
-#include <fcntl.h>
+#include <fstream>
 
 #include"utils.hpp"
 #include"Location.hpp"
@@ -15,7 +13,7 @@
 
 class Request {
 	private:
-		enums								_method;
+		HttpRequestMethod					_method;
 		enums								_parseState;
 		size_t								_maxBodySize;
 		size_t								_contentLen;
@@ -38,7 +36,7 @@ class Request {
 		void					addRequestLine(std::string buff);
 		void					addHeaders(std::string buff);
 		void					addBody(const std::string& buff, size_t len);
-		enums					getMeth() const ;
+		const HttpRequestMethod	&getMeth() const ;
 		enums					getParseState() const ;
 		const std::string&		getPath() const ;
 		const std::string&		getVersion() const ;
@@ -47,7 +45,7 @@ class Request {
 		const std::string		getHeader(const std::string& key) ;
 		const std::ifstream&	getBodyFile();
 		bool					isTargetValid();
-		bool					isMethodValid();
+		bool					isMethodValid() const;
 		bool					isBodySizeValid();
 		
 	class InvalidRequestLine : public std::exception {

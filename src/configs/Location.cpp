@@ -9,7 +9,7 @@ void Location::setUrl(const std::string& url)
 	_url = url;
 }
 
-void Location::addMethod(const enums& method)
+void Location::addMethod(const HttpRequestMethod& method)
 {
 	_methods.push_back(method);
 }
@@ -44,8 +44,10 @@ void Location::setCgiExt(const std::string& ext)
 	_cgiExt = ext;
 }
 
-bool Location::isMethodValid(enums method) {
-	for (std::vector<enums>::iterator it = _methods.begin(); it != _methods.end(); it++) {
+bool Location::isMethodValid(const HttpRequestMethod& method)
+{
+	for (std::vector<HttpRequestMethod>::iterator it = _methods.begin(); it != _methods.end(); ++it)
+	{
 		std::cout << "->" << *it << std::endl << method << std::endl;
 		if (*it == method)
 			return true;
@@ -53,17 +55,25 @@ bool Location::isMethodValid(enums method) {
 	return false;
 }
 
-void Location::printMethods() {
-	for (std::vector<enums>::iterator it = _methods.begin(); it != _methods.end(); it++) {
-		switch (*it) {
-        case GET: std::cout << "Method: GET\n"; break;
-        case POST: std::cout << "Method: POST\n"; break;
-        case DELETE: std::cout << "Method: DELETE\n"; break;
-        default: std::cout << "Method: Unsupported\n"; break;
-    	}
+void Location::printMethods()
+{
+	for (std::vector<HttpRequestMethod>::iterator it = _methods.begin(); it != _methods.end(); ++it)
+	{
+		switch (*it)
+		{
+			case Get: std::cout << "Method: GET\n";
+				break;
+			case Post: std::cout << "Method: POST\n";
+				break;
+			case Delete: std::cout << "Method: DELETE\n";
+				break;
+			default: std::cout << "Method: Unsupported\n";
+				break;
+		}
 	}
 }
 
-const std::string& Location::getUrl() {
+const std::string& Location::getUrl()
+{
 	return _url;
 }

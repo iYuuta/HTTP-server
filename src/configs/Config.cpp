@@ -25,10 +25,7 @@ void Config::addServer(const Server& server)
 	_servers.push_back(server);
 }
 
-void Config::forEachServer(void (*func)(Server& server))
+std::vector<Server>& Config::getServers()
 {
-	for (std::vector<Server>::iterator it = _servers.begin(); it != _servers.end(); ++it)
-	{
-		func(*it);
-	}
+	return (_servers);
 }

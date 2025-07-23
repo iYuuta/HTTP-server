@@ -1,13 +1,8 @@
 #include "../../includes/HttpServer.hpp"
 #include <iostream>
-#include <cstring>
-#include <cerrno>
-#include <cstdlib>
-#include <cstdio>
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <fcntl.h>
 #include <sys/select.h>
 #include <arpa/inet.h>
 
@@ -15,7 +10,7 @@ HttpServer::HttpServer(Config& config) : _config(config)
 {
 }
 
-static void setup(Server& server)
+void HttpServer::setup(Server& server)
 {
 	sockaddr_in address;
 
@@ -23,23 +18,40 @@ static void setup(Server& server)
 	address.sin_port = htons(server.getPort());
 	address.sin_addr.s_addr = INADDR_ANY;
 
-	const int listen_fd = socket(AF_INET, SOCK_STREAM, 0);
-	if (listen_fd < 0)
+	const int fd = socket(AF_INET, SOCK_STREAM, 0);
+	if (fd < 0)
 		throw std::runtime_error("Socket creation failed");
 
-	if (bind(listen_fd, (sockaddr*)&address, sizeof(address)) < 0)
+	server.setFd(fd);
+	if (bind(fd, (sockaddr*)&address, sizeof(address)) < 0)
 		throw std::runtime_error("Socket bind failed");
 
-	if (listen(listen_fd, 10) < 0)
+	if (listen(fd, SOMAXCONN) < 0)
 		throw std::runtime_error("Socket listen failed");
+
+	pollfd pollFd;
+	pollFd.fd = fd;
+	pollFd.events = POLLIN;
+	_pollFds.push_back(pollFd);
 }
+
+void HttpServer::setupAll()
+{
+	std::vector<Server>& servers = _config.getServers();
+
+	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); ++it)
+	{
+		setup(*it);
+	}
+}
+
 
 bool HttpServer::startAll()
 {
 	try
 	{
-		_config.forEachServer(setup);
-		listen();
+		setupAll();
+		listenAll();
 		clean();
 	}
 	catch (std::exception& e)
@@ -51,13 +63,26 @@ bool HttpServer::startAll()
 	return (true);
 }
 
-void HttpServer::listen()
+void HttpServer::listenAll()
 {
 	while (true)
 	{
+		const int rt = poll(_pollFds.data(), _pollFds.size(), -1);
+
+		if (rt < 0)
+			throw std::runtime_error("poll failed");
+		if (rt == 0)
+			throw std::runtime_error("TIMEOUT");
+		for (std::vector<pollfd>::iterator it = _pollFds.begin(); it != _pollFds.end(); ++it)
+		{
+		}
 	}
 }
 
 void HttpServer::clean()
 {
+	for (std::vector<pollfd>::iterator it = _pollFds.begin(); it != _pollFds.end(); ++it)
+	{
+		close(it->fd);
+	}
 }

@@ -9,7 +9,8 @@ class Config
 	public:
 		Config(const std::string& input);
 		void addServer(const Server& server);
-		void forEachServer(void (*func)(Server& server));
+		std::vector<Server>& getServers();
+
 	private:
 		short _errorCode;
 		std::vector<Server> _servers;

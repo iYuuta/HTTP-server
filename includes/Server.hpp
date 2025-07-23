@@ -20,13 +20,13 @@ class Server
 		std::map<int, std::string>					_errorPages;
 		Size										_maxAllowedClientRequestSize;
 		std::vector<Location>						_locations;
-
 		int									  		_fd;
 	public:
 		std::vector<int>							_client_fds;
 		std::map<int, Client*>						_clients;
 		Server( );
 		void				setHost(const std::string &host);
+		void				setFd(const int &fd);
 		void				setName(const std::string &name);
 		void				addErrorPage(const int &code, const std::string &page);
 		void				setPort(const int &port);

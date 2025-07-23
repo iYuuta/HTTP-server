@@ -1,26 +1,34 @@
 # include "../../includes/Config.hpp"
 # include <fstream>
 
-Config::Config(const std::string &input) : _errorCode(0)
+Config::Config(const std::string& input) : _errorCode(0)
 {
-    parseConfig(input);
+	parseConfig(input);
 }
 
-void    Config::parseConfig(const std::string &input)
+void Config::parseConfig(const std::string& input)
 {
-    std::ifstream conf(input.c_str());
+	std::ifstream conf(input.c_str());
 
-    if (conf.fail())
-    {
-        _errorCode = 1;
-        return ;
-    }
-    if (!parseServers(conf, *this))
-        _errorCode = 2;
-    conf.close();
+	if (conf.fail())
+	{
+		_errorCode = 1;
+		return;
+	}
+	if (!parseServers(conf, *this))
+		_errorCode = 2;
+	conf.close();
 }
 
-void    Config::addServer(const Server &server)
+void Config::addServer(const Server& server)
 {
-    _servers.push_back(server);
+	_servers.push_back(server);
+}
+
+void Config::forEachServer(void (*func)(Server& server))
+{
+	for (std::vector<Server>::iterator it = _servers.begin(); it != _servers.end(); ++it)
+	{
+		func(*it);
+	}
 }

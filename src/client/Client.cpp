@@ -12,8 +12,14 @@ Client::~Client()
 {
 }
 
-void Client::getData(char* buffer, size_t len)
+void Client::readData()
 {
+	char 	buffer[BUFFER_SIZE];
+	size_t	len;
+
+	len = read(_fd, buffer, BUFFER_SIZE);
+	if (len < 0)
+		// handle error;
 	request.parseData(buffer, len);
 	if (request.getParseState() == DONE)
 	{

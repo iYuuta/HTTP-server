@@ -75,6 +75,7 @@ void HttpServer::listenAll()
 			throw std::runtime_error("TIMEOUT");
 		for (std::vector<pollfd>::iterator it = _pollFds.begin(); it != _pollFds.end(); ++it)
 		{
+			
 		}
 	}
 }

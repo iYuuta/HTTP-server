@@ -5,6 +5,7 @@
 #include "Request.hpp"
 #include "Size.hpp"
 #include "Location.hpp"
+#include <unistd.h>
 
 class Client {
 	private:
@@ -21,7 +22,7 @@ class Client {
 		Request request;
 		Response response;
 		Client(const std::vector<Location> &locations, const Size &maxRequestSize, const int &fd);
-		void getData(char *buffer, size_t len);
+		void readData();
 		bool					isRequestDone();
 		bool					isResponseDone();
 		~Client();

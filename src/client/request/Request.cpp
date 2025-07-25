@@ -5,9 +5,7 @@ Request::Request()
 };
 
 Request::Request(size_t maxBodySize, std::vector<Location>& it):
-	_parseState(REQUESLINE), _maxBodySize(maxBodySize),
-	_contentLen(0), _receivedBytes(0),
-	_locations(it)
+	_parseState(REQUESLINE), _contentLen(0), _receivedBytes(0)
 {
 	_buffer.clear();
 	_path.clear();
@@ -112,8 +110,6 @@ void Request::addHeaders(std::string buff)
 		unsigned long long len = std::strtoull(value.c_str(), &endptr, 10);
 		if (endptr == value.c_str() || *endptr != '\0')
 			throw InvalidHeader();
-		if (len > static_cast<unsigned long long>(SIZE_MAX))
-			throw InvalidHeader();
 		_contentLen = static_cast<size_t>(len);
 	}
 }
@@ -169,7 +165,7 @@ const std::string Request::getHeader(const std::string& key)
 
 const std::ifstream& Request::getBodyFile()
 {
-	_bodyIn.open(_bodyFileName, std::ios::binary);
+	_bodyIn.open(_bodyFileName.c_str(), std::ios::binary);
 	if (!_bodyIn.is_open())
 		throw OpenFailed();
 	return _bodyIn;

@@ -1,14 +1,15 @@
 #ifndef REQUEST_HPP 
 #define REQUEST_HPP 
 
-#include <map>
-#include <string>
-#include <exception>
-#include <iostream>
-#include <fstream>
+# include <map>
+# include <string>
+# include <exception>
+# include <iostream>
+# include <fstream>
+# include <ctime>
 
-#include"utils.hpp"
-#include"Location.hpp"
+# include"utils.hpp"
+# include"Location.hpp"
 
 #define BUFFER_SIZE 4096
 
@@ -16,7 +17,6 @@ class Request {
 	private:
 		HttpRequestMethod					_method;
 		enums								_parseState;
-		size_t								_maxBodySize;
 		size_t								_contentLen;
 		size_t								_receivedBytes;
 		std::string							_buffer;
@@ -26,8 +26,6 @@ class Request {
 		std::string							_bodyFileName;
 		std::ofstream						_bodyOut;
 		std::ifstream						_bodyIn;
-		std::vector<Location>::iterator 	_locationIter;
-		std::vector<Location>			 	_locations;
 	public:
 		Request();
 		Request(size_t maxBody, std::vector<Location>& it);
@@ -45,9 +43,6 @@ class Request {
 		size_t					getReceivedBytes()	const ;
 		const std::string		getHeader(const std::string& key) ;
 		const std::ifstream&	getBodyFile();
-		bool					isTargetValid();
-		bool					isMethodValid() const;
-		bool					isBodySizeValid();
 		
 	class InvalidRequestLine : public std::exception {
 		public :

@@ -18,6 +18,9 @@ class Client {
 		bool							_responseDone;
 		bool							_requestDone;
 		bool							_activeCgi;
+		bool							isTargetValid();
+		bool							isMethodValid() const;
+		bool							isBodySizeValid();
 	public:
 		Request request;
 		Response response;

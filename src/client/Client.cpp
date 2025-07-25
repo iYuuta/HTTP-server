@@ -25,8 +25,6 @@ void Client::readData()
 	{
 		_requestDone = true;
 		std::cout << request << std::endl;
-		if (request.isTargetValid())
-			request.isMethodValid();
 	}
 }
 
@@ -56,9 +54,9 @@ std::ostream& operator<<(std::ostream& os, Request& req)
 	os << "Version: " << req.getVersion() << "\n";
 
 	os << "\nHeaders:\n";
-	for (const auto& header : req.getHeaders())
+	for (std::map<std::string, std::string>::iterator it = req.getHeaders().begin(); it != req.getHeaders().end(); it++)
 	{
-		os << header.first << ": " << header.second << "\n";
+		os << it->first << ": " << it->second << "\n";
 	}
 
 	if (req.getContentLen() > 0)

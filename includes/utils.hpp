@@ -3,6 +3,8 @@
 
 # include <vector>
 # include <sstream>
+# include <cerrno>
+# include <cstdlib>
 
 enum  enums {
 	NOTHING,

@@ -5,8 +5,7 @@ Client::Client(const int& fd, Server& server): _server(server),
 												_errorCode(-1),
 												_responseDone(false),
 												_requestDone(false),
-												_activeCgi(false),
-												request(fd)
+												_activeCgi(false)
 {
 }
 
@@ -22,13 +21,20 @@ void Client::readData()
 	ssize_t len;
 
 	len = read(_fd, buffer, BUFFER_SIZE);
-	// if (len < 0)
-		//TODO : handle error;
+	if (len < 0)
+		return ;// TODO : handle error;
+	try {
 		request.parseData(buffer, len);
-	if (request.getParseState() == DONE)
-	{
-		_requestDone = true;
-		std::cout << request << std::endl;
+		if (request.getParseState() == DONE)
+		{
+			_requestDone = true;
+			std::cout << request << std::endl;
+			if (!isRequestValid())
+				return ;
+		}
+	}
+	catch (std::string error) {
+		std::cerr << "Error: " << error << std::endl;
 	}
 }
 

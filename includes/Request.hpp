@@ -28,7 +28,6 @@ class Request {
 		std::ifstream						_bodyIn;
 	public:
 		Request();
-		Request(size_t maxBody);
 		~Request();
 
 		void					parseData(const char *data, size_t len);
@@ -43,25 +42,8 @@ class Request {
 		size_t					getReceivedBytes()	const ;
 		const std::string		getHeader(const std::string& key) ;
 		const std::ifstream&	getBodyFile();
-		
-	class InvalidRequestLine : public std::exception {
-		public :
-			const char *what() const throw() ;
-	};
-	class InvalidHeader : public std::exception {
-		public :
-			const char *what() const throw() ;
-	};
-	class OpenFailed : public std::exception {
-		public :
-			const char *what() const throw() ;
-	};
-	class WriteError : public std::exception {
-		public :
-			const char *what() const throw() ;
-	};
-
-	std::map<std::string, std::string>	getHeaders() const ;
+	
+	std::map<std::string, std::string>&	getHeaders() ;
 
 };
 

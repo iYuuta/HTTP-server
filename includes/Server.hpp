@@ -39,6 +39,8 @@ class Server
 		bool isClientExists(const int& clientId);
 		void setup();
 		int getFd() const;
+		std::vector<Location>& getLocations();
+		size_t getMaxRequestSize() const;
 		const sockaddr_in& getSocketAddress() const;
 };
 

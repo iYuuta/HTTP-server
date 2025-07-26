@@ -48,7 +48,6 @@ bool Location::isMethodValid(const HttpRequestMethod& method)
 {
 	for (std::vector<HttpRequestMethod>::iterator it = _methods.begin(); it != _methods.end(); ++it)
 	{
-		std::cout << "->" << *it << std::endl << method << std::endl;
 		if (*it == method)
 			return true;
 	}

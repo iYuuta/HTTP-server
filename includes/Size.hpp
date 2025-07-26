@@ -1,14 +1,17 @@
 # ifndef SIZE_HPP
 # define SIZE_HPP
 
+#include <cstdlib>
+
 class Size
 {
     private:
-        unsigned long  _size;
+        size_t  _size;
     public:
         Size();
-	    Size(unsigned long size);
+	    Size(size_t size);
         Size &operator=(const Size &other);
+        size_t getSize() const;
 };
 
 # endif

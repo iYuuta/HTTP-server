@@ -1,6 +1,6 @@
 #include "../../includes/Server.hpp"
 
-Server::Server(): _port(-1), _fd(-1)
+Server::Server(): _fd(-1), _port(-1)
 {
 }
 
@@ -24,16 +24,6 @@ void Server::setPort(const int& port)
 	_port = port;
 }
 
-const std::string& Server::getHost() const
-{
-	return (_host);
-}
-
-const int& Server::getPort() const
-{
-	return (_port);
-}
-
 void Server::setMaxAllowedClientRequestSize(size_t size)
 {
 	_maxAllowedClientRequestSize = size;
@@ -49,9 +39,27 @@ void Server::setFd(const int& fd)
 	_fd = fd;
 }
 
+const std::string& Server::getHost() const
+{
+	return (_host);
+}
+
+const int& Server::getPort() const
+{
+	return (_port);
+}
+
 int Server::getFd() const
 {
 	return (_fd);
+}
+
+std::vector<Location>& Server::getLocations() {
+	return _locations;
+}
+
+size_t Server::getMaxRequestSize() const {
+	return _maxAllowedClientRequestSize.getSize();
 }
 
 void Server::setup()
@@ -64,6 +72,12 @@ void Server::setup()
 	if (fd < 0)
 		throw std::runtime_error("Socket creation failed");
 
+	int yes = 1;
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) < 0) {
+		perror("setsockopt");
+		close(fd);
+		exit(EXIT_FAILURE);
+	}
 	setFd(fd);
 	if (bind(fd, (sockaddr*)&_address, sizeof(_address)) < 0)
 		throw std::runtime_error("Socket bind failed");

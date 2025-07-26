@@ -14,6 +14,7 @@ class Client {
 
 	private:
 		Server							&_server;
+		std::vector<Location>::iterator	_location;
 		int								_fd;
 		std::string						_buffer;
 		int								_errorCode;
@@ -23,6 +24,7 @@ class Client {
 		bool							isTargetValid();
 		bool							isMethodValid() const;
 		bool							isBodySizeValid();
+		bool							isRequestValid();
 	public:
 		Request request;
 		Response response;

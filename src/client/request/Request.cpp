@@ -1,10 +1,6 @@
 #include "../../../includes/Request.hpp"
 
-Request::Request()
-{
-};
-
-Request::Request(size_t maxBodySize):
+Request::Request():
 	_parseState(REQUESLINE), _contentLen(0), _receivedBytes(0)
 {
 	_buffer.clear();
@@ -25,16 +21,12 @@ void Request::parseData(const char* data, size_t len)
 		if (_parseState == REQUESLINE)
 		{
 			size_t pos = _buffer.find("\r\n");
-
-			if (pos != std::string::npos)
-			{
-				std::string request_line = _buffer.substr(0, pos);
-				_buffer.erase(0, pos + 2);
-				addRequestLine(request_line);
-				_parseState = HEADERS;
-			}
-			else
+			if (pos == std::string::npos)
 				break ;
+			std::string request_line = _buffer.substr(0, pos);
+			_buffer.erase(0, pos + 2);
+			addRequestLine(request_line);
+			_parseState = HEADERS;\
 		}
 		else if (_parseState == HEADERS)
 		{
@@ -83,7 +75,7 @@ void Request::addRequestLine(std::string buff)
 	std::string method;
 
 	if (!(parser >> method >> _path >> _version))
-		throw InvalidRequestLine();
+		throw (std::string) "invalid request line";
 	if (method == "GET")
 		_method = Get;
 	else if (method == "POST")
@@ -98,18 +90,18 @@ void Request::addHeaders(std::string buff)
 {
 	size_t pos = buff.find(":");
 	if (pos == std::string::npos)
-		throw InvalidHeader();
+		throw (std::string) "invalid header";
 	std::string key = trim(buff.substr(0, pos));
 	std::string value = trim(buff.substr(pos + 1));
 	_headers[key] = value;
 	if (key == "Content-Length")
 	{
 		if (value.empty())
-			throw InvalidHeader();
+			throw (std::string) "invalid header";
 		char* endptr = NULL;
 		unsigned long long len = std::strtoull(value.c_str(), &endptr, 10);
 		if (endptr == value.c_str() || *endptr != '\0')
-			throw InvalidHeader();
+			throw (std::string) "invalid header";
 		_contentLen = static_cast<size_t>(len);
 	}
 }
@@ -121,11 +113,9 @@ void Request::addBody(const std::string& buff, size_t len)
 		_bodyFileName = "/tmp/." + generateRandomName();
 		_bodyOut.open(_bodyFileName.c_str(), std::ios::binary | std::ios::out);
 		if (!_bodyOut)
-			throw OpenFailed();
+			throw (std::string) "failed to open a file";
 	}
 	_bodyOut.write(buff.data(), len);
-	if (!_bodyOut)
-		throw WriteError();
 }
 
 const HttpRequestMethod& Request::getMeth() const
@@ -167,31 +157,11 @@ const std::ifstream& Request::getBodyFile()
 {
 	_bodyIn.open(_bodyFileName.c_str(), std::ios::binary);
 	if (!_bodyIn.is_open())
-		throw OpenFailed();
+		throw (std::string) "failed to open a file";
 	return _bodyIn;
 }
 
-const char* Request::InvalidRequestLine::what() const throw()
-{
-	return "Invalid request line";
-}
-
-const char* Request::InvalidHeader::what() const throw()
-{
-	return "Invalid header";
-}
-
-const char* Request::OpenFailed::what() const throw()
-{
-	return "open failed";
-}
-
-const char* Request::WriteError::what() const throw()
-{
-	return "write failed";
-}
-
-std::map<std::string, std::string> Request::getHeaders() const
+std::map<std::string, std::string>& Request::getHeaders()
 {
 	return _headers;
 }

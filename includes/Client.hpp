@@ -3,13 +3,17 @@
 
 #include "Response.hpp"
 #include "Request.hpp"
-#include "Size.hpp"
-#include "Location.hpp"
+#include "Server.hpp"
 #include <unistd.h>
+
+#include "Server.hpp"
+
+class Server;
 
 class Client {
 
 	private:
+		Server							&_server;
 		int								_fd;
 		std::string						_buffer;
 		int								_errorCode;
@@ -22,7 +26,7 @@ class Client {
 	public:
 		Request request;
 		Response response;
-		Client(const int &fd);
+		Client(const int& fd, Server& server);
 		void readData();
 		bool					isRequestDone();
 		bool					isResponseDone();

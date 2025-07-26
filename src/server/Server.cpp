@@ -49,20 +49,6 @@ void Server::setFd(const int& fd)
 	_fd = fd;
 }
 
-void Server::insertNewClient(const int& clientId)
-{
-	if (isClientExists(clientId))
-		return;
-	_clients[clientId] = new Client(clientId);
-}
-
-bool Server::isClientExists(const int& clientId)
-{
-	std::map<int, Client*>::iterator it = _clients.find(clientId);
-
-	return (it != _clients.end());
-}
-
 int Server::getFd() const
 {
 	return (_fd);

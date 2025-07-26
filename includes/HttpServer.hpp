@@ -7,17 +7,22 @@
 class HttpServer
 {
 	private:
-		Config&				_config;
-		std::vector<pollfd> _pollFds;
+		Config&					_config;
+		std::vector<pollfd>		_pollFds;
+		std::map<int, Client*>	_clients;
 
 		void clean();
 		void listenAll();
 		void setupAll();
 		void removePollFd(const pollfd &pfd);
 		void newPollFd(int fd, short events);
-		void handleNewConnection(Server &server, pollfd& pollFd);
+		void handleNewConnection(pollfd& pollFd);
 		void handleClientRequest(pollfd& pollFd);
 		void handleClientResponse(pollfd& pollFd);
+		Server& getServerByFd(const int &fd);
+		void insertNewClient(const int& clientId, Server &server);
+		bool isClientExists(const int& clientId);
+		Client &getClient(const int& clientId);
 	public:
 		HttpServer(Config& config);
 

@@ -1,12 +1,9 @@
 #include "../../includes/HttpServer.hpp"
 #include <iostream>
-#include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <sys/select.h>
 #include <arpa/inet.h>
 
-#include <fcntl.h>
 
 HttpServer::HttpServer(Config& config) : _config(config)
 {
@@ -20,6 +17,39 @@ void HttpServer::clean()
 	}
 }
 
+
+Client& HttpServer::getClient(const int& clientId)
+{
+	std::map<int, Client*>::iterator it = _clients.find(clientId);
+
+	return *it->second;
+}
+
+void HttpServer::insertNewClient(const int& clientId, Server& server)
+{
+	if (isClientExists(clientId))
+		return;
+	_clients[clientId] = new Client(clientId, server);
+}
+
+bool HttpServer::isClientExists(const int& clientId)
+{
+	std::map<int, Client*>::iterator it = _clients.find(clientId);
+
+	return (it != _clients.end());
+}
+
+Server& HttpServer::getServerByFd(const int& fd)
+{
+	std::vector<Server>& servers = _config.getServers();
+
+	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); ++it)
+	{
+		if (it->getFd() == fd)
+			return *it;
+	}
+	throw std::runtime_error("Server not found");
+}
 
 void HttpServer::removePollFd(const pollfd& pfd)
 {
@@ -88,7 +118,7 @@ void HttpServer::listenAll()
 			if (pollFd.revents & POLLIN)
 			{
 				if (i < _config.getServers().size())
-					handleNewConnection(_config.getServers().at(i), pollFd);
+					handleNewConnection(pollFd);
 				else
 					handleClientRequest(pollFd);
 			}
@@ -99,15 +129,18 @@ void HttpServer::listenAll()
 }
 
 
-void HttpServer::handleNewConnection(Server& server, pollfd& pollFd)
+void HttpServer::handleNewConnection(pollfd& pollFd)
 {
+	Server& server = getServerByFd(pollFd.fd);
 	std::cout << "New connection" << std::endl;
 	sockaddr_in address = server.getSocketAddress();
 	socklen_t socketLen = sizeof(address);
-	int clientFd = accept(pollFd.fd, (struct sockaddr*)&address, &socketLen);
+	const int clientFd = accept(pollFd.fd, (struct sockaddr*)&address, &socketLen);
 
 	if (clientFd < 0)
 		throw std::runtime_error("accept failed");
+
+	insertNewClient(clientFd, server);
 
 	newPollFd(clientFd, POLLIN);
 }
@@ -115,12 +148,15 @@ void HttpServer::handleNewConnection(Server& server, pollfd& pollFd)
 void HttpServer::handleClientRequest(pollfd& pollFd)
 {
 	std::cout << "REQUEST" << std::endl;
+	Client& client = getClient(pollFd.fd);
 
+	client.readData();
 	pollFd.events = POLLOUT;
 }
 
 void HttpServer::handleClientResponse(pollfd& pollFd)
 {
 	std::cout << "RESPONSE" << std::endl;
+
 	removePollFd(pollFd);
 }

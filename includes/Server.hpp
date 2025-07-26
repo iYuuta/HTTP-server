@@ -23,7 +23,6 @@ class Server
 		std::map<int, std::string> _errorPages;
 		Size _maxAllowedClientRequestSize;
 		std::vector<Location> _locations;
-		std::map<int, Client*> _clients;
 
 	public:
 		Server();

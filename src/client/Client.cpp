@@ -1,11 +1,12 @@
 #include "../../includes/Client.hpp"
 
-Client::Client(const int& fd): _fd(fd),
-								_errorCode(-1),
-								_responseDone(false),
-								_requestDone(false),
-								_activeCgi(false),
-								request(fd)
+Client::Client(const int& fd, Server& server): _server(server),
+												_fd(fd),
+												_errorCode(-1),
+												_responseDone(false),
+												_requestDone(false),
+												_activeCgi(false),
+												request(fd)
 {
 }
 
@@ -18,11 +19,11 @@ Client::~Client()
 void Client::readData()
 {
 	char buffer[BUFFER_SIZE];
-	size_t len;
+	ssize_t len;
 
 	len = read(_fd, buffer, BUFFER_SIZE);
-	if (len < 0)
-		// handle error;
+	// if (len < 0)
+		//TODO : handle error;
 		request.parseData(buffer, len);
 	if (request.getParseState() == DONE)
 	{

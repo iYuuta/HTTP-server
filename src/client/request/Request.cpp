@@ -4,7 +4,7 @@ Request::Request()
 {
 };
 
-Request::Request(size_t maxBodySize, std::vector<Location>& it):
+Request::Request(size_t maxBodySize):
 	_parseState(REQUESLINE), _contentLen(0), _receivedBytes(0)
 {
 	_buffer.clear();

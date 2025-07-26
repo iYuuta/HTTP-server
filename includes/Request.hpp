@@ -28,7 +28,7 @@ class Request {
 		std::ifstream						_bodyIn;
 	public:
 		Request();
-		Request(size_t maxBody, std::vector<Location>& it);
+		Request(size_t maxBody);
 		~Request();
 
 		void					parseData(const char *data, size_t len);

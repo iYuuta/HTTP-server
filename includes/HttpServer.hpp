@@ -13,8 +13,11 @@ class HttpServer
 		void clean();
 		void listenAll();
 		void setupAll();
-		void setup(Server& server);
-
+		void removePollFd(const pollfd &pfd);
+		void newPollFd(int fd, short events);
+		void handleNewConnection(Server &server, pollfd& pollFd);
+		void handleClientRequest(pollfd& pollFd);
+		void handleClientResponse(pollfd& pollFd);
 	public:
 		HttpServer(Config& config);
 

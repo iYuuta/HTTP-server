@@ -1,8 +1,11 @@
 #include "../../includes/Client.hpp"
 
-Client::Client(const std::vector<Location>& locations, const Size& maxRequestSize, const int& fd): _fd(fd),
-	_maxRequestSize(maxRequestSize), _locations(locations), _errorCode(-1), _responseDone(false), _requestDone(false),
-	_activeCgi(false), request(fd, _locations)
+Client::Client(const int& fd): _fd(fd),
+								_errorCode(-1),
+								_responseDone(false),
+								_requestDone(false),
+								_activeCgi(false),
+								request(fd)
 {
 }
 
@@ -14,13 +17,13 @@ Client::~Client()
 
 void Client::readData()
 {
-	char 	buffer[BUFFER_SIZE];
-	size_t	len;
+	char buffer[BUFFER_SIZE];
+	size_t len;
 
 	len = read(_fd, buffer, BUFFER_SIZE);
 	if (len < 0)
 		// handle error;
-	request.parseData(buffer, len);
+		request.parseData(buffer, len);
 	if (request.getParseState() == DONE)
 	{
 		_requestDone = true;

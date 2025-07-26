@@ -6,32 +6,38 @@
 #include <sys/select.h>
 #include <arpa/inet.h>
 
+#include <fcntl.h>
+
 HttpServer::HttpServer(Config& config) : _config(config)
 {
 }
 
-void HttpServer::setup(Server& server)
+void HttpServer::clean()
 {
-	sockaddr_in address;
+	for (std::vector<pollfd>::iterator it = _pollFds.begin(); it != _pollFds.end(); ++it)
+	{
+		// close(it->fd);
+	}
+}
 
-	address.sin_family = AF_INET;
-	address.sin_port = htons(server.getPort());
-	address.sin_addr.s_addr = INADDR_ANY;
 
-	const int fd = socket(AF_INET, SOCK_STREAM, 0);
-	if (fd < 0)
-		throw std::runtime_error("Socket creation failed");
+void HttpServer::removePollFd(const pollfd& pfd)
+{
+	for (std::vector<pollfd>::iterator it = _pollFds.begin(); it != _pollFds.end(); ++it)
+	{
+		if (it->fd == pfd.fd)
+		{
+			_pollFds.erase(it);
+			return;
+		}
+	}
+}
 
-	server.setFd(fd);
-	if (bind(fd, (sockaddr*)&address, sizeof(address)) < 0)
-		throw std::runtime_error("Socket bind failed");
-
-	if (listen(fd, SOMAXCONN) < 0)
-		throw std::runtime_error("Socket listen failed");
-
+void HttpServer::newPollFd(int fd, short events)
+{
 	pollfd pollFd;
 	pollFd.fd = fd;
-	pollFd.events = POLLIN;
+	pollFd.events = events;
 	_pollFds.push_back(pollFd);
 }
 
@@ -41,7 +47,8 @@ void HttpServer::setupAll()
 
 	for (std::vector<Server>::iterator it = servers.begin(); it != servers.end(); ++it)
 	{
-		setup(*it);
+		it->setup();
+		newPollFd(it->getFd(), POLLIN);
 	}
 }
 
@@ -73,17 +80,47 @@ void HttpServer::listenAll()
 			throw std::runtime_error("poll failed");
 		if (rt == 0)
 			throw std::runtime_error("TIMEOUT");
-		for (std::vector<pollfd>::iterator it = _pollFds.begin(); it != _pollFds.end(); ++it)
+
+		for (size_t i = 0; i < _pollFds.size(); i++)
 		{
-			
+			pollfd& pollFd = _pollFds[i];
+
+			if (pollFd.revents & POLLIN)
+			{
+				if (i < _config.getServers().size())
+					handleNewConnection(_config.getServers().at(i), pollFd);
+				else
+					handleClientRequest(pollFd);
+			}
+			else if (pollFd.revents & POLLOUT)
+				handleClientResponse(pollFd);
 		}
 	}
 }
 
-void HttpServer::clean()
+
+void HttpServer::handleNewConnection(Server& server, pollfd& pollFd)
 {
-	for (std::vector<pollfd>::iterator it = _pollFds.begin(); it != _pollFds.end(); ++it)
-	{
-		close(it->fd);
-	}
+	std::cout << "New connection" << std::endl;
+	sockaddr_in address = server.getSocketAddress();
+	socklen_t socketLen = sizeof(address);
+	int clientFd = accept(pollFd.fd, (struct sockaddr*)&address, &socketLen);
+
+	if (clientFd < 0)
+		throw std::runtime_error("accept failed");
+
+	newPollFd(clientFd, POLLIN);
+}
+
+void HttpServer::handleClientRequest(pollfd& pollFd)
+{
+	std::cout << "REQUEST" << std::endl;
+
+	pollFd.events = POLLOUT;
+}
+
+void HttpServer::handleClientResponse(pollfd& pollFd)
+{
+	std::cout << "RESPONSE" << std::endl;
+	removePollFd(pollFd);
 }

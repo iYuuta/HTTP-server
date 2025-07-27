@@ -30,6 +30,8 @@ class Location
 		void				setCgiExt(const std::string &ext);
 		bool				isMethodValid(const HttpRequestMethod &method);
 		const std::string&	getUrl();
+		const std::string&	getRoute();
+		bool				autoIndex();
 		void				printMethods();
 };
 

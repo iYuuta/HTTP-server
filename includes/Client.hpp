@@ -9,12 +9,14 @@
 #include "Server.hpp"
 
 class Server;
+class Response;
 
 class Client {
 
 	private:
 		Server							&_server;
 		std::vector<Location>::iterator	_location;
+		std::map<int, std::string>		&_errorPages;
 		int								_fd;
 		std::string						_buffer;
 		int								_errorCode;
@@ -22,16 +24,19 @@ class Client {
 		bool							_requestDone;
 		bool							_activeCgi;
 		bool							isTargetValid();
-		bool							isMethodValid() const;
+		bool							isMethodValid();
 		bool							isBodySizeValid();
 		bool							isRequestValid();
-	public:
 		Request request;
 		Response response;
-		Client(const int& fd, Server& server);
-		void readData();
-		bool					isRequestDone();
-		bool					isResponseDone();
+	public:
+		Client(const int& fd, Server& server, std::map<int, std::string>& errorp);
+		void parseRequest();
+		void createResponse();
+		void writeData();
+		bool isRequestDone();
+		bool isResponseDone();
+		bool isFinished();
 		~Client();
 
 };

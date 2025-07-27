@@ -1,24 +1,16 @@
 #ifndef REQUEST_HPP 
 #define REQUEST_HPP 
 
-# include <map>
-# include <string>
-# include <exception>
-# include <iostream>
-# include <fstream>
-# include <ctime>
-
 # include"utils.hpp"
 # include"Location.hpp"
-
-#define BUFFER_SIZE 4096
 
 class Request {
 	private:
 		HttpRequestMethod					_method;
-		enums								_parseState;
+		enums								_parseState;	
 		size_t								_contentLen;
 		size_t								_receivedBytes;
+		int									_errorCode;
 		std::string							_buffer;
 		std::string							_path;
 		std::string							_version;
@@ -40,6 +32,7 @@ class Request {
 		const std::string&		getVersion() const ;
 		size_t					getContentLen()	const ;
 		size_t					getReceivedBytes()	const ;
+		int						getErrorCode()	const ;
 		const std::string		getHeader(const std::string& key) ;
 		const std::ifstream&	getBodyFile();
 	

@@ -76,3 +76,13 @@ const std::string& Location::getUrl()
 {
 	return _url;
 }
+
+const std::string& Location::getRoute()
+{
+	return _route;
+}
+
+bool Location::autoIndex()
+{
+	return _autoindex;
+}

@@ -58,6 +58,10 @@ std::vector<Location>& Server::getLocations() {
 	return _locations;
 }
 
+std::map<int, std::string>& Server::getErrorPages() {
+	return _errorPages;
+}
+
 size_t Server::getMaxRequestSize() const {
 	return _maxAllowedClientRequestSize.getSize();
 }

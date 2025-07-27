@@ -1,11 +1,16 @@
 #include "../../includes/Client.hpp"
 
-Client::Client(const int& fd, Server& server): _server(server),
+Client::Client(const int& fd, Server& server, std::map<int, std::string>& errorp):
+												_server(server),
+												_location(server.getLocations().begin()),
+												_errorPages(errorp),
 												_fd(fd),
 												_errorCode(-1),
 												_responseDone(false),
 												_requestDone(false),
-												_activeCgi(false)
+												_activeCgi(false),
+												request(),
+												response(request, _server.getErrorPages(), _location)
 {
 }
 
@@ -15,34 +20,52 @@ Client::~Client()
 {
 }
 
-void Client::readData()
+void Client::parseRequest()
 {
 	char buffer[BUFFER_SIZE];
 	ssize_t len;
 
 	len = read(_fd, buffer, BUFFER_SIZE);
 	if (len < 0)
-		return ;// TODO : handle error;
+		throw (std::string) "read error";
 	try {
 		request.parseData(buffer, len);
 		if (request.getParseState() == DONE)
 		{
 			_requestDone = true;
-			std::cout << request << std::endl;
+			// std::cout << request << std::endl;
 			if (!isRequestValid())
 				return ;
 		}
 	}
 	catch (std::string error) {
+		_requestDone = true;
 		std::cerr << "Error: " << error << std::endl;
 	}
 }
 
-bool Client::isRequestDone()
-{
+void Client::createResponse() {
+	response.buildResponse();
+}
+
+void Client::writeData() {
+	const std::string& buff = response.getResponse();
+	write(_fd, buff.c_str(), buff.size());
+}
+
+bool Client::isRequestDone() {
 	return _requestDone;
 }
 
+bool Client::isResponseDone() {
+	return _responseDone;
+}
+
+bool Client::isFinished() {
+	if (response.getResponseState() == DONE)
+		return true;
+	return false;
+}
 
 std::ostream& operator<<(std::ostream& os, Request& req)
 {

@@ -29,7 +29,7 @@ void HttpServer::insertNewClient(const int& clientId, Server& server)
 {
 	if (isClientExists(clientId))
 		return;
-	_clients[clientId] = new Client(clientId, server);
+	_clients[clientId] = new Client(clientId, server, server.getErrorPages());
 }
 
 bool HttpServer::isClientExists(const int& clientId)
@@ -150,13 +150,25 @@ void HttpServer::handleClientRequest(pollfd& pollFd)
 	std::cout << "REQUEST" << std::endl;
 	Client& client = getClient(pollFd.fd);
 
-	client.readData();
-	pollFd.events = POLLOUT;
+	if (!client.isRequestDone())
+		client.parseRequest();
+	if (client.isRequestDone())
+	{
+		client.createResponse();
+		pollFd.events = POLLOUT;
+	}
+	else
+	{
+		pollFd.events = POLLIN;
+	}
 }
 
 void HttpServer::handleClientResponse(pollfd& pollFd)
 {
-	std::cout << "RESPONSE" << std::endl;
+	// std::cout << "RESPONSE" << std::endl;
+	Client& client = getClient(pollFd.fd);
 
-	removePollFd(pollFd);
+	client.writeData();
+	if (client.isFinished())
+		removePollFd(pollFd);
 }

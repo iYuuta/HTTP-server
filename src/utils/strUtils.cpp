@@ -33,6 +33,12 @@ std::vector<std::string> splitNumber(const std::string& s)
 	return tokens;
 }
 
+std::string intToString(int n) {
+    std::ostringstream oss;
+    oss << n;
+    return oss.str();
+}
+
 unsigned long atoiul(const std::string& s)
 {
 	errno = 0;
@@ -41,4 +47,37 @@ unsigned long atoiul(const std::string& s)
 	if (errno != 0 || *ptr != '\0')
 		throw std::invalid_argument(s);
 	return (value);
+}
+
+std::string getContentType(const std::string& fileName) {
+    size_t pos = fileName.find_last_of('.');
+    if (pos == std::string::npos)
+        return "application/octet-stream";
+
+    std::string ext = fileName.substr(pos);
+
+    if (ext == ".html" || ext == ".htm")
+        return "text/html";
+    else if (ext == ".css")
+        return "text/css";
+    else if (ext == ".js")
+        return "application/javascript";
+    else if (ext == ".json")
+        return "application/json";
+    else if (ext == ".png")
+        return "image/png";
+    else if (ext == ".jpg" || ext == ".jpeg")
+        return "image/jpeg";
+    else if (ext == ".gif")
+        return "image/gif";
+    else if (ext == ".svg")
+        return "image/svg+xml";
+    else if (ext == ".ico")
+        return "image/x-icon";
+    else if (ext == ".txt")
+        return "text/plain";
+    else if (ext == ".pdf")
+        return "application/pdf";
+    else
+        return "application/octet-stream";  // default binary fallback
 }

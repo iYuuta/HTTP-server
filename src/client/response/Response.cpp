@@ -61,14 +61,14 @@ void Response::ERROR() {
 	}
 
 	if (!_ErrorPageExists) {
-		_statusLine_Headers.append("Content-Type: text/html\r\nContent-Length: 147\r\nConnection: close\r\n\r\n" + errorFile);
-		_contentLen = 0;
+			_statusLine_Headers.append("Connection: close\r\n\r\n");
+			_done = true;
+			return;
+		}
+		_statusLine_Headers.append("Content-Type: text/html\r\n");
+		_statusLine_Headers.append("Content-Length: " + intToString(_contentLen) + "\r\n");  // Fixed: added \r\n
+		_statusLine_Headers.append("Connection: close\r\n\r\n");
 		_done = true;
-		return ;
-	}
-	_statusLine_Headers.append("Content-Type: text/html\r\n");
-	_statusLine_Headers.append("Content-Length:" + intToString(_contentLen) + "Connection: close\r\n\r\n");
-	_done = true;
 }
 
 void Response::createStatusLine() {
@@ -134,6 +134,42 @@ void Response::POST() {
 
 void Response::DELETE() {
 
+	if (_errorCode != 200 && _errorCode != -1) {
+        ERROR();
+        return ;
+    }
+ 	try {
+        struct stat fileStat;
+        std::string fileName = _location->getRoute() + _request.getPath();
+        
+        std::cout << "DELETE: " << fileName << std::endl;
+        
+        if (stat(fileName.c_str(), &fileStat) != 0) {
+            _errorCode = 404;
+            throw (std::string) "file not found";
+        }
+        
+        if (!S_ISREG(fileStat.st_mode)) {
+            _errorCode = 403;
+            throw (std::string) "not a regular file";
+        }
+        
+        if (unlink(fileName.c_str()) != 0) {
+            _errorCode = 403;
+            throw (std::string) "failed to delete file";
+        }
+
+		_statusLine_Headers.append("HTTP/1.0 204 No Content\r\n");
+		_statusLine_Headers.append("Connection: close\r\n\r\n");
+		_contentLen = 0;
+		_done = true;
+		// _responseState = DONE;
+
+    }
+    catch (std::string error) {
+        ERROR();
+        std::cerr << "DELETE error: " << error << std::endl;
+    }
 }
 
 void Response::buildResponse() {
@@ -167,6 +203,12 @@ std::string Response::getResponse() {
 		}
 		return std::string(buffer, toRead);
 	}
+
+	if (_responseState == BODY && _contentLen == 0) {
+			_responseState = DONE;
+			return "";
+	}
+
 	_responseState = BODY;
 	return _statusLine_Headers;
 }

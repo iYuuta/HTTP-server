@@ -32,6 +32,7 @@ class Location
 		const std::string&	getUrl();
 		const std::string&	getRoute();
 		const std::string&	getIndex();
+		const std::string&	getUploadStore();
 		bool				autoIndex();
 		void				printMethods();
 };

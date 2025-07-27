@@ -87,6 +87,11 @@ const std::string& Location::getIndex()
 	return _index;
 }
 
+const std::string& Location::getUploadStore()
+{
+	return _uploadStore;
+}
+
 bool Location::autoIndex()
 {
 	return _autoindex;

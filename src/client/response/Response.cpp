@@ -129,7 +129,72 @@ void Response::GET() {
 }
 
 void Response::POST() {
-	
+    if (_errorCode != 200 && _errorCode != -1) {
+        ERROR();
+        return;
+    }
+    try
+    {
+        std::string uploadPath = _location->getUploadStore();
+        if (uploadPath.empty()) {
+            _errorCode = 403;
+            throw (std::string) "File uploads are not configured for this location.";
+        }
+
+        struct stat dirStat;
+        if (stat(uploadPath.c_str(), &dirStat) != 0) {
+            if (mkdir(uploadPath.c_str(), 0755) != 0) {
+                _errorCode = 500;
+                throw (std::string) "Failed to create upload directory.";
+            }
+        } else if (!S_ISDIR(dirStat.st_mode)) {
+            _errorCode = 500;
+            throw (std::string) "Upload path exists but is not a directory.";
+        }
+
+           std::string requestPath = _request.getPath();
+        std::string filename = requestPath.substr(requestPath.find_last_of('/') + 1);
+        std::string filePath = uploadPath + "/" + filename;
+
+        struct stat fileStat;
+        if (stat(filePath.c_str(), &fileStat) == 0) {
+            _errorCode = 409;
+            throw (std::string) "Resource already exists at the target path.";
+        }
+
+        std::ofstream newFile(filePath.c_str(), std::ios::out | std::ios::binary);
+        if (!newFile.is_open()) {
+            _errorCode = 500;
+            throw (std::string) "Failed to create the file on the server.";
+        }
+
+           std::ifstream& bodyFile = const_cast<std::ifstream&>(_request.getBodyFile());
+        if (!bodyFile.is_open()) {
+            _errorCode = 500;
+            throw (std::string) "Failed to open request body file.";
+        }
+
+        newFile << bodyFile.rdbuf();
+        bodyFile.close();
+        newFile.close();
+
+        if (!newFile.good()) {
+            _errorCode = 500;
+            unlink(filePath.c_str());
+            throw (std::string) "An error occurred while writing to the file.";
+        }
+
+        _statusLine_Headers.clear();
+        _statusLine_Headers.append("HTTP/1.0 204 No Content\r\n");
+        _statusLine_Headers.append("Connection: close\r\n\r\n");
+        _contentLen = 0;
+        _done = true;
+		
+    }
+    catch (const std::string& error) {
+        ERROR();
+        std::cerr << "POST Error: " << error << std::endl;
+    }
 }
 
 void Response::DELETE() {
@@ -141,8 +206,6 @@ void Response::DELETE() {
  	try {
         struct stat fileStat;
         std::string fileName = _location->getRoute() + _request.getPath();
-        
-        std::cout << "DELETE: " << fileName << std::endl;
         
         if (stat(fileName.c_str(), &fileStat) != 0) {
             _errorCode = 404;
@@ -159,16 +222,16 @@ void Response::DELETE() {
             throw (std::string) "failed to delete file";
         }
 
+		_statusLine_Headers.clear();
 		_statusLine_Headers.append("HTTP/1.0 204 No Content\r\n");
 		_statusLine_Headers.append("Connection: close\r\n\r\n");
 		_contentLen = 0;
 		_done = true;
-		// _responseState = DONE;
 
     }
     catch (std::string error) {
         ERROR();
-        std::cerr << "DELETE error: " << error << std::endl;
+        std::cerr << error << std::endl;
     }
 }
 

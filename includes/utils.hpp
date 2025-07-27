@@ -34,6 +34,7 @@ std::vector<std::string> splitNumber(const std::string& s);
 unsigned long atoiul(const std::string& s);
 std::string intToString(int n);
 std::string getContentType(const std::string& fileName);
-
+std::string trim(const std::string& s);
+std::string generateRandomName();
 
 #endif

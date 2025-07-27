@@ -40,7 +40,5 @@ class Request {
 
 };
 
-std::string trim(const std::string& s);
-std::string generateRandomName();
 
 #endif

@@ -59,16 +59,6 @@ void Response::createStatusLine() {
 }
 
 void Response::createHeaders() {
-// 	_statusLine_Headers.append("Content-Type: text/html\r\nContent-Length: 147\r\nConnection: close\r\n\r\n""<!DOCTYPE html>\n"
-// "<html>\n"
-// "<head>\n"
-// "    <title>Test Page</title>\n"
-// "</head>\n"
-// "<body>\n"
-// "    <h1>Hello, this is a test page!</h1>\n"
-// "    <p>Welcome to your webserver test.</p>\n"
-// "</body>\n"
-// "</html>\n");
 	_statusLine_Headers.append("Content-Type: " + _contentType + "\r\n");
 	_statusLine_Headers.append("Content-Length: " + intToString(_contentLen) + "\r\n");
 	_statusLine_Headers.append("Connection: close\r\n\r\n");

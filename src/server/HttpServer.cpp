@@ -35,7 +35,6 @@ void HttpServer::insertNewClient(const int& clientId, Server& server)
 bool HttpServer::isClientExists(const int& clientId)
 {
 	std::map<int, Client*>::iterator it = _clients.find(clientId);
-
 	return (it != _clients.end());
 }
 

@@ -9,12 +9,11 @@ _errorPages(error),
 _errorCode(-1),
 _done(false),
 _ErrorPageExists(true),
-_readBody(false),
 _responseState(STATUSLINE_HEADERS),
 _bytesSend(0) {}
 
 void Response::ERROR() {
-	std::cout << _errorCode << std::endl;
+	// std::cout << _errorCode << std::endl;
 	std::string errorFile = _errorPages[_errorCode];
 	if (errorFile.length() == 0) {
 		errorFile.append(DEF_ERROR);
@@ -61,7 +60,9 @@ void Response::createStatusLine() {
 void Response::createHeaders() {
 	_statusLine_Headers.append("Content-Type: " + _contentType + "\r\n");
 	_statusLine_Headers.append("Content-Length: " + intToString(_contentLen) + "\r\n");
-	_statusLine_Headers.append("Connection: close\r\n\r\n");
+	_statusLine_Headers.append("Connection: close\r\n");
+	if (_contentLen > 0)
+		_statusLine_Headers.append("\r\n");
 }
 
 void Response::getBody() {
@@ -69,9 +70,10 @@ void Response::getBody() {
 	struct stat fileStat;
 	std::string fileName = _location->getRoute() + _request.getPath();
 
+	std::cout << fileName << std::endl;
 	if (fileName[fileName.length() - 1] == '/') {
 		if (_location->autoIndex())
-			fileName += "index.html";
+			fileName += _location->getIndex();
 		else {
 			_errorCode = 404;
 			throw (std::string) "AutoIndex off and no index file";
@@ -102,10 +104,12 @@ void Response::GET() {
 		getBody();
 		createStatusLine();
 		createHeaders();
+		std::cout << _statusLine_Headers << std::endl;
 		_done = true;
 	}
-	catch (std::string) {
-		ERROR();
+	catch (std::string error) {
+		// ERROR();
+		std::cerr << error << std::endl;
 	}
 }
 
@@ -132,8 +136,9 @@ void Response::buildResponse() {
 			break;
 	}
 }
+
 std::string Response::getResponse() {
-	if (_readBody) {
+	if (_responseState == BODY) {
 		char buffer[BUFFER_SIZE];
 		size_t toRead = std::min(static_cast<size_t>(BUFFER_SIZE), _contentLen - _bytesSend);
 
@@ -145,7 +150,6 @@ std::string Response::getResponse() {
 		return std::string(buffer, bytesRead);
 	}
 	_responseState = BODY;
-	_readBody = true;
 	return _statusLine_Headers;
 }
 

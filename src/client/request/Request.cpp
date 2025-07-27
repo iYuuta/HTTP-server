@@ -132,6 +132,10 @@ void Request::addBody(const std::string& buff, size_t len)
 	_bodyOut.write(buff.data(), len);
 }
 
+void Request::setPath(const std::string& path) {
+	_path = path;
+}
+
 const HttpRequestMethod& Request::getMeth() const
 {
 	return _method;

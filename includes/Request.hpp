@@ -26,6 +26,7 @@ class Request {
 		void					addRequestLine(std::string buff);
 		void					addHeaders(std::string buff);
 		void					addBody(const std::string& buff, size_t len);
+		void					setPath(const std::string& path);
 		const HttpRequestMethod	&getMeth() const ;
 		enums					getParseState() const ;
 		const std::string&		getPath() const ;

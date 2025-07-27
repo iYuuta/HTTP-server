@@ -82,6 +82,11 @@ const std::string& Location::getRoute()
 	return _route;
 }
 
+const std::string& Location::getIndex()
+{
+	return _index;
+}
+
 bool Location::autoIndex()
 {
 	return _autoindex;

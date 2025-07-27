@@ -18,7 +18,6 @@ class Response {
 		int									_errorCode;
 		bool								_done;
 		bool								_ErrorPageExists;
-		bool								_readBody;
 		enums								_responseState;
 		size_t								_bytesSend;
 

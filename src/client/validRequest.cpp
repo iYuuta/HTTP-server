@@ -4,7 +4,16 @@ bool Client::isTargetValid()
 {
 	std::vector<Location>& _locations = _server.getLocations();
 	std::string path = request.getPath();
-
+	
+	if (path[path.length() - 1] != '/') {
+		size_t pos = path.find_first_of('/', 1);
+		if (pos == std::string::npos) {
+			return false;
+			//error
+		}
+		request.setPath(path.substr(pos));
+		path = path.substr(0, pos);
+	}
 	for (_location = _locations.begin(); _location != _locations.end(); _location++) {
 		if (_location->getUrl() == path) {
 			return true;
@@ -32,7 +41,7 @@ bool Client::isBodySizeValid()
 }
 
 bool Client::isRequestValid () {
-	if (request.getErrorCode())
-		return false;
+	// if (request.getErrorCode())
+	// 	return false;
 	return isTargetValid() && isMethodValid() && isBodySizeValid();
 }

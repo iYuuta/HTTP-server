@@ -66,8 +66,8 @@ std::string getContentType(const std::string& fileName) {
         return "application/json";
     else if (ext == ".png")
         return "image/png";
-    else if (ext == ".jpg" || ext == ".jpeg")
-        return "image/jpeg";
+    else if (ext == ".jpg")
+        return "image/jpg";
     else if (ext == ".gif")
         return "image/gif";
     else if (ext == ".svg")

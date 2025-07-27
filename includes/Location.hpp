@@ -31,6 +31,7 @@ class Location
 		bool				isMethodValid(const HttpRequestMethod &method);
 		const std::string&	getUrl();
 		const std::string&	getRoute();
+		const std::string&	getIndex();
 		bool				autoIndex();
 		void				printMethods();
 };

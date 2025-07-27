@@ -19,7 +19,7 @@ class Response {
 		bool								_done;
 		bool								_ErrorPageExists;
 		enums								_responseState;
-		size_t								_bytesSend;
+		size_t								_bytesSent;
 
 		void ERROR();
 		void createStatusLine();
@@ -38,6 +38,7 @@ class Response {
 		std::string getResponse();
 		void buildResponse();
 		enums getResponseState() const ;
+		void setErrorCode(int error);
 		bool isResponseDone() const ;
 };
 

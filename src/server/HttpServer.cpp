@@ -146,7 +146,7 @@ void HttpServer::handleNewConnection(pollfd& pollFd)
 
 void HttpServer::handleClientRequest(pollfd& pollFd)
 {
-	std::cout << "REQUEST" << std::endl;
+	// std::cout << "REQUEST" << std::endl;
 	Client& client = getClient(pollFd.fd);
 
 	if (!client.isRequestDone())
@@ -167,7 +167,8 @@ void HttpServer::handleClientResponse(pollfd& pollFd)
 	// std::cout << "RESPONSE" << std::endl;
 	Client& client = getClient(pollFd.fd);
 
-	client.writeData();
-	if (client.isFinished())
+	if (!client.isFinished())
+		client.writeData();
+	else
 		removePollFd(pollFd);
 }

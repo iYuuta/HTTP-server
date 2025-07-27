@@ -110,3 +110,13 @@ std::string generateRandomName() {
 		
 	return result;
 }
+
+bool isDirectory(const std::string& path) {
+	struct stat st;
+	return (stat(path.c_str(), &st) == 0 && S_ISDIR(st.st_mode));
+}
+
+bool isRegularFile(const std::string& path) {
+	struct stat st;
+	return (stat(path.c_str(), &st) == 0 && S_ISREG(st.st_mode));
+}

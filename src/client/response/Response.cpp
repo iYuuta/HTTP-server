@@ -6,18 +6,33 @@ Response::Response(Request& req, std::map<int, std::string>& error, std::vector<
 _request(req),
 _location(location),
 _errorPages(error),
-_errorCode(-1),
+_errorCode(200),
 _done(false),
 _ErrorPageExists(true),
 _responseState(STATUSLINE_HEADERS),
-_bytesSend(0) {}
+_bytesSent(0) {}
 
 void Response::ERROR() {
-	// std::cout << _errorCode << std::endl;
+	std::cout << _errorCode << std::endl;
 	std::string errorFile = _errorPages[_errorCode];
+	struct stat fileStat;
+
+	_statusLine_Headers.clear();
+	if (_body.is_open())
+		_body.close();
 	if (errorFile.length() == 0) {
 		errorFile.append(DEF_ERROR);
 		_ErrorPageExists = false;
+	}
+	else {
+		if (stat(errorFile.c_str(), &fileStat) == 0)
+			_contentLen = fileStat.st_size;
+		_body.open(errorFile.c_str(), std::ios::in | std::ios::binary);
+		if (!_body.is_open()) {
+			errorFile.append(DEF_ERROR);
+			_ErrorPageExists = false;
+			_errorCode = 500;
+		}
 	}
 	switch (_errorCode) {
 	case 400 :
@@ -44,17 +59,20 @@ void Response::ERROR() {
 	default:
 		break;
 	}
+
 	if (!_ErrorPageExists) {
-		_statusLine_Headers.append("Content-Type: text/html\nContent-Length: 148\nConnection: close\r\n\r\n" + errorFile);
+		_statusLine_Headers.append("Content-Type: text/html\r\nContent-Length: 147\r\nConnection: close\r\n\r\n" + errorFile);
+		_contentLen = 0;
 		_done = true;
 		return ;
 	}
-	_statusLine_Headers.append("Content-Type: " + errorFile + "\r\n");
-	_statusLine_Headers.append("Content-Length:" + intToString(_contentLen) + "\r\n");
+	_statusLine_Headers.append("Content-Type: text/html\r\n");
+	_statusLine_Headers.append("Content-Length:" + intToString(_contentLen) + "Connection: close\r\n\r\n");
+	_done = true;
 }
 
 void Response::createStatusLine() {
-	_statusLine_Headers.append("HTTP/1.0 " + intToString(_errorCode) + "OK\r\n");
+	_statusLine_Headers.append("HTTP/1.0 " + intToString(_errorCode) + " OK\r\n");
 }
 
 void Response::createHeaders() {
@@ -95,20 +113,17 @@ void Response::getBody() {
 }
 
 void Response::GET() {
-	// if (_request.getErrorCode()) {
-	// 	ERROR();
-	// 	_done = true;
-	// 	return ;
-	// }
+	if (_errorCode != 200 && _errorCode != -1) {
+		ERROR();
+		return ;
+	}
 	try {
 		getBody();
 		createStatusLine();
 		createHeaders();
-		std::cout << _statusLine_Headers << std::endl;
-		_done = true;
 	}
 	catch (std::string error) {
-		// ERROR();
+		ERROR();
 		std::cerr << error << std::endl;
 	}
 }
@@ -138,19 +153,26 @@ void Response::buildResponse() {
 }
 
 std::string Response::getResponse() {
-	if (_responseState == BODY) {
+	if (_responseState == BODY && _bytesSent < _contentLen) {
 		char buffer[BUFFER_SIZE];
-		size_t toRead = std::min(static_cast<size_t>(BUFFER_SIZE), _contentLen - _bytesSend);
+		size_t toRead = std::min(static_cast<size_t>(BUFFER_SIZE), _contentLen - _bytesSent);
 
 		_body.read(buffer, toRead);
-		std::streamsize bytesRead = _body.gcount();
-		_bytesSend += bytesRead;
-		if (_bytesSend >= _contentLen)
+		toRead = _body.gcount();
+		_bytesSent += toRead;
+		if (_bytesSent >= _contentLen)
+		{
+			// std::cout << "DONE\n";
 			_responseState = DONE;
-		return std::string(buffer, bytesRead);
+		}
+		return std::string(buffer, toRead);
 	}
 	_responseState = BODY;
 	return _statusLine_Headers;
+}
+
+void Response::setErrorCode(int error) {
+	_errorCode = error;
 }
 
 enums Response::getResponseState() const {

@@ -34,11 +34,15 @@ void Client::parseRequest()
 		{
 			_requestDone = true;
 			// std::cout << request << std::endl;
-			if (!isRequestValid())
+			if (!isRequestValid()) {
+				response.setErrorCode(_errorCode);
 				return ;
+			}
 		}
 	}
 	catch (std::string error) {
+		if (_errorCode)
+			response.setErrorCode(_errorCode);
 		_requestDone = true;
 		std::cerr << "Error: " << error << std::endl;
 	}
@@ -49,6 +53,7 @@ void Client::createResponse() {
 }
 
 void Client::writeData() {
+	// std::cout << "write response\n";
 	const std::string& buff = response.getResponse();
 	write(_fd, buff.c_str(), buff.size());
 }

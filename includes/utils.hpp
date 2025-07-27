@@ -36,5 +36,7 @@ std::string intToString(int n);
 std::string getContentType(const std::string& fileName);
 std::string trim(const std::string& s);
 std::string generateRandomName();
+bool isRegularFile(const std::string& path);
+bool isDirectory(const std::string& path);
 
 #endif

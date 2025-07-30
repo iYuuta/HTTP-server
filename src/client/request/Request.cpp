@@ -27,9 +27,12 @@ void Request::parseData(const char* data, size_t len)
 			size_t pos = _buffer.find("\r\n");
 			if (pos == std::string::npos)
 				break ;
-			std::string request_line = _buffer.substr(0, pos);
+			addRequestLine( _buffer.substr(0, pos));
+			if (_method == Unsupported) {
+				_errorCode = 405;
+				throw (std::string) "Unsupported method";
+			}
 			_buffer.erase(0, pos + 2);
-			addRequestLine(request_line);
 			_parseState = HEADERS;
 		}
 		else if (_parseState == HEADERS)
@@ -73,15 +76,15 @@ void Request::parseData(const char* data, size_t len)
 	}
 }
 
-void Request::addRequestLine(std::string buff)
-{
+void Request::addRequestLine(const std::string &buff) {
 	std::istringstream parser(buff);
 	std::string method;
 
 	if (!(parser >> method >> _path >> _version)) {
 		_errorCode = 400;
-		throw (std::string) "Bad request";
+		throw std::runtime_error("Bad request");
 	}
+
 	if (method == "GET")
 		_method = Get;
 	else if (method == "POST")
@@ -90,7 +93,24 @@ void Request::addRequestLine(std::string buff)
 		_method = Delete;
 	else
 		_method = Unsupported;
+	size_t pos = _path.find('?');
+	if (pos != std::string::npos) {
+		std::string qstring = _path.substr(pos + 1);
+		_path = _path.substr(0, pos);
+
+		std::istringstream queryStream(qstring);
+		std::string pair;
+		while (std::getline(queryStream, pair, '&')) {
+			size_t eqPos = pair.find('=');
+			if (eqPos == std::string::npos || eqPos == 0 || eqPos == pair.size() - 1) {
+				_errorCode = 400;
+				throw (std::string) "Bad request";
+			}
+			_queryString[pair.substr(0, eqPos)] = pair.substr(eqPos + 1);
+		}
+	}
 }
+
 
 void Request::addHeaders(std::string buff)
 {
@@ -122,7 +142,7 @@ void Request::addBody(const std::string& buff, size_t len)
 {
 	if (!_bodyOut.is_open())
 	{
-		_bodyFileName = "/tmp/." + generateRandomName();
+		_bodyFileName = generateRandomName();
 		_bodyOut.open(_bodyFileName.c_str(), std::ios::binary | std::ios::out);
 		if (!_bodyOut) {
 			_errorCode = 500;
@@ -189,4 +209,8 @@ const std::ifstream& Request::getBodyFile()
 std::map<std::string, std::string>& Request::getHeaders()
 {
 	return _headers;
+}
+std::map<std::string, std::string>& Request::getqueryStrings()
+{
+	return _queryString;
 }

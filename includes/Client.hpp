@@ -22,7 +22,6 @@ class Client {
 		int								_errorCode;
 		bool							_responseDone;
 		bool							_requestDone;
-		bool							_activeCgi;
 		bool							isTargetValid();
 		bool							isMethodValid();
 		bool							isBodySizeValid();

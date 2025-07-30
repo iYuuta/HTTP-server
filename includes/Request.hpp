@@ -15,15 +15,17 @@ class Request {
 		std::string							_path;
 		std::string							_version;
 		std::map<std::string, std::string>	_headers;
+		std::map<std::string, std::string>	_queryString;
 		std::string							_bodyFileName;
 		std::ofstream						_bodyOut;
 		std::ifstream						_bodyIn;
+
 	public:
 		Request();
 		~Request();
 
 		void					parseData(const char *data, size_t len);
-		void					addRequestLine(std::string buff);
+		void					addRequestLine(const std::string& buff);
 		void					addHeaders(std::string buff);
 		void					addBody(const std::string& buff, size_t len);
 		void					setPath(const std::string& path);
@@ -36,9 +38,9 @@ class Request {
 		int						getErrorCode()	const ;
 		const std::string		getHeader(const std::string& key) ;
 		const std::ifstream&	getBodyFile();
-	
-	std::map<std::string, std::string>&	getHeaders() ;
-
+		
+		std::map<std::string, std::string>&	getHeaders() ;
+		std::map<std::string, std::string>&	getqueryStrings() ;
 };
 
 

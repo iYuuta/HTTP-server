@@ -12,19 +12,23 @@ class Response {
 		std::vector<Location>::iterator&	_location;
 		std::string							_statusLine_Headers;
 		std::string 						_contentType;
+		std::string 						_status;
+		std::string 						_errorResponse;
 		std::map<int, std::string>& 		_errorPages;
 		size_t								_contentLen;
 		std::ifstream						_body;
+		std::fstream						_cgiResponse;
 		int									_errorCode;
-		bool								_done;
-		bool								_ErrorPageExists;
+		bool								_isError;
+		bool								_isCgi;
+		bool								_errorPageExists;
 		enums								_responseState;
 		size_t								_bytesSent;
 
 		void ERROR();
-		void createStatusLine();
 		void createHeaders();
 		void getBody();
+		void CGI();
 
 		void GET();
 		void POST();
@@ -32,14 +36,13 @@ class Response {
 
 		Response();
 
-		public:
+	public:
 		Response(Request& req, std::map<int, std::string>& error, std::vector<Location>::iterator& location);
 		~Response();
 		std::string getResponse();
 		void buildResponse();
 		enums getResponseState() const ;
 		void setErrorCode(int error);
-		bool isResponseDone() const ;
 };
 
 #endif

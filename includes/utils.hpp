@@ -7,18 +7,20 @@
 # include <fstream>
 # include <sstream>
 # include <vector>
+# include <iterator>
 # include <map>
 # include <ctime>
 # include <cerrno>
 # include <cstdlib>
 # include <sys/stat.h>
 # include <unistd.h>
+# include <fcntl.h>
+# include <sys/wait.h>
 
 #define BUFFER_SIZE 4096
 
 enum  enums {
 	NOTHING,
-	UNSUPPORTED,
 	REQUESLINE,
 	HEADERS,
 	STATUSLINE_HEADERS,

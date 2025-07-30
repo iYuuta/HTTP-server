@@ -108,7 +108,7 @@ std::string generateRandomName() {
 		result += characters[std::rand() % characters.size()];
 	}
 		
-	return result;
+	return "/tmp/" + result;
 }
 
 bool isDirectory(const std::string& path) {

@@ -8,7 +8,6 @@ Client::Client(const int& fd, Server& server, std::map<int, std::string>& errorp
 												_errorCode(-1),
 												_responseDone(false),
 												_requestDone(false),
-												_activeCgi(false),
 												request(),
 												response(request, _server.getErrorPages(), _location)
 {
@@ -41,10 +40,10 @@ void Client::parseRequest()
 		}
 	}
 	catch (std::string error) {
-		if (_errorCode)
-			response.setErrorCode(_errorCode);
+		if (request.getErrorCode())
+			response.setErrorCode(request.getErrorCode());
 		_requestDone = true;
-		std::cerr << "Error: " << error << std::endl;
+		std::cerr << "Error: " << error << " -> " << request.getErrorCode() << std::endl;
 	}
 }
 
@@ -53,9 +52,11 @@ void Client::createResponse() {
 }
 
 void Client::writeData() {
-	// std::cout << "write response\n";
 	const std::string& buff = response.getResponse();
 	write(_fd, buff.c_str(), buff.size());
+	// std::cout << "*************************************\n";
+	// write(1, buff.c_str(), buff.size());
+	// std::cout << "*************************************\n";
 }
 
 bool Client::isRequestDone() {
@@ -97,6 +98,11 @@ std::ostream& operator<<(std::ostream& os, Request& req)
 		os << it->first << ": " << it->second << "\n";
 	}
 
+	os << "\nqueryStrings:\n";
+	for (std::map<std::string, std::string>::iterator it = req.getqueryStrings().begin(); it != req.getqueryStrings().end(); it++)
+	{
+		os << it->first << ": " << it->second << "\n";
+	}
 	if (req.getContentLen() > 0)
 	{
 		os << "\nBody File Content:\n";

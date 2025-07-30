@@ -6,5 +6,5 @@ int main ()
     Config      conf("configs/test.conf");
     HttpServer  server(conf);
 
-    server.startAll();
+    return (server.startAll());
 }

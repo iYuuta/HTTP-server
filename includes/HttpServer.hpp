@@ -12,10 +12,10 @@ class HttpServer
 		std::map<int, Client*>	_clients;
 
 		void clean();
-		void listenAll();
+		void listen();
 		void setupAll();
 		void removePollFd(const pollfd &pfd);
-		void newPollFd(int fd, short events);
+		void newPollFd(const int &fd, const short &events);
 		void handleNewConnection(pollfd& pollFd);
 		void handleClientRequest(pollfd& pollFd);
 		void handleClientResponse(pollfd& pollFd);
@@ -25,7 +25,7 @@ class HttpServer
 		Client &getClient(const int& clientId);
 	public:
 		HttpServer(Config& config);
-
+		void closeFd(std::vector<pollfd>::iterator it);
 		bool startAll();
 };
 

@@ -7,6 +7,7 @@ Request::Request():
 	_path.clear();
 	_version.clear();
 	_bodyFileName.clear();
+	_queryString.clear();
 }
 
 Request::~Request()
@@ -95,22 +96,10 @@ void Request::addRequestLine(const std::string &buff) {
 		_method = Unsupported;
 	size_t pos = _path.find('?');
 	if (pos != std::string::npos) {
-		std::string qstring = _path.substr(pos + 1);
+		_queryString = _path.substr(pos + 1);
 		_path = _path.substr(0, pos);
-
-		std::istringstream queryStream(qstring);
-		std::string pair;
-		while (std::getline(queryStream, pair, '&')) {
-			size_t eqPos = pair.find('=');
-			if (eqPos == std::string::npos || eqPos == 0 || eqPos == pair.size() - 1) {
-				_errorCode = 400;
-				throw (std::string) "Bad request";
-			}
-			_queryString[pair.substr(0, eqPos)] = pair.substr(eqPos + 1);
-		}
 	}
 }
-
 
 void Request::addHeaders(std::string buff)
 {
@@ -150,6 +139,8 @@ void Request::addBody(const std::string& buff, size_t len)
 		}
 	}
 	_bodyOut.write(buff.data(), len);
+	_bodyOut.flush();
+	_bodyOut.close();
 }
 
 void Request::setPath(const std::string& path) {
@@ -181,6 +172,10 @@ const std::string& Request::getVersion() const
 	return _version;
 }
 
+const std::string& Request::getFileName() {
+	return _bodyFileName;
+}
+
 size_t Request::getContentLen() const
 {
 	return _contentLen;
@@ -210,7 +205,7 @@ std::map<std::string, std::string>& Request::getHeaders()
 {
 	return _headers;
 }
-std::map<std::string, std::string>& Request::getqueryStrings()
+std::string& Request::getQueryStrings()
 {
 	return _queryString;
 }

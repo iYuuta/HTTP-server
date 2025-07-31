@@ -17,26 +17,33 @@ class Client {
 		Server							&_server;
 		std::vector<Location>::iterator	_location;
 		std::map<int, std::string>		&_errorPages;
+
 		int								_fd;
 		std::string						_buffer;
 		int								_errorCode;
+
 		bool							_responseDone;
 		bool							_requestDone;
+
 		bool							isTargetValid();
 		bool							isMethodValid();
 		bool							isBodySizeValid();
 		bool							isRequestValid();
+
 		Request request;
 		Response response;
 	public:
 		Client(const int& fd, Server& server, std::map<int, std::string>& errorp);
+		~Client();
+
 		void parseRequest();
 		void createResponse();
-		void writeData();
+
 		bool isRequestDone();
 		bool isResponseDone();
+
+		void writeData();
 		bool isFinished();
-		~Client();
 
 };
 

@@ -34,9 +34,9 @@ std::vector<std::string> splitNumber(const std::string& s)
 }
 
 std::string intToString(int n) {
-    std::ostringstream oss;
-    oss << n;
-    return oss.str();
+	std::ostringstream oss;
+	oss << n;
+	return oss.str();
 }
 
 unsigned long atoiul(const std::string& s)
@@ -50,38 +50,37 @@ unsigned long atoiul(const std::string& s)
 }
 
 std::string getContentType(const std::string& fileName) {
-    size_t pos = fileName.find_last_of('.');
-    if (pos == std::string::npos)
-        return "application/octet-stream";
+	size_t pos = fileName.find_last_of('.');
+	if (pos == std::string::npos)
+		return "application/octet-stream";
 
-    std::string ext = fileName.substr(pos);
+	std::string ext = fileName.substr(pos);
 
-    if (ext == ".html" || ext == ".htm")
-        return "text/html";
-    else if (ext == ".css")
-        return "text/css";
-    else if (ext == ".js")
-        return "application/javascript";
-    else if (ext == ".json")
-        return "application/json";
-    else if (ext == ".png")
-        return "image/png";
-    else if (ext == ".jpg")
-        return "image/jpg";
-    else if (ext == ".gif")
-        return "image/gif";
-    else if (ext == ".svg")
-        return "image/svg+xml";
-    else if (ext == ".ico")
-        return "image/x-icon";
-    else if (ext == ".txt")
-        return "text/plain";
-    else if (ext == ".pdf")
-        return "application/pdf";
-    else
-        return "application/octet-stream";
+	if (ext == ".html" || ext == ".htm")
+		return "text/html";
+	else if (ext == ".css")
+		return "text/css";
+	else if (ext == ".js")
+		return "application/javascript";
+	else if (ext == ".json")
+		return "application/json";
+	else if (ext == ".png")
+		return "image/png";
+	else if (ext == ".jpg")
+		return "image/jpg";
+	else if (ext == ".gif")
+		return "image/gif";
+	else if (ext == ".svg")
+		return "image/svg+xml";
+	else if (ext == ".ico")
+		return "image/x-icon";
+	else if (ext == ".txt")
+		return "text/plain";
+	else if (ext == ".pdf")
+		return "application/pdf";
+	else
+		return "application/octet-stream";
 }
-
 
 std::string trim(const std::string& s) {
 	size_t start = 0;
@@ -100,14 +99,15 @@ std::string trim(const std::string& s) {
 
 std::string generateRandomName() {
 	const std::string characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-	std::string result;
-		
-	std::srand(std::time(NULL));
-		
-	for (size_t i = 0; i < 12; ++i) {
-		result += characters[std::rand() % characters.size()];
+	static bool seeded = false;
+
+	if (!seeded) {
+		std::srand(std::time(NULL));
+		seeded = true;
 	}
-		
+	std::string result;
+	for (size_t i = 0; i < 12; ++i)
+		result += characters[std::rand() % characters.size()];
 	return "/tmp/" + result;
 }
 
@@ -119,4 +119,31 @@ bool isDirectory(const std::string& path) {
 bool isRegularFile(const std::string& path) {
 	struct stat st;
 	return (stat(path.c_str(), &st) == 0 && S_ISREG(st.st_mode));
+}
+
+std::string getExtension(const std::string& path) {
+	size_t slashPos = path.find_last_of('/');
+	size_t dotPos = path.find_last_of('.');
+	std::string ext;
+
+	if (dotPos == std::string::npos || (slashPos != std::string::npos && dotPos < slashPos))
+		return "";
+	ext = path.substr(dotPos);
+	if (ext == ".py")
+		return "/usr/bin/python3";
+	return "";
+}
+
+std::string methodToStr(HttpRequestMethod meth) {
+	switch (meth)
+	{
+	case Get: return "GET";
+		break;
+	case Post: return "POST";
+		break;
+	case Delete: return "DELETE";
+		break;
+	default: return "Unsupported";
+		break;
+	}
 }

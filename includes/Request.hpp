@@ -12,10 +12,11 @@ class Request {
 		size_t								_receivedBytes;
 		int									_errorCode;
 		std::string							_buffer;
+		
 		std::string							_path;
 		std::string							_version;
 		std::map<std::string, std::string>	_headers;
-		std::map<std::string, std::string>	_queryString;
+		std::string							_queryString;
 		std::string							_bodyFileName;
 		std::ofstream						_bodyOut;
 		std::ifstream						_bodyIn;
@@ -29,6 +30,7 @@ class Request {
 		void					addHeaders(std::string buff);
 		void					addBody(const std::string& buff, size_t len);
 		void					setPath(const std::string& path);
+
 		const HttpRequestMethod	&getMeth() const ;
 		enums					getParseState() const ;
 		const std::string&		getPath() const ;
@@ -37,10 +39,11 @@ class Request {
 		size_t					getReceivedBytes()	const ;
 		int						getErrorCode()	const ;
 		const std::string		getHeader(const std::string& key) ;
+		const std::string&		getFileName();
 		const std::ifstream&	getBodyFile();
+		std::string&			getQueryStrings() ;
 		
 		std::map<std::string, std::string>&	getHeaders() ;
-		std::map<std::string, std::string>&	getqueryStrings() ;
 };
 
 

@@ -10,15 +10,23 @@ class Response {
 	private:
 		Request&							_request;
 		std::vector<Location>::iterator&	_location;
-		std::string							_statusLine_Headers;
+		std::map<int, std::string>& 		_errorPages;
+
 		std::string 						_contentType;
 		std::string 						_status;
-		std::string 						_errorResponse;
-		std::map<int, std::string>& 		_errorPages;
 		size_t								_contentLen;
-		std::ifstream						_body;
-		std::fstream						_cgiResponse;
 		int									_errorCode;
+		std::vector<std::string>			_env;
+		std::string							_cgiExt;
+		std::string							_cgiFile;
+		std::vector<char*>					_envPtr;
+
+		std::string 						_errorResponse;
+		std::string							_statusLine_Headers;
+		std::ifstream						_body;
+		int									_cgiFd;
+		std::fstream						_cgiResponse;
+		
 		bool								_isError;
 		bool								_isCgi;
 		bool								_errorPageExists;
@@ -26,23 +34,24 @@ class Response {
 		size_t								_bytesSent;
 
 		void ERROR();
-		void createHeaders();
-		void getBody();
-		void CGI();
-
 		void GET();
 		void POST();
 		void DELETE();
+		void getBody();
+
+		void CGI();
+		void initCgi();
 
 		Response();
 
 	public:
 		Response(Request& req, std::map<int, std::string>& error, std::vector<Location>::iterator& location);
 		~Response();
-		std::string getResponse();
+
 		void buildResponse();
-		enums getResponseState() const ;
 		void setErrorCode(int error);
+		enums getResponseState() const ;
+		std::string getResponse();
 };
 
 #endif

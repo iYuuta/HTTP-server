@@ -98,11 +98,7 @@ std::ostream& operator<<(std::ostream& os, Request& req)
 		os << it->first << ": " << it->second << "\n";
 	}
 
-	os << "\nqueryStrings:\n";
-	for (std::map<std::string, std::string>::iterator it = req.getqueryStrings().begin(); it != req.getqueryStrings().end(); it++)
-	{
-		os << it->first << ": " << it->second << "\n";
-	}
+	os << "\nqueryStrings:\n" << req.getQueryStrings() << std::endl;
 	if (req.getContentLen() > 0)
 	{
 		os << "\nBody File Content:\n";

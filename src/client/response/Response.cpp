@@ -14,6 +14,11 @@ _responseState(STATUSLINE_HEADERS),
 _bytesSent(0) {
 	_errorResponse.clear();
 	_statusLine_Headers.clear();
+	_contentType.clear();
+	_env.clear();
+	_status.clear();
+	_cgiExt.clear();
+    _envPtr.clear();
 }
 
 void Response::ERROR() {
@@ -71,14 +76,6 @@ void Response::ERROR() {
 	_errorResponse += ss.str();
 }
 
-void Response::createHeaders() {
-	_statusLine_Headers.append("Content-Type: " + _contentType + "\r\n");
-	_statusLine_Headers.append("Content-Length: " + intToString(_contentLen) + "\r\n");
-	_statusLine_Headers.append("Connection: close\r\n");
-	if (_contentLen > 0)
-		_statusLine_Headers.append("\r\n");
-}
-
 void Response::getBody() {
 
 	struct stat fileStat;
@@ -106,75 +103,81 @@ void Response::getBody() {
 	_contentType = getContentType(fileName);
 }
 
-void Response::CGI() {
-	int cgiPipe[2];
+void Response::initCgi() {
+    _cgiExt = getExtension(_request.getPath());
+    _env.clear();
 
-	std::cout << "cgi running\n";
-	if (pipe(cgiPipe) < 0) {
+    _env.push_back("REQUEST_METHOD=" + methodToStr(_request.getMeth()));
+    _env.push_back("CONTENT_LENGTH=" + intToString(_request.getContentLen()));
+    _env.push_back("CONTENT_TYPE=" + _request.getHeader("Content-Type"));
+    _env.push_back("SCRIPT_NAME=" + _location->getRoute() + _request.getPath());
+    _env.push_back("SERVER_PROTOCOL=HTTP/1.0");
+    _env.push_back("GATEWAY_INTERFACE=CGI/1.1");
+    _env.push_back("SERVER_SOFTWARE=Webserv/1.0");
+    _env.push_back("HTTP_HOST=" + _request.getHeader("Host"));
+
+    if (!_request.getQueryStrings().empty())
+        _env.push_back("QUERY_STRING=" + _request.getQueryStrings());
+    for (size_t i = 0; i < _env.size(); ++i)
+        _envPtr.push_back(const_cast<char*>(_env[i].c_str()));
+    _envPtr.push_back(nullptr);
+}
+
+void Response::CGI() {
+	int fd = 0;
+
+	initCgi();
+	_cgiFile = generateRandomName();
+	_cgiFd = open(_cgiFile.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+	if (_cgiFd < 0) {
 		_errorCode = 500;
-		throw (std::string) "pipe failed";
+		throw (std::string) "failed to open a file";
+	}
+	write(_cgiFd, "HTTP/1.0 200 ok\r\n", 17);
+	if (_request.getContentLen() > 0) {
+		fd = open(_request.getFileName().c_str(), O_RDONLY);
+		if (fd < 0) {
+			close(_cgiFd);
+			_errorCode = 500;
+			throw (std::string) "failed to open a file";
+		}
 	}
 	int pid = fork();
-	if (pid < 0) {
-		_errorCode = 500;
+	if (pid < 0)
 		throw (std::string) "fork failed";
-	}
-	else if (pid == 0) {
-		if (chdir((_location->getRoute()).c_str()) < 0) 
-			exit (500);
-		dup2(cgiPipe[1], STDOUT_FILENO);
-		close(cgiPipe[1]);
-		close(cgiPipe[0]);
-		char* argv[] = {(char *)_request.getPath().c_str(), NULL};
-		execve(_request.getPath().substr(1).c_str(), argv, NULL);
+	if (pid == 0) {
+		if (chdir(_location->getRoute().c_str()) < 0) {
+			close(_cgiFd);
+			if (fd > 0)
+				close(fd);
+			exit(500);
+		}
+		if (fd != 0) {
+			dup2(fd, STDIN_FILENO);
+			close(fd);
+		}
+		dup2(_cgiFd, STDOUT_FILENO);
+		close(_cgiFd);
+		std::string file = _request.getPath();
+		file = file.erase(0, 1);
+		char *argv[] = {const_cast<char*>(_cgiExt.c_str()), const_cast<char*>(file.c_str()), nullptr};
+		execve(_cgiExt.c_str(), argv, _envPtr.data());
 		exit(500);
 	}
 	else {
 		int status;
-		int value;
-		close(cgiPipe[1]);
-		waitpid(pid, &status, 0);
-		if (WIFEXITED(status))
-			value = WEXITSTATUS(status);
-		if (WIFSIGNALED(status))
-			value = WTERMSIG(status);
-		if (value != 0) {
-			close(cgiPipe[0]);
+    	waitpid(pid, &status, 0);
+		close(fd);
+		close(_cgiFd);
+		if (status == 500) {
 			_errorCode = 500;
-			throw (std::string) "cgi failed";
+			throw (std::string) "child process terminated with a failure";
 		}
-		std::string name = generateRandomName();
-		_cgiResponse.open(name.c_str(), std::ios::binary | std::ios::out);
-		if (!_cgiResponse.is_open()) {
-			close(cgiPipe[0]);
-			_errorCode = 500;
+		_cgiFd = open(_cgiFile.c_str(), O_RDONLY);
+		if (_cgiFd < 0) {
+   			_errorCode = 500;
 			throw (std::string) "failed to open a file";
 		}
-		_cgiResponse << "Status: 200 OK\r\n";
-		_contentLen += 16;
-		char buffer[BUFFER_SIZE];
-    	ssize_t bytesRead;
-
-	    while ((bytesRead = read(cgiPipe[0], buffer, BUFFER_SIZE)) > 0) {
-			_contentLen += bytesRead;
-    	    _cgiResponse.write(buffer, bytesRead);
-	    }
-	    if (bytesRead < 0) {
-    	    _errorCode = 500;
-			throw (std::string) "Read error";
-    	}
-		_cgiResponse.flush();
-		_contentLen = 199 + 16;
-		_cgiResponse.close();
-		_cgiResponse.open(name.c_str(), std::ios::binary | std::ios::out);
-		if (!_cgiResponse.is_open()) {
-			close(cgiPipe[0]);
-			_errorCode = 500;
-			throw (std::string) "failed to open a file";
-		}
-		std::ostringstream ss;
-    	ss << _cgiResponse.rdbuf();
-		std::cout << "-> " << ss.str() << std::endl;
 	}
 }
 
@@ -191,7 +194,11 @@ void Response::GET() {
 		}
 		getBody();
 		_statusLine_Headers.append("HTTP/1.0 " + intToString(_errorCode) + " OK\r\n");
-		createHeaders();
+		_statusLine_Headers.append("Content-Type: " + _contentType + "\r\n");
+		_statusLine_Headers.append("Content-Length: " + intToString(_contentLen) + "\r\n");
+		_statusLine_Headers.append("Connection: close\r\n");
+		if (_contentLen > 0)
+			_statusLine_Headers.append("\r\n");
 	}
 	catch (std::string error) {
 		_isError = true;
@@ -208,6 +215,10 @@ void Response::POST() {
 	}
 	try
 	{
+		if (_isCgi) {
+			CGI();
+			return ;
+		}
 		std::string uploadPath = _location->getUploadStore();
 		if (uploadPath.empty()) {
 			_errorCode = 403;
@@ -215,6 +226,7 @@ void Response::POST() {
 		}
 
 		struct stat dirStat;
+
 		if (stat(uploadPath.c_str(), &dirStat) != 0) {
 			if (mkdir(uploadPath.c_str(), 0755) != 0) {
 				_errorCode = 500;
@@ -234,29 +246,24 @@ void Response::POST() {
 			_errorCode = 409;
 			throw (std::string) "Resource already exists at the target path.";
 		}
-
 		std::ofstream newFile(filePath.c_str(), std::ios::out | std::ios::binary);
 		if (!newFile.is_open()) {
 			_errorCode = 500;
 			throw (std::string) "Failed to create the file on the server.";
 		}
-
-		   std::ifstream& bodyFile = const_cast<std::ifstream&>(_request.getBodyFile());
+		std::ifstream& bodyFile = const_cast<std::ifstream&>(_request.getBodyFile());
 		if (!bodyFile.is_open()) {
 			_errorCode = 500;
 			throw (std::string) "Failed to open request body file.";
 		}
-
 		newFile << bodyFile.rdbuf();
 		bodyFile.close();
 		newFile.close();
-
 		if (!newFile.good()) {
 			_errorCode = 500;
 			unlink(filePath.c_str());
 			throw (std::string) "An error occurred while writing to the file.";
 		}
-
 		_statusLine_Headers.clear();
 		_statusLine_Headers.append("HTTP/1.0 204 No Content\r\n");
 		_statusLine_Headers.append("Connection: close\r\n\r\n");
@@ -278,6 +285,10 @@ void Response::DELETE() {
 		return ;
 	}
  	try {
+		if (_isCgi) {
+			CGI();
+			return ;
+		}
 		struct stat fileStat;
 		std::string fileName = _location->getRoute() + _request.getPath();
 		
@@ -336,28 +347,18 @@ std::string Response::getResponse() {
 		return _errorResponse;
 	}
 	else if (_isCgi && _responseState != DONE) {
-		if (_contentLen == 0) {
-			_responseState = DONE;
-			return "";
-		}
-		if (_bytesSent < _contentLen) {
 			char buffer[BUFFER_SIZE];
-			size_t toRead = std::min(static_cast<size_t>(BUFFER_SIZE), _contentLen - _bytesSent);
+			ssize_t bytes;
 
-			_cgiResponse.read(buffer, toRead);
-			size_t actuallyRead = _cgiResponse.gcount();
-			if (_cgiResponse.eof())
-				actuallyRead = toRead;
-			_bytesSent += actuallyRead;
+			bytes = read(_cgiFd, buffer, BUFFER_SIZE);
+			_bytesSent += bytes;
 
-			if (_bytesSent >= _contentLen) {
-				_cgiResponse.close();
+			if (bytes == 0) {
 				_responseState = DONE;
-			}				
-			return std::string(buffer, actuallyRead);
-		}
-		_responseState = DONE;
-		return "";
+				return "";
+			}
+			_responseState = DONE;		
+			return std::string(buffer, bytes);
 	}
 	switch (_responseState) {
 		case STATUSLINE_HEADERS: {

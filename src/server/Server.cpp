@@ -76,11 +76,11 @@ void Server::setup()
 	if (fd < 0)
 		throw std::runtime_error("Socket creation failed");
 
-	int yes = 1;
+	const int yes = 1;
 	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) < 0) {
 		perror("setsockopt");
 		close(fd);
-		exit(EXIT_FAILURE);
+		throw std::runtime_error("Can't reuse socket address");
 	}
 	setFd(fd);
 	if (bind(fd, (sockaddr*)&_address, sizeof(_address)) < 0)

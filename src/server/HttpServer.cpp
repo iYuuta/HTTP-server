@@ -12,9 +12,10 @@ HttpServer::HttpServer(Config& config) : _config(config)
 void HttpServer::clean()
 {
 	for (std::vector<pollfd>::iterator it = _pollFds.begin(); it != _pollFds.end(); ++it)
-	{
-		// close(it->fd);
-	}
+		closeFd(it);
+	_pollFds.clear();
+	for (std::map<int, Client*>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+		delete it->second;
 }
 
 
@@ -25,11 +26,18 @@ Client& HttpServer::getClient(const int& clientId)
 	return *it->second;
 }
 
+void HttpServer::closeFd(std::vector<pollfd>::iterator it)
+{
+	delete _clients[it->fd];
+	_clients.erase(it->fd);
+	close(it->fd);
+}
+
 void HttpServer::insertNewClient(const int& clientId, Server& server)
 {
 	if (isClientExists(clientId))
 		return;
-	_clients[clientId] = new Client(clientId, server, server.getErrorPages());
+	_clients.insert(std::make_pair(clientId, new Client(clientId, server, server.getErrorPages())));
 }
 
 bool HttpServer::isClientExists(const int& clientId)
@@ -56,13 +64,14 @@ void HttpServer::removePollFd(const pollfd& pfd)
 	{
 		if (it->fd == pfd.fd)
 		{
+			closeFd(it);
 			_pollFds.erase(it);
 			return;
 		}
 	}
 }
 
-void HttpServer::newPollFd(int fd, short events)
+void HttpServer::newPollFd(const int& fd, const short& events)
 {
 	pollfd pollFd;
 	pollFd.fd = fd;
@@ -87,10 +96,10 @@ bool HttpServer::startAll()
 	try
 	{
 		setupAll();
-		listenAll();
+		listen();
 		clean();
 	}
-	catch (std::exception& e)
+	catch (const std::exception& e)
 	{
 		std::cerr << e.what() << std::endl;
 		clean();
@@ -99,7 +108,7 @@ bool HttpServer::startAll()
 	return (true);
 }
 
-void HttpServer::listenAll()
+void HttpServer::listen()
 {
 	while (true)
 	{
@@ -146,7 +155,6 @@ void HttpServer::handleNewConnection(pollfd& pollFd)
 
 void HttpServer::handleClientRequest(pollfd& pollFd)
 {
-	// std::cout << "REQUEST" << std::endl;
 	Client& client = getClient(pollFd.fd);
 
 	if (!client.isRequestDone())
@@ -164,7 +172,6 @@ void HttpServer::handleClientRequest(pollfd& pollFd)
 
 void HttpServer::handleClientResponse(pollfd& pollFd)
 {
-	// std::cout << "RESPONSE" << std::endl;
 	Client& client = getClient(pollFd.fd);
 
 	if (!client.isFinished())

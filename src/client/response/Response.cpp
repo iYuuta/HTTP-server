@@ -166,7 +166,7 @@ void Response::CGI() {
 	}
 	else {
 		int status;
-    	waitpid(pid, &status, 0);
+    	waitpid(pid, &status, 0); 
 		close(fd);
 		close(_cgiFd);
 		if (status == 500) {

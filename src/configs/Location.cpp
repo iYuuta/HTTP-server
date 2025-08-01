@@ -24,6 +24,17 @@ void Location::setAutoIndex(const bool& autoindex)
 	_autoindex = autoindex;
 }
 
+const std::pair<int, std::string>&	Location::getReturn() {
+	return _return;
+}
+
+bool Location::isRedirect() {
+	if (_return.second.empty())
+		return false;
+	return true;
+}
+
+
 void Location::setIndex(const std::string& index)
 {
 	_index = index;
@@ -36,6 +47,8 @@ void Location::setUploadStore(const std::string& store)
 
 void Location::setReturn(const int& code, const std::string& page)
 {
+	std::cout << "code-> " << code << std::endl;
+	std::cout << "page-> " << page << std::endl;
 	this->_return = std::make_pair(code, page);
 }
 

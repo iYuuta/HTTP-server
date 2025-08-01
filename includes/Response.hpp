@@ -22,12 +22,14 @@ class Response {
 		std::vector<char*>					_envPtr;
 
 		std::string 						_errorResponse;
+		std::string 						_return;
 		std::string							_statusLine_Headers;
 		std::ifstream						_body;
 		int									_cgiFd;
 		
 		bool								_isError;
 		bool								_isCgi;
+		bool								_isRedirect;
 		bool								_errorPageExists;
 		enums								_responseState;
 		size_t								_bytesSent;
@@ -37,6 +39,7 @@ class Response {
 		void POST();
 		void DELETE();
 		void CGI();
+		void REDIRECT();
 
 		void getBody();
 		void initCgi();
@@ -49,6 +52,7 @@ class Response {
 
 		void buildResponse();
 		void setErrorCode(int error);
+		void isRedirect();
 		enums getResponseState() const ;
 		std::string getResponse();
 };

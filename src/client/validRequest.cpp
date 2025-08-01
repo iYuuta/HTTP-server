@@ -21,6 +21,8 @@ bool Client::isTargetValid() {
 		if (newPath.empty() || newPath[0] != '/')
 			newPath = "/" + newPath;
 		request.setPath(newPath);
+		if (_location->isRedirect())
+			response.isRedirect();
 		return true;
 	}
 	_errorCode = 404;
@@ -28,7 +30,7 @@ bool Client::isTargetValid() {
 }
 
 bool Client::isMethodValid() {
-	if (_location->isMethodValid(request.getMeth())) {
+	if (_location->isMethodValid(request.getMeth()) || _location->isRedirect()) {
 		return true;
 	}
 	_errorCode = 405;
@@ -36,6 +38,8 @@ bool Client::isMethodValid() {
 }
 
 bool Client::isBodySizeValid() {
+	if (_location->isRedirect())
+		return true;
 	if (request.getReceivedBytes() > _server.getMaxRequestSize()) {
 		_errorCode = 413;
 		return false;

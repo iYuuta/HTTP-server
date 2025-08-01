@@ -9,6 +9,7 @@ _errorPages(error),
 _errorCode(200),
 _isError(false),
 _isCgi(false),
+_isRedirect(false),
 _errorPageExists(true),
 _responseState(STATUSLINE_HEADERS),
 _bytesSent(0) {
@@ -19,6 +20,7 @@ _bytesSent(0) {
 	_status.clear();
 	_cgiExt.clear();
     _envPtr.clear();
+    _return.clear();
 }
 
 void Response::ERROR() {
@@ -65,13 +67,13 @@ void Response::ERROR() {
 		break;
 	}
 	if (!_errorPageExists) {
-		_errorResponse.append("Content-Type: text/html\r\nContent-Length: 147\r\nConnection: close\r\n\r\n");
+		_errorResponse.append("Content-Type: text/html\r\nContent-Length: 147\r\nConnection: Close\r\n\r\n");
 		_errorResponse.append(DEF_ERROR);
 		return;
 	}
 	_errorResponse.append("Content-Type: text/html\r\n");
 	_errorResponse.append("Content-Length: " + intToString(_contentLen) + "\r\n");
-	_errorResponse.append("Connection: close\r\n\r\n");
+	_errorResponse.append("Connection: Close\r\n\r\n");
 	std::ostringstream ss;
 	ss << _body.rdbuf();
 	_errorResponse += ss.str();
@@ -209,7 +211,7 @@ void Response::GET() {
 		_statusLine_Headers.append("HTTP/1.0 " + intToString(_errorCode) + " OK\r\n");
 		_statusLine_Headers.append("Content-Type: " + _contentType + "\r\n");
 		_statusLine_Headers.append("Content-Length: " + intToString(_contentLen) + "\r\n");
-		_statusLine_Headers.append("Connection: close\r\n");
+		_statusLine_Headers.append("Connection: Close\r\n");
 		if (_contentLen > 0)
 			_statusLine_Headers.append("\r\n");
 	}
@@ -251,7 +253,6 @@ void Response::POST() {
 		std::string filePath = uploadPath + "/" + filename;
 
 		struct stat fileStat;
-		std::cout << filePath << std::endl;
 		if (stat(filePath.c_str(), &fileStat) == 0) {
 			_errorCode = 409;
 			throw (std::string) "Resource already exists at the target path.";
@@ -276,7 +277,7 @@ void Response::POST() {
 		}
 		_statusLine_Headers.clear();
 		_statusLine_Headers.append("HTTP/1.0 204 No Content\r\n");
-		_statusLine_Headers.append("Connection: close\r\n\r\n");
+		_statusLine_Headers.append("Connection: Close\r\n\r\n");
 		_contentLen = 0;
 		
 	}
@@ -315,7 +316,7 @@ void Response::DELETE() {
 
 		_statusLine_Headers.clear();
 		_statusLine_Headers.append("HTTP/1.0 204 No Content\r\n");
-		_statusLine_Headers.append("Connection: close\r\n\r\n");
+		_statusLine_Headers.append("Connection: Close\r\n\r\n");
 		_contentLen = 0;
 
 	}
@@ -326,11 +327,20 @@ void Response::DELETE() {
 	}
 }
 
+void Response::REDIRECT() {
+	_return.append("HTTP/1.0 " + intToString(_location->getReturn().first) + " Moved Permanently\n" + "Location: " + _location->getReturn().second);
+	std::cout << _return << std::endl;
+}
+
 void Response::buildResponse() {
 	
 	if (isExtension(_request.getPath())) {
 		_isCgi = true;
 		CGI();
+		return ;
+	}
+	if (_isRedirect) {
+		REDIRECT();
 		return ;
 	}
 	switch (_request.getMeth()) {
@@ -351,6 +361,10 @@ void Response::buildResponse() {
 }
 
 std::string Response::getResponse() {
+	if (_isRedirect) {
+		_responseState = DONE;
+		return _return;
+	}
 	if (_isError) {
 		if (_body.is_open())
 			_body.close();
@@ -403,6 +417,10 @@ std::string Response::getResponse() {
 
 void Response::setErrorCode(int error) {
 	_errorCode = error;
+}
+
+void Response::isRedirect() {
+	_isRedirect = true;
 }
 
 enums Response::getResponseState() const {

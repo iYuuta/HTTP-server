@@ -29,7 +29,9 @@ class Location
 		void				setReturn(const int &code, const std::string &page);
 		void				setCgiExt(const std::string &ext);
 		bool				isMethodValid(const HttpRequestMethod &method);
+		bool				isRedirect();
 		const std::string&	getUrl();
+		const std::pair<int, std::string>&	getReturn();
 		const std::string&	getRoute();
 		const std::string&	getIndex();
 		const std::string&	getUploadStore();

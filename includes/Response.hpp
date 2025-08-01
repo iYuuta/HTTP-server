@@ -6,6 +6,18 @@
 
 #define DEF_ERROR "<!DOCTYPE html>\n<html>\n<head><title>Error</title></head>\n<body>\n  <h1>An error occurred</h1>\n  <p>Sorry, something went wrong.</p>\n</body>\n</html>\n"
 
+struct Multipart {
+    std::map<std::string, std::string> headers;
+    std::string contentDispositionName;
+    std::string contentDispositionFilename;
+    std::string contentType;
+    std::string contentBody;
+    std::string tempFilePath;
+    bool isFile;
+
+    Multipart() : isFile(false) {}
+};
+
 class Response {
 	private:
 		Request&							_request;
@@ -34,6 +46,9 @@ class Response {
 		enums								_responseState;
 		size_t								_bytesSent;
 
+		std::string							_boundary;
+		std::vector<Multipart>				_multiparts;
+
 		void ERROR();
 		void GET();
 		void POST();
@@ -43,6 +58,12 @@ class Response {
 
 		void getBody();
 		void initCgi();
+
+		void parseMultipartBody();
+		bool extractBoundary(const std::string& contentTypeHeader, std::string& boundary);
+		void parsePartHeaders(const std::string& headerStr, Multipart& part);
+		void processPartBody(Multipart& part, const std::string& bodyContent);
+		bool readFileToString(const std::string& filePath, std::string& content);
 
 		Response();
 

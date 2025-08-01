@@ -328,8 +328,7 @@ void Response::DELETE() {
 }
 
 void Response::REDIRECT() {
-	_return.append("HTTP/1.0 " + intToString(_location->getReturn().first) + " Moved Permanently\n" + "Location: " + _location->getReturn().second);
-	std::cout << _return << std::endl;
+	_return.append("HTTP/1.0 " + intToString(_location->getReturn().first) + " Moved Permanently\r\n" + "Location: " + _location->getReturn().second + "\r\n");
 }
 
 void Response::buildResponse() {

@@ -47,8 +47,6 @@ void Location::setUploadStore(const std::string& store)
 
 void Location::setReturn(const int& code, const std::string& page)
 {
-	std::cout << "code-> " << code << std::endl;
-	std::cout << "page-> " << page << std::endl;
 	this->_return = std::make_pair(code, page);
 }
 

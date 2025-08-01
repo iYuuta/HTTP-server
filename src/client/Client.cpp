@@ -57,7 +57,7 @@ void Client::writeData() {
 	const std::string& buff = response.getResponse();
 	write(_fd, buff.c_str(), buff.size());
 	// std::cout << "*************************************\n";
-	// write(1, buff.c_str(), buff.size());
+	write(1, buff.c_str(), buff.size());
 	// std::cout << "*************************************\n";
 }
 

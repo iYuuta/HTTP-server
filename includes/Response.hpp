@@ -4,7 +4,7 @@
 #include "Request.hpp"
 #include "utils.hpp"
 
-#define DEF_ERROR "<!DOCTYPE html>\r\n<html>\r\n<head><title>Error</title></head>\r\n<body>\r\n  <h1>An error occurred</h1>\r\n  <p>Sorry, something went wrong.</p>\r\n</body>\r\n</html>\r\n"
+#define DEF_ERROR "<!DOCTYPE html>\n<html>\n<head><title>Error</title></head>\n<body>\n  <h1>An error occurred</h1>\n  <p>Sorry, something went wrong.</p>\n</body>\n</html>\n"
 
 class Response {
 	private:

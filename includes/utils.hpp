@@ -41,6 +41,7 @@ std::string trim(const std::string& s);
 std::string generateRandomName();
 bool isRegularFile(const std::string& path);
 bool isDirectory(const std::string& path);
+bool isExtension(const std::string& path);
 std::string getExtension(const std::string& path);
 std::string methodToStr(HttpRequestMethod meth);
 

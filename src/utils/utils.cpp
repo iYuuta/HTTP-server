@@ -134,6 +134,19 @@ std::string getExtension(const std::string& path) {
 	return "";
 }
 
+bool isExtension(const std::string& path) {
+	size_t slashPos = path.find_last_of('/');
+	size_t dotPos = path.find_last_of('.');
+	std::string ext;
+
+	if (dotPos == std::string::npos || (slashPos != std::string::npos && dotPos < slashPos))
+		return false;
+	ext = path.substr(dotPos);
+	if (ext == ".py" || ext == ".sh")
+		return true;
+	return false;
+}
+
 std::string methodToStr(HttpRequestMethod meth) {
 	switch (meth)
 	{

@@ -204,10 +204,6 @@ void Response::GET() {
 		return ;
 	}
 	try {
-		if (_isCgi) {
-			CGI();
-			return ;
-		}
 		getBody();
 		_statusLine_Headers.append("HTTP/1.0 " + intToString(_errorCode) + " OK\r\n");
 		_statusLine_Headers.append("Content-Type: " + _contentType + "\r\n");
@@ -231,10 +227,6 @@ void Response::POST() {
 	}
 	try
 	{
-		if (_isCgi) {
-			CGI();
-			return ;
-		}
 		std::string uploadPath = _location->getUploadStore();
 		if (uploadPath.empty()) {
 			_errorCode = 403;
@@ -301,10 +293,6 @@ void Response::DELETE() {
 		return ;
 	}
  	try {
-		if (_isCgi) {
-			CGI();
-			return ;
-		}
 		struct stat fileStat;
 		std::string fileName = _location->getRoute() + _request.getPath();
 		
@@ -338,8 +326,11 @@ void Response::DELETE() {
 
 void Response::buildResponse() {
 	
-	if (_location->getUrl() == "/cgi-bin")
+	if (isExtension(_request.getPath())) {
 		_isCgi = true;
+		CGI();
+		return ;
+	}
 	switch (_request.getMeth()) {
 		case Get:
 			GET();

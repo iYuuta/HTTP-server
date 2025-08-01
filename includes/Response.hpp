@@ -4,7 +4,7 @@
 #include "Request.hpp"
 #include "utils.hpp"
 
-#define DEF_ERROR "<!DOCTYPE html>\n<html>\n<head><title>Error</title></head>\n<body>\n  <h1>An error occurred</h1>\n  <p>Sorry, something went wrong.</p>\n</body>\n</html>\n"
+#define DEF_ERROR "<!DOCTYPE html>\r\n<html>\r\n<head><title>Error</title></head>\r\n<body>\r\n  <h1>An error occurred</h1>\r\n  <p>Sorry, something went wrong.</p>\r\n</body>\r\n</html>\r\n"
 
 class Response {
 	private:
@@ -25,7 +25,6 @@ class Response {
 		std::string							_statusLine_Headers;
 		std::ifstream						_body;
 		int									_cgiFd;
-		std::fstream						_cgiResponse;
 		
 		bool								_isError;
 		bool								_isCgi;
@@ -37,9 +36,9 @@ class Response {
 		void GET();
 		void POST();
 		void DELETE();
-		void getBody();
-
 		void CGI();
+
+		void getBody();
 		void initCgi();
 
 		Response();

@@ -1,7 +1,7 @@
 #include "../../../includes/Request.hpp"
 
 Request::Request():
-	_parseState(REQUESLINE), _contentLen(0), _receivedBytes(0), _errorCode(-1)
+	 _method(Unsupported),_parseState(REQUESLINE), _contentLen(0), _receivedBytes(0), _errorCode(-1)
 {
 	_buffer.clear();
 	_path.clear();

@@ -13,11 +13,11 @@ Client::Client(const int& fd, Server& server, std::map<int, std::string>& errorp
 {
 }
 
-std::ostream& operator<<(std::ostream& os, Request& req);
-
 Client::~Client()
 {
 }
+
+std::ostream& operator<<(std::ostream& os, Request& req);
 
 void Client::parseRequest()
 {
@@ -25,8 +25,11 @@ void Client::parseRequest()
 	ssize_t len;
 
 	len = read(_fd, buffer, BUFFER_SIZE);
-	if (len < 0)
-		throw (std::string) "read error";
+	if (len < 0) {
+		_requestDone = true;
+		response.setErrorCode(500);
+		return;
+	}
 	try {
 		request.parseData(buffer, len);
 		if (request.getParseState() == DONE)
@@ -40,8 +43,7 @@ void Client::parseRequest()
 		}
 	}
 	catch (std::string error) {
-		if (request.getErrorCode())
-			response.setErrorCode(request.getErrorCode());
+		response.setErrorCode(request.getErrorCode());
 		_requestDone = true;
 		std::cerr << "Error: " << error << " -> " << request.getErrorCode() << std::endl;
 	}

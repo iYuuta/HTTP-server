@@ -137,19 +137,32 @@ void Response::CGI() {
 	if (_request.getContentLen() > 0) {
 		fd = open(_request.getFileName().c_str(), O_RDONLY);
 		if (fd < 0) {
+			unlink(_cgiFile.c_str());
 			close(_cgiFd);
 			_errorCode = 500;
 			throw (std::string) "failed to open a file";
 		}
 	}
 	int pid = fork();
-	if (pid < 0)
+	if (pid < 0) {
+		if (fd != 0) {
+			unlink(_request.getFileName().c_str());
+			close(fd);
+		}
+		_errorCode = 500;
+		unlink(_cgiFile.c_str());
+		close(_cgiFd);
 		throw (std::string) "fork failed";
+	}
 	if (pid == 0) {
 		if (chdir(_location->getRoute().c_str()) < 0) {
-			close(_cgiFd);
-			if (fd > 0)
+			if (fd != 0) {
+				unlink(_request.getFileName().c_str());
 				close(fd);
+			}
+			_errorCode = 500;
+			unlink(_cgiFile.c_str());
+			close(_cgiFd);
 			exit(500);
 		}
 		if (fd != 0) {
@@ -166,13 +179,16 @@ void Response::CGI() {
 	}
 	else {
 		int status;
-    	waitpid(pid, &status, 0); 
+    	waitpid(pid, &status, 0);
+		unlink(_request.getFileName().c_str());
 		close(fd);
-		close(_cgiFd);
 		if (status == 500) {
 			_errorCode = 500;
+			unlink(_cgiFile.c_str());
+			close(_cgiFd);
 			throw (std::string) "child process terminated with a failure";
 		}
+		close(_cgiFd);
 		_cgiFd = open(_cgiFile.c_str(), O_RDONLY);
 		if (_cgiFd < 0) {
    			_errorCode = 500;
@@ -335,6 +351,8 @@ void Response::buildResponse() {
 			DELETE();
 			break;
 		default:
+			_isError = true;
+			ERROR();
 			break;
 	}
 }
@@ -351,13 +369,11 @@ std::string Response::getResponse() {
 			ssize_t bytes;
 
 			bytes = read(_cgiFd, buffer, BUFFER_SIZE);
-			_bytesSent += bytes;
-
 			if (bytes == 0) {
+				close(_cgiFd);
 				_responseState = DONE;
 				return "";
-			}
-			_responseState = DONE;		
+			}	
 			return std::string(buffer, bytes);
 	}
 	switch (_responseState) {

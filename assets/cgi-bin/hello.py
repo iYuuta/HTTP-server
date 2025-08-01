@@ -1,44 +1,51 @@
 #!/usr/bin/env python3
 
-import sys
 import os
+import sys
 import urllib.parse
 
-def parse_post_data():
+def html_escape(s):
+    return (s.replace("&", "&amp;")
+             .replace("<", "&lt;")
+             .replace(">", "&gt;")
+             .replace('"', "&quot;")
+             .replace("'", "&#x27;"))
+
+def get_post_data():
     try:
         content_length = int(os.environ.get("CONTENT_LENGTH", 0))
-    except (TypeError, ValueError):
+    except (ValueError, TypeError):
         content_length = 0
-    raw_data = sys.stdin.read(content_length)
-    return urllib.parse.parse_qs(raw_data)
+    return sys.stdin.read(content_length)
 
-def html_escape(text):
-    return (text.replace("&", "&amp;")
-                .replace("<", "&lt;")
-                .replace(">", "&gt;")
-                .replace('"', "&quot;")
-                .replace("'", "&#x27;"))
+def parse_form_data(data):
+    return urllib.parse.parse_qs(data)
 
-def main():
-    post_data = parse_post_data()
-    name = html_escape(post_data.get("name", [""])[0])
-    message = html_escape(post_data.get("message", [""])[0])
+print("Content-Type: text/html\r\n")
 
-    print("Content-Type: text/html")
-    print()
-    print(f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Form Submitted</title>
-</head>
-<body>
-    <h1>Thank You!</h1>
-    <p><strong>Name:</strong> {name}</p>
-    <p><strong>Message:</strong> {message}</p>
-    <a href="/index.html">Go back</a>
-</body>
-</html>""")
+print("<!DOCTYPE html>")
+print("<html><head><title>CGI Response</title></head><body>")
+print("<h1>Hello from CGI!</h1>")
 
-if __name__ == "__main__":
-    main()
+method = os.environ.get("REQUEST_METHOD", "GET")
+print(f"<p>Request Method: <strong>{method}</strong></p>")
+
+if method == "GET":
+    query = os.environ.get("QUERY_STRING", "")
+    print(f"<p>Query String: {html_escape(query)}</p>")
+    parsed = urllib.parse.parse_qs(query)
+elif method == "POST":
+    raw_data = get_post_data()
+    print(f"<p>Raw POST Data: {html_escape(raw_data)}</p>")
+    parsed = parse_form_data(raw_data)
+else:
+    parsed = {}
+
+if parsed:
+    print("<h2>Parsed Form Data:</h2><ul>")
+    for key, values in parsed.items():
+        for v in values:
+            print(f"<li>{html_escape(key)} = {html_escape(v)}</li>")
+    print("</ul>")
+
+print("</body></html>")

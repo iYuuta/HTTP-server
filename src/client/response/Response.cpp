@@ -54,13 +54,14 @@ void Response::ERROR() {
 	case 413 :
 		_errorResponse.append("HTTP/1.0 413 Payload Too Large\r\n");
 		break;
-	case 500 :
-		_errorResponse.append("HTTP/1.0 500 Internal Server Error\r\n");
-		break;
 	case 501 :
 		_errorResponse.append("HTTP/1.0 501 Not Implemented\r\n");
 		break;
+	case 409:
+		_errorResponse.append("HTTP/1.0 409 Conflict\r\n");
+		break;
 	default:
+		_errorResponse.append("HTTP/1.0 500 Internal Server Error\r\n");
 		break;
 	}
 	if (!_errorPageExists) {
@@ -250,6 +251,7 @@ void Response::POST() {
 		std::string filePath = uploadPath + "/" + filename;
 
 		struct stat fileStat;
+		std::cout << filePath << std::endl;
 		if (stat(filePath.c_str(), &fileStat) == 0) {
 			_errorCode = 409;
 			throw (std::string) "Resource already exists at the target path.";

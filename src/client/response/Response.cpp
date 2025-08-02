@@ -222,84 +222,107 @@ void Response::GET() {
 	}
 }
 
+void Response::validateUploadPath(const std::string& uploadPath) {
+    if (uploadPath.empty()) {
+        _errorCode = 403;
+        throw std::runtime_error("File uploads are not configured for this location.");
+    }
+
+    struct stat dirStat;
+    if (stat(uploadPath.c_str(), &dirStat) != 0) {
+        if (mkdir(uploadPath.c_str(), 0755) != 0) {
+            _errorCode = 500;
+            throw std::runtime_error("Failed to create upload directory.");
+        }
+    } else if (!S_ISDIR(dirStat.st_mode)) {
+        _errorCode = 500;
+        throw std::runtime_error("Upload path exists but is not a directory.");
+    }
+}
+
+void Response::handleRawUpload(const std::string& uploadPath) {
+    std::string requestPath = _request.getPath();
+    std::string filename = requestPath.substr(requestPath.find_last_of('/') + 1);
+    if (filename.empty() || filename == "/") {
+        _errorCode = 400;
+        throw std::runtime_error("Cannot upload body to a directory");
+    }
+    std::string filePath = uploadPath + "/" + filename;
+
+    std::ofstream newFile(filePath.c_str(), std::ios::out | std::ios::binary);
+    if (!newFile.is_open()) {
+        _errorCode = 500;
+        throw std::runtime_error("Failed to create the file on the server.");
+    }
+
+    std::ifstream& bodyFile = const_cast<std::ifstream&>(_request.getBodyFile());
+    if (!bodyFile.is_open()) {
+        _errorCode = 500;
+        throw std::runtime_error("Failed to open request body file.");
+    }
+
+    newFile << bodyFile.rdbuf();
+    bodyFile.close();
+    newFile.close();
+
+    _statusLine_Headers.append("HTTP/1.0 204 No Content\r\n");
+    _statusLine_Headers.append("Connection: close\r\n");
+}
+
+
+void Response::handleMultipartUpload(const std::string& uploadPath) {
+    
+    parseMultipartBody();
+
+    for (size_t i = 0; i < _multiparts.size(); i++) {
+        const Multipart& part = _multiparts[i];
+        if (part.isFile && !part.contentDispositionFilename.empty()) {
+            std::string finalFilePath = uploadPath + "/" + part.contentDispositionFilename;
+            
+            std::ifstream src(part.tempFilePath.c_str(), std::ios::binary);
+            std::ofstream dst(finalFilePath.c_str(), std::ios::binary);
+
+            if (!src.is_open() || !dst.is_open()) {
+                _errorCode = 500;
+                unlink(part.tempFilePath.c_str());
+                throw std::runtime_error("Failed to open streams for file copy.");
+            }
+            
+            dst << src.rdbuf();
+            src.close();
+            dst.close();
+            
+            unlink(part.tempFilePath.c_str());
+        } else if (part.isFile) {
+            unlink(part.tempFilePath.c_str());
+        }
+    }
+
+    _statusLine_Headers.append("HTTP/1.0 201 Created\r\n");
+    _statusLine_Headers.append("Connection: close\r\n");
+}
+
 void Response::POST() {
-	if (_errorCode != 200 && _errorCode != -1) {
-		_isError = true;
-		ERROR();
-		return;
-	}
-	try
-	{
-		std::string uploadPath = _location->getUploadStore();
-		if (uploadPath.empty()) {
-			_errorCode = 403;
-			throw (std::string) "File uploads are not configured for this location.";
-		}
-
-		struct stat dirStat;
-		if (stat(uploadPath.c_str(), &dirStat) != 0) {
-			if (mkdir(uploadPath.c_str(), 0755) != 0) {
-				_errorCode = 500;
-				throw (std::string) "Failed to create upload directory.";
-			}
-		} else if (!S_ISDIR(dirStat.st_mode)) {
-			_errorCode = 500;
-			throw (std::string) "Upload path exists but is not a directory.";
-		}
-			
-		std::string contentType = _request.getHeader("Content-Type");
-		if (contentType.find("multipart/form-data") != std::string::npos) {
-
-			parseMultipartBody();
-
-			for (size_t i = 0; i < _multiparts.size(); i++) {
-				const Multipart& part = _multiparts[i];
-				if (part.isFile && !part.contentDispositionFilename.empty()) {
-					std::string finalFilePath = uploadPath + "/" + part.contentDispositionFilename;
-					
-					std::ifstream src(part.tempFilePath.c_str(), std::ios::binary);
-					std::ofstream dst(finalFilePath.c_str(), std::ios::binary);
-					if (!src.is_open() || !dst.is_open()) {
-						_errorCode = 500;
-						throw (std::string) "Failed to move uploaded file.";
-					}
-					dst << src.rdbuf();
-					src.close();
-					dst.close();
-				}
-			}
-			_statusLine_Headers.append("HTTP/1.0 201 Created\r\n");
-			_statusLine_Headers.append("Connection: close\r\n\r\n");
-			_contentLen = 0;
-
-		} else {
-			std::string requestPath = _request.getPath();
-			std::string filename = requestPath.substr(requestPath.find_last_of('/') + 1);
-			std::string filePath = uploadPath + "/" + filename;
-
-			std::ofstream newFile(filePath.c_str(), std::ios::out | std::ios::binary);
-			if (!newFile.is_open()) {
-				_errorCode = 500;
-				throw (std::string) "Failed to create the file on the server.";
-			}
-			std::ifstream& bodyFile = const_cast<std::ifstream&>(_request.getBodyFile());
-			if (!bodyFile.is_open()) {
-				_errorCode = 500;
-				throw (std::string) "Failed to open request body file.";
-			}
-			newFile << bodyFile.rdbuf();
-			bodyFile.close();
-			newFile.close();
-			_statusLine_Headers.append("HTTP/1.0 204 No Content\r\n");
-			_statusLine_Headers.append("Connection: close\r\n\r\n");
-			_contentLen = 0;
-		}
-	}
-	catch (const std::string& error) {
-		_isError = true;
-		ERROR();
-		std::cerr << "POST Error: " << error << std::endl;
-	}
+    if (_errorCode != 200 && _errorCode != -1) {
+        _isError = true;
+        ERROR();
+        return;
+    }
+    try {
+        std::string uploadPath = _location->getUploadStore();
+        validateUploadPath(uploadPath);
+        
+        std::string contentType = _request.getHeader("Content-Type");
+        if (contentType.find("multipart/form-data") != std::string::npos)
+            handleMultipartUpload(uploadPath);
+        else
+            handleRawUpload(uploadPath);
+        _contentLen = 0;
+    } catch (const std::exception& e) {
+        _isError = true;
+        ERROR();
+        std::cerr << "POST Error: " << e.what() << std::endl;
+    }
 }
 
 void Response::DELETE() {

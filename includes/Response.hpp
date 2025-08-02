@@ -6,6 +6,13 @@
 
 #define DEF_ERROR "<!DOCTYPE html>\n<html>\n<head><title>Error</title></head>\n<body>\n  <h1>An error occurred</h1>\n  <p>Sorry, something went wrong.</p>\n</body>\n</html>\n"
 
+enum ParseState {
+    LOOKING_FOR_START_BOUNDARY,
+    PARSING_HEADERS,
+    STREAMING_BODY,
+    FINISHED
+};
+
 struct Multipart {
     std::map<std::string, std::string> headers;
     std::string contentDispositionName;
@@ -59,11 +66,14 @@ class Response {
 		void getBody();
 		void initCgi();
 
-		void parseMultipartBody();
+		void validateUploadPath(const std::string& uploadPath);
+		void handleRawUpload(const std::string& uploadPath);
+		void handleMultipartUpload(const std::string& uploadPath);
+
 		bool extractBoundary(const std::string& contentTypeHeader, std::string& boundary);
 		void parsePartHeaders(const std::string& headerStr, Multipart& part);
-		void processPartBody(Multipart& part, const std::string& bodyContent);
-		bool readFileToString(const std::string& filePath, std::string& content);
+		void parseMultipartBody();
+		
 
 		Response();
 

@@ -57,8 +57,15 @@ void Request::parseData(const char* data, size_t len)
 		}
 		else if (_parseState == BODY)
 		{
+			if (_contentLen == 0 || _receivedBytes >= _contentLen) {
+				_parseState = DONE;
+				continue;
+			}
 			size_t LeftOver = _contentLen - _receivedBytes;
 			size_t ReadLen = std::min(LeftOver, _buffer.size());
+
+			if (ReadLen == 0)
+				break;
 
 			addBody(_buffer.substr(0, ReadLen), ReadLen);
 			_buffer.erase(0, ReadLen);
@@ -66,7 +73,8 @@ void Request::parseData(const char* data, size_t len)
 			if (_receivedBytes >= _contentLen)
 			{
 				_parseState = DONE;
-				_bodyOut.close();
+				if (_bodyOut.is_open())
+					_bodyOut.close();
 			}
 			break ;
 		}
@@ -132,15 +140,13 @@ void Request::addBody(const std::string& buff, size_t len)
 	if (!_bodyOut.is_open())
 	{
 		_bodyFileName = generateRandomName();
-		_bodyOut.open(_bodyFileName.c_str(), std::ios::binary | std::ios::out);
+		_bodyOut.open(_bodyFileName.c_str(), std::ios::binary | std::ios::app);
 		if (!_bodyOut) {
 			_errorCode = 500;
 			throw (std::string) "failed to open a file";
 		}
 	}
 	_bodyOut.write(buff.data(), len);
-	_bodyOut.flush();
-	_bodyOut.close();
 }
 
 void Request::setPath(const std::string& path) {

@@ -1,22 +1,5 @@
 #include "../../../includes/Response.hpp"
 
-bool Response::readFileToString(const std::string& filePath, std::string& content) {
-    std::ifstream fileStream(filePath.c_str(), std::ios::in | std::ios::binary);
-    if (!fileStream.is_open()) {
-        _errorCode = 500;
-        return (false);
-    }
-
-    char buffer[BUFFER_SIZE];
-    content.clear();
-    while (fileStream.read(buffer, sizeof(buffer)))
-        content.append(buffer, sizeof(buffer));
-    content.append(buffer, fileStream.gcount());
-
-    fileStream.close();
-    return (true);
-}
-
 bool Response::extractBoundary(const std::string& contentTypeHeader, std::string& boundary) {
     size_t boundaryPos = contentTypeHeader.find("boundary=");
     if (boundaryPos == std::string::npos) {
@@ -65,71 +48,98 @@ void Response::parsePartHeaders(const std::string& headerStr, Multipart& part) {
     }
 }
 
-void Response::processPartBody(Multipart& part, const std::string& bodyContent) {
-    if (part.isFile) {
-        part.tempFilePath = generateRandomName();
-        std::ofstream tempFileStream(part.tempFilePath.c_str(), std::ios::binary | std::ios::out);
-        if (!tempFileStream.is_open()) {
-            _errorCode = 500;
-            throw (std::string) "Failed to create temporary file for upload.";
-        }
-        tempFileStream.write(bodyContent.data(), bodyContent.length());
-        tempFileStream.close();
-    } else {
-        part.contentBody = bodyContent;
-    }
-}
-
 void Response::parseMultipartBody() {
-    std::string rawBodyContent;
-
-    if (!readFileToString(_request.getFileName(), rawBodyContent))
-        throw (std::string) "Failed to read request body";
-
-    if (!extractBoundary(_request.getHeader("Content-Type"), _boundary))
-        throw (std::string) "multipart error invalid boundary.";
-
-    std::string delimiter = "--" + _boundary;
-    std::string finalDelimiter = delimiter + "--";
-    size_t currentPos = rawBodyContent.find(delimiter);
-
-    if (currentPos == std::string::npos) {
+    if (!extractBoundary(_request.getHeader("Content-Type"), _boundary)) {
         _errorCode = 400;
-        throw (std::string) "multipart error no initial boundary.";
+        throw std::runtime_error("Multipart error: Invalid or missing boundary.");
     }
-    currentPos += delimiter.length();
-    if (rawBodyContent.substr(currentPos, 2) == "\r\n") currentPos += 2;
+    std::string boundary_delimiter = "--" + _boundary;
+    std::string header_separator = "\r\n\r\n";
 
-    while (true) {
-        size_t nextDelimiterPos = rawBodyContent.find(delimiter, currentPos);
-        if (nextDelimiterPos == std::string::npos) {
-            _errorCode = 400;
-            throw (std::string) "multipart error no closing boundary.";
+    std::ifstream body_stream(_request.getFileName().c_str(), std::ios::binary);
+    if (!body_stream.is_open()) {
+        _errorCode = 500;
+        throw std::runtime_error("Failed to open request body.");
+    }
+
+    std::string buffer;
+    char chunk[BUFFER_SIZE];
+    ParseState state = LOOKING_FOR_START_BOUNDARY;
+    Multipart currentPart;
+    std::ofstream out_stream;
+
+    bool has_more_data = true;
+    while (has_more_data && state != FINISHED) {
+        if (!body_stream.eof() && body_stream.good()) {
+            body_stream.read(chunk, sizeof(chunk));
+            buffer.append(chunk, body_stream.gcount());
+        } else
+            has_more_data = false;
+
+        bool state_has_changed = true;
+        while (state_has_changed) {
+            state_has_changed = false;
+            switch (state) {
+                case LOOKING_FOR_START_BOUNDARY: {
+                    size_t pos = buffer.find(boundary_delimiter + "\r\n");
+                    if (pos != std::string::npos) {
+                        buffer.erase(0, pos + boundary_delimiter.length() + 2);
+                        state = PARSING_HEADERS;
+                        state_has_changed = true;
+                    }
+                    break;
+                }
+                case PARSING_HEADERS: {
+                    size_t pos = buffer.find(header_separator);
+                    if (pos != std::string::npos) {
+                        std::string headers_str = buffer.substr(0, pos);
+                        buffer.erase(0, pos + header_separator.length());
+                        
+                        currentPart = Multipart();
+                        parsePartHeaders(headers_str, currentPart);
+
+                        if (currentPart.isFile) {
+                            currentPart.tempFilePath = generateRandomName();
+                            out_stream.open(currentPart.tempFilePath.c_str(), std::ios::binary);
+                            if (!out_stream.is_open()) {
+                                _errorCode = 500;
+                                throw std::runtime_error("Failed to create temporary file for upload.");
+                            }
+                        }
+                        state = STREAMING_BODY;
+                        state_has_changed = true;
+                    }
+                    break;
+                }
+                case STREAMING_BODY: {
+                    std::string end_delimiter = "\r\n" + boundary_delimiter;
+                    size_t pos = buffer.find(end_delimiter);
+                    if (pos != std::string::npos) {
+                        if (out_stream.is_open()) {
+                            out_stream.write(buffer.c_str(), pos);
+                            out_stream.close();
+                        }
+                        _multiparts.push_back(currentPart);
+                        buffer.erase(0, pos + end_delimiter.length());
+                        if (buffer.rfind("--", 0) == 0)
+                            state = FINISHED;
+                        else if (buffer.rfind("\r\n", 0) == 0) {
+                            buffer.erase(0, 2);
+                            state = PARSING_HEADERS;
+                        } else
+                            throw std::runtime_error("Multipart error: Malformed boundary.");
+                        state_has_changed = true;
+                    }
+                    break;
+                }
+                case FINISHED:
+                    break;
+            }
         }
-
-        std::string partContent = rawBodyContent.substr(currentPos, nextDelimiterPos - currentPos);
-        if (partContent.length() > 1 && partContent.substr(partContent.length() - 2) == "\r\n") {
-             partContent.erase(partContent.length() - 2);
-        }
-
-        size_t headerEndPos = partContent.find("\r\n\r\n");
-        if (headerEndPos == std::string::npos) {
-            _errorCode = 400;
-            throw (std::string) "multipart error headers not terminated.";
-        }
-
-        std::string headerStr = partContent.substr(0, headerEndPos);
-        std::string bodyStr = partContent.substr(headerEndPos + 4);
-
-        Multipart currentPart;
-        parsePartHeaders(headerStr, currentPart);
-        processPartBody(currentPart, bodyStr);
-        _multiparts.push_back(currentPart);
-
-        if (rawBodyContent.substr(nextDelimiterPos, finalDelimiter.length()) == finalDelimiter)
-            break;
-
-        currentPos = nextDelimiterPos + delimiter.length();
-        if (rawBodyContent.substr(currentPos, 2) == "\r\n") currentPos += 2;
+    }
+    if (state != FINISHED) {
+        if (out_stream.is_open())
+            out_stream.close();
+        throw std::runtime_error("Multipart error: Incomplete or malformed request body.");
     }
 }

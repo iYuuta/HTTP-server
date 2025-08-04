@@ -126,11 +126,13 @@ std::string getExtension(const std::string& path) {
 	size_t dotPos = path.find_last_of('.');
 	std::string ext;
 
-	if (dotPos == std::string::npos || (slashPos != std::string::npos && dotPos < slashPos))
-		return "";
 	ext = path.substr(dotPos);
 	if (ext == ".py")
 		return "/usr/bin/python3";
+	else if (ext == ".php")
+		return "/usr/bin/php";
+	else if (ext == ".sh")
+		return "/bin/bash";
 	return "";
 }
 
@@ -142,7 +144,7 @@ bool isExtension(const std::string& path) {
 	if (dotPos == std::string::npos || (slashPos != std::string::npos && dotPos < slashPos))
 		return false;
 	ext = path.substr(dotPos);
-	if (ext == ".py" || ext == ".sh")
+	if (ext == ".py" || ext == ".php" || ext == ".sh")
 		return true;
 	return false;
 }

@@ -25,12 +25,23 @@
 
   <!-- POST to CGI -->
   <section>
-    <h2>POST to CGI (/cgi-bin/hello.py)</h2>
-    <form action="/cgi-bin/hello.py" method="post">
+    <h2>POST to CGI</h2>
+
+    <!-- Select CGI Script -->
+    <form id="cgiForm" method="post">
+      <label for="cgi-script">Choose CGI script:</label>
+      <select id="cgi-script" onchange="updateAction()">
+        <option value="/cgi-bin/python-cgi.py">python-cgi.py</option>
+        <option value="/cgi-bin/bash-cgi.sh">bash-cgi.sh</option>
+        <option value="/cgi-bin/php-cgi.php">php-cgi.php</option>
+      </select>
+
       <label for="name">Name:</label>
       <input type="text" name="name" required>
+
       <label for="message">Message:</label>
       <textarea name="message" rows="4"></textarea>
+
       <button type="submit">POST to CGI</button>
     </form>
   </section>
@@ -63,6 +74,12 @@
   </section>
 
   <script>
+    function updateAction() {
+      const select = document.getElementById("cgi-script");
+      const form = document.getElementById("cgiForm");
+      form.action = select.value;
+    }
+
     async function sendDelete() {
       const file = document.getElementById('delPath').value;
       const result = document.getElementById('deleteResult');
@@ -74,6 +91,9 @@
         result.innerText = 'Error sending DELETE: ' + e.message;
       }
     }
+
+    // Set initial action
+    updateAction();
   </script>
 </body>
 </html>

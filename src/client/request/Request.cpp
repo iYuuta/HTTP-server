@@ -29,6 +29,8 @@ void Request::parseData(const char* data, size_t len)
 			if (pos == std::string::npos)
 				break ;
 			addRequestLine( _buffer.substr(0, pos));
+			if (_errorCode == 400)
+				throw (std::string) "Bad request";
 			if (_method == Unsupported) {
 				_errorCode = 405;
 				throw (std::string) "Unsupported method";
@@ -87,13 +89,13 @@ void Request::parseData(const char* data, size_t len)
 
 void Request::addRequestLine(const std::string &buff) {
 	std::istringstream parser(buff);
-	std::string method;
+	std::string method, leftover;
 
-	if (!(parser >> method >> _path >> _version)) {
+	if (!(parser >> method >> _path))
 		_errorCode = 400;
-		throw std::runtime_error("Bad request");
-	}
-
+	parser >> _version >> leftover;
+	if (!leftover.empty() || (!_version.empty() && (_version != "HTTP/1.0" && _version != "HTTP/1.1")))
+		_errorCode = 400;
 	if (method == "GET")
 		_method = Get;
 	else if (method == "POST")
@@ -116,7 +118,7 @@ void Request::addHeaders(std::string buff)
 		_errorCode = 400;
 		throw (std::string) "Bad request";
 	}
-	std::string key = trim(buff.substr(0, pos));
+	std::string key = trim(buff.substr(0, pos));//key : value is invalid
 	std::string value = trim(buff.substr(pos + 1));
 	_headers[key] = value;
 	if (key == "Content-Length")

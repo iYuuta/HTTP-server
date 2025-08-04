@@ -95,6 +95,7 @@ void Response::getBody() {
 	if (stat(fileName.c_str(), &fileStat) == 0)
 		_contentLen = fileStat.st_size;
 	else {
+		std::cout << fileName << std::endl;
 		_errorCode = 404;
 		throw (std::string) "file not found";
 	}

@@ -12,6 +12,7 @@ class Request {
 		size_t								_receivedBytes;
 		int									_errorCode;
 		std::string							_buffer;
+		bool								_simpleRequest;
 		
 		std::string							_path;
 		std::string							_version;
@@ -31,6 +32,8 @@ class Request {
 		void					addBody(const std::string& buff, size_t len);
 		void					setPath(const std::string& path);
 
+		bool					isValidRequestLine(const std::string& line);
+		bool					isKeyValid(const std::string& line);
 		const HttpRequestMethod	&getMeth() const ;
 		enums					getParseState() const ;
 		const std::string&		getPath() const ;
@@ -41,7 +44,8 @@ class Request {
 		const std::string		getHeader(const std::string& key) ;
 		const std::string&		getFileName();
 		const std::ifstream&	getBodyFile();
-		std::string&			getQueryStrings() ;
+		std::string&			getQueryStrings();
+		bool					isSimpleRequest();
 		
 		std::map<std::string, std::string>&	getHeaders() ;
 };

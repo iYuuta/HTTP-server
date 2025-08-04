@@ -41,30 +41,30 @@ void Response::ERROR() {
 		}
 	}
 	switch (_errorCode) {
-	case 400 :
-		_errorResponse.append("HTTP/1.0 400 Bad Request\r\n");
-		break;
-	case 404 :
-		_errorResponse.append("HTTP/1.0 404 Not Found\r\n");
-		break;
-	case 403 :
-		_errorResponse.append("HTTP/1.0 403 Forbidden\r\n");
-		break;
-	case 405 :
-		_errorResponse.append("HTTP/1.0 405 Method Not Allowed\r\n");
-		break;
-	case 413 :
-		_errorResponse.append("HTTP/1.0 413 Payload Too Large\r\n");
-		break;
-	case 501 :
-		_errorResponse.append("HTTP/1.0 501 Not Implemented\r\n");
-		break;
-	case 409:
-		_errorResponse.append("HTTP/1.0 409 Conflict\r\n");
-		break;
-	default:
-		_errorResponse.append("HTTP/1.0 500 Internal Server Error\r\n");
-		break;
+		case 400 :
+			_errorResponse.append("HTTP/1.0 400 Bad Request\r\n");
+			break;
+		case 404 :
+			_errorResponse.append("HTTP/1.0 404 Not Found\r\n");
+			break;
+		case 403 :
+			_errorResponse.append("HTTP/1.0 403 Forbidden\r\n");
+			break;
+		case 405 :
+			_errorResponse.append("HTTP/1.0 405 Method Not Allowed\r\n");
+			break;
+		case 413 :
+			_errorResponse.append("HTTP/1.0 413 Payload Too Large\r\n");
+			break;
+		case 501 :
+			_errorResponse.append("HTTP/1.0 501 Not Implemented\r\n");
+			break;
+		case 409:
+			_errorResponse.append("HTTP/1.0 409 Conflict\r\n");
+			break;
+		default:
+			_errorResponse.append("HTTP/1.0 500 Internal Server Error\r\n");
+			break;
 	}
 	if (!_errorPageExists) {
 		_errorResponse.append("Content-Type: text/html\r\nContent-Length: 147\r\nConnection: Close\r\n\r\n");
@@ -336,17 +336,17 @@ void Response::DELETE() {
  	try {
 		struct stat fileStat;
 		std::string fileName = _location->getRoute() + _request.getPath();
-		
+
 		if (stat(fileName.c_str(), &fileStat) != 0) {
 			_errorCode = 404;
 			throw (std::string) "file not found";
 		}
-		
+
 		if (!S_ISREG(fileStat.st_mode)) {
 			_errorCode = 403;
 			throw (std::string) "not a regular file";
 		}
-		
+
 		if (unlink(fileName.c_str()) != 0) {
 			_errorCode = 403;
 			throw (std::string) "failed to delete file";
@@ -369,6 +369,24 @@ void Response::REDIRECT() {
 	_return.append("HTTP/1.0 " + intToString(_location->getReturn().first) + " Moved Permanently\r\n" + "Location: " + _location->getReturn().second + "\r\n");
 }
 
+void Response::simpleReqsponse() {
+	if (_request.getMeth() == Get) {
+		try {
+			getBody();
+		}
+		catch (std::string err) {
+			std::cerr << "Error: " << err << std::endl;
+			_isError = true;
+			ERROR();
+		}
+	}
+	else {
+		_errorCode = 501;
+		_isError = true;
+		ERROR();
+	}
+}
+
 void Response::buildResponse() {
 	
 	if (isExtension(_request.getPath())) {
@@ -376,8 +394,12 @@ void Response::buildResponse() {
 		CGI();
 		return ;
 	}
-	if (_isRedirect) {
+	else if (_isRedirect) {
 		REDIRECT();
+		return ;
+	}
+	else if (_request.isSimpleRequest()) {
+		simpleReqsponse();
 		return ;
 	}
 	switch (_request.getMeth()) {
@@ -398,15 +420,37 @@ void Response::buildResponse() {
 }
 
 std::string Response::getResponse() {
-	if (_isRedirect) {
-		_responseState = DONE;
-		return _return;
-	}
 	if (_isError) {
 		if (_body.is_open())
 			_body.close();
 		_responseState = DONE;
 		return _errorResponse;
+	}
+	if (_request.isSimpleRequest()) {
+		if (_contentLen == 0) {
+			_responseState = DONE;
+			return "";
+		}
+		if (_bytesSent < _contentLen) {
+			char buffer[BUFFER_SIZE];
+			size_t toRead = std::min(static_cast<size_t>(BUFFER_SIZE), _contentLen - _bytesSent);
+
+			_body.read(buffer, toRead);
+			size_t actuallyRead = _body.gcount();
+			_bytesSent += actuallyRead;
+
+			if (_bytesSent >= _contentLen) {
+				_body.close();
+				_responseState = DONE;
+			}
+			return std::string(buffer, actuallyRead);
+		}
+		_responseState = DONE;
+		return "";
+	}
+	if (_isRedirect) {
+		_responseState = DONE;
+		return _return;
 	}
 	else if (_isCgi && _responseState != DONE) {
 			char buffer[BUFFER_SIZE];
@@ -448,6 +492,7 @@ std::string Response::getResponse() {
 			return "";
 		}
 		default:
+			_responseState = DONE;
 			return "";
 	}
 }

@@ -122,7 +122,6 @@ bool isRegularFile(const std::string& path) {
 }
 
 std::string getExtension(const std::string& path) {
-	size_t slashPos = path.find_last_of('/');
 	size_t dotPos = path.find_last_of('.');
 	std::string ext;
 

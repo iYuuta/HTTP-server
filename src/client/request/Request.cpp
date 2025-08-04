@@ -1,7 +1,7 @@
 #include "../../../includes/Request.hpp"
 
 Request::Request():
-	 _method(Unsupported),_parseState(REQUESLINE), _contentLen(0), _receivedBytes(0), _errorCode(-1)
+	 _method(Unsupported),_parseState(REQUESLINE), _contentLen(0), _receivedBytes(0), _errorCode(-1), _simpleRequest(false)
 {
 	_buffer.clear();
 	_path.clear();
@@ -16,9 +16,13 @@ Request::~Request()
 
 void Request::parseData(const char* data, size_t len)
 {
-	if (len == 0 && !_buffer.empty()) {
+	if (len == 0 && !_buffer.empty() && !_simpleRequest) {
 		_errorCode = 400;
 		throw (std::string) "Bad request";
+	}
+	if (_simpleRequest) {
+		_parseState = DONE;
+		return ;
 	}
 	_buffer.append(data, len);
 	while (!_buffer.empty())
@@ -61,13 +65,13 @@ void Request::parseData(const char* data, size_t len)
 		{
 			if (_contentLen == 0 || _receivedBytes >= _contentLen) {
 				_parseState = DONE;
-				continue;
+				break ;
 			}
 			size_t LeftOver = _contentLen - _receivedBytes;
 			size_t ReadLen = std::min(LeftOver, _buffer.size());
 
 			if (ReadLen == 0)
-				break;
+				break ;
 
 			addBody(_buffer.substr(0, ReadLen), ReadLen);
 			_buffer.erase(0, ReadLen);
@@ -81,21 +85,49 @@ void Request::parseData(const char* data, size_t len)
 			break ;
 		}
 		if (_parseState == DONE)
-		{
 			break ;
-		}
 	}
+}
+
+bool Request::isValidRequestLine(const std::string& line) {
+	size_t pos1 = line.find(' ');
+
+	if (pos1 == std::string::npos)
+		return false;
+	size_t pos2 = line.find(' ', pos1 + 1);
+
+	if (pos2 == std::string::npos) {
+		std::string method = line.substr(0, pos1);
+		std::string path = line.substr(pos1 + 1);
+
+		if (method.empty() || path.empty())
+			return false;
+		return true;
+	}
+	if (line.find(' ', pos2 + 1) != std::string::npos)
+		return false;
+	std::string method = line.substr(0, pos1);
+	std::string path = line.substr(pos1 + 1, pos2 - pos1 - 1);
+	std::string version = line.substr(pos2 + 1);
+
+	if (method.empty() || path.empty() || version.empty())
+		return false;
+	if (version != "HTTP/1.0" && version != "HTTP/1.1")
+		return false;
+	return true;
 }
 
 void Request::addRequestLine(const std::string &buff) {
 	std::istringstream parser(buff);
-	std::string method, leftover;
+	std::string method;
 
-	if (!(parser >> method >> _path))
+	if (!isValidRequestLine(buff)) {
 		_errorCode = 400;
-	parser >> _version >> leftover;
-	if (!leftover.empty() || (!_version.empty() && (_version != "HTTP/1.0" && _version != "HTTP/1.1")))
-		_errorCode = 400;
+		return ;
+	}
+	parser >> method >> _path >> _version;
+	if (_version.empty())
+		_simpleRequest = true;
 	if (method == "GET")
 		_method = Get;
 	else if (method == "POST")
@@ -111,14 +143,36 @@ void Request::addRequestLine(const std::string &buff) {
 	}
 }
 
+bool Request::isKeyValid(const std::string& line) {
+	std::string tspecials("()<>@,;:\"/[]?={}");
+
+	for (size_t i = 0; i < line.length(); i++) {
+		if ((line[i] >= 0 && line[i] <= 32) || tspecials.find(line[i]) != std::string::npos || line[i] == 127)
+			return false;
+	}
+	return true;
+}
+
 void Request::addHeaders(std::string buff)
 {
 	size_t pos = buff.find(":");
 	if (pos == std::string::npos) {
-		_errorCode = 400;
-		throw (std::string) "Bad request";
+		if (buff.empty() || (buff[0] != ' ' && buff[0] != '\t')) {
+			_errorCode = 400;
+			throw std::string("Bad request");
+		}
+		if (_headers.empty()) {
+			_errorCode = 400;
+			throw std::string("Bad request");
+		}
+		_headers.rbegin()->second += " " + trim(buff);
+		return ;
 	}
-	std::string key = trim(buff.substr(0, pos));//key : value is invalid
+	std::string key = buff.substr(0, pos);
+	if (!isKeyValid(key)) {
+		_errorCode = 400;
+		throw std::string("Bad request");
+	}
 	std::string value = trim(buff.substr(pos + 1));
 	_headers[key] = value;
 	if (key == "Content-Length")
@@ -213,7 +267,12 @@ std::map<std::string, std::string>& Request::getHeaders()
 {
 	return _headers;
 }
+
 std::string& Request::getQueryStrings()
 {
 	return _queryString;
+}
+
+bool Request::isSimpleRequest() {
+	return _simpleRequest;
 }

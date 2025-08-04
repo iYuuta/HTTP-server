@@ -62,6 +62,7 @@ class Response {
 		void DELETE();
 		void CGI();
 		void REDIRECT();
+		void simpleReqsponse();
 
 		void getBody();
 		void initCgi();

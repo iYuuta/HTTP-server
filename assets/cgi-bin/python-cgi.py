@@ -21,7 +21,10 @@ def get_post_data():
 def parse_form_data(data):
     return urllib.parse.parse_qs(data)
 
-print("Content-Type: text/html\r\n")
+# Output CGI headers with correct \r\n endings
+sys.stdout.write("Content-Type: text/html\r\n")
+sys.stdout.write("\r\n")  # Blank line separates headers from body
+sys.stdout.flush()
 
 print("<!DOCTYPE html>")
 print("<html><head><title>CGI Response</title></head><body>")

@@ -33,7 +33,6 @@ class Request {
 		void					setPath(const std::string& path);
 
 		bool					isValidRequestLine(const std::string& line);
-		bool					isKeyValid(const std::string& line);
 		const HttpRequestMethod	&getMeth() const ;
 		enums					getParseState() const ;
 		const std::string&		getPath() const ;

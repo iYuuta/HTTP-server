@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Required CGI header
-echo "Content-Type: text/html"
-echo ""
+# Required CGI header with explicit CRLF
+printf "Content-Type: text/html\r\n"
+printf "\r\n"
 
 # HTML escape function
 html_escape() {

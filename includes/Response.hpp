@@ -39,12 +39,13 @@ class Response {
 		std::string							_cgiExt;
 		std::string							_cgiFile;
 		std::vector<char*>					_envPtr;
+		int									_cgiFd;
 
 		std::string 						_errorResponse;
 		std::string 						_return;
 		std::string							_statusLine_Headers;
 		std::ifstream						_body;
-		int									_cgiFd;
+		std::ofstream						_outBody;
 		
 		bool								_isError;
 		bool								_isCgi;
@@ -66,6 +67,8 @@ class Response {
 
 		void getBody();
 		void initCgi();
+		void executeCgi();
+		bool addCgiHeaders(const std::string& line);
 
 		void validateUploadPath(const std::string& uploadPath);
 		void handleRawUpload(const std::string& uploadPath);

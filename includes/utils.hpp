@@ -44,5 +44,6 @@ bool isDirectory(const std::string& path);
 bool isExtension(const std::string& path);
 std::string getExtension(const std::string& path);
 std::string methodToStr(HttpRequestMethod meth);
+bool isKeyValid(const std::string& line);
 
 #endif

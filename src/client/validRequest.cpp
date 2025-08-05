@@ -50,5 +50,5 @@ bool Client::isBodySizeValid() {
 bool Client::isRequestValid () {
 	if (request.getErrorCode() != -1)
 		return false;
-	return isTargetValid() && isMethodValid(); //&& isBodySizeValid();
+	return isTargetValid() && isMethodValid() && isBodySizeValid();
 }

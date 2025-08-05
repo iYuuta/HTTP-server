@@ -12,7 +12,8 @@ Size::Size(size_t size)
 
 Size& Size::operator=(const Size& other)
 {
-	_size = other._size;
+	if (&other != this)
+		_size = other._size;
 	return (*this);
 }
 

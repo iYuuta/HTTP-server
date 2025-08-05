@@ -127,17 +127,15 @@ void Response::initCgi() {
     _envPtr.push_back(nullptr);
 }
 
-void Response::CGI() {
+void Response::executeCgi() {
 	int fd = 0;
 
-	initCgi();
 	_cgiFile = generateRandomName();
 	_cgiFd = open(_cgiFile.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
 	if (_cgiFd < 0) {
 		_errorCode = 500;
 		throw (std::string) "failed to open a file";
 	}
-	write(_cgiFd, "HTTP/1.0 200 ok\r\n", 17);
 	if (_request.getContentLen() > 0) {
 		fd = open(_request.getFileName().c_str(), O_RDONLY);
 		if (fd < 0) {
@@ -198,7 +196,132 @@ void Response::CGI() {
    			_errorCode = 500;
 			throw (std::string) "failed to open a file";
 		}
+		unlink(_cgiFile.c_str());
 	}
+}
+
+bool Response::addCgiHeaders(const std::string& line) {
+	size_t pos = line.find(":");
+
+	if (pos == std::string::npos) {
+		if (line.empty() || (line[0] != ' ' && line[0] != '\t'))
+			return false;		
+		if (_statusLine_Headers.empty())
+			return false;		
+		_statusLine_Headers += " " + trim(line) + "\r\n";
+		return true;
+	}
+	std::string key = line.substr(0, pos);
+
+	if (!isKeyValid(key))
+		return false;	
+	std::string value = trim(line.substr(pos + 1));
+
+	_statusLine_Headers += key + ": " + value + "\r\n";
+	if (key == "Content-Length") {
+		if (value.empty())
+			return false;		
+		char* endptr = NULL;
+		unsigned long long len = std::strtoull(value.c_str(), &endptr, 10);
+		if (endptr == value.c_str() || *endptr != '\0')
+			return false;		
+		_contentLen = static_cast<size_t>(len);
+	}
+	return true;
+}
+
+void Response::CGI() {
+	initCgi();
+	try {
+		executeCgi();
+	}
+	catch (std::string err) {
+		std::cerr << "Error: " << err << std::endl;
+		_isError = true;
+		ERROR();
+		return ;
+	}
+	_statusLine_Headers.append("HTTP/1.0 200 OK\r\n");
+	ssize_t bytes;
+	char buffer[BUFFER_SIZE];
+	std::string strbuff;
+	std::string line;
+	std::string fileName;
+	bool body = false;
+	fileName = generateRandomName();
+	_outBody.open(fileName);
+	if (!_outBody.is_open()) {
+		std::cerr << "Error: failed to open a file" << std::endl;
+		_isError = true;
+		_errorCode = 500;
+		ERROR();
+		close(_cgiFd);
+		return ;
+	}
+	while ((bytes = read(_cgiFd, buffer, BUFFER_SIZE)) > 0) {
+		strbuff.append(buffer, bytes);
+		while (!strbuff.empty()) {
+			if (!body) {
+				size_t pos = strbuff.find("\r\n");
+				if (pos == std::string::npos)
+					break ;
+				line = strbuff.substr(0, pos);
+				strbuff.erase(0, pos + 2);
+				if (line.empty()) {
+					_statusLine_Headers.append("\r\n");
+					body = true;
+					continue;
+				}
+				else if (!addCgiHeaders(line)) {
+					std::cerr << "Error: Bad Gateway" << std::endl;
+					unlink(fileName.c_str());
+					_outBody.close();
+					_isError = true;
+					_errorCode = 502;
+					ERROR();
+					close(_cgiFd);
+					return ;
+				}
+			}
+			else {
+				_outBody.write(strbuff.c_str(), strbuff.size());
+				strbuff.clear();
+			}
+		}
+	}
+	_outBody.flush();
+	if (bytes < 0 || (bytes == 0 && !body)) {
+		std::cerr << "Error: Internal Server Error" << std::endl;
+		unlink(fileName.c_str());
+		_outBody.close(); 
+		_errorCode = 500;
+		_isError = true;
+		ERROR();
+		close(_cgiFd);
+		return ;
+	}
+	else {
+		if (_contentLen == 0) {
+			struct stat fileStat;
+			stat(fileName.c_str(), &fileStat);
+			_contentLen = fileStat.st_size;
+		}
+		_outBody.close();
+		_body.open(fileName);
+		if (!_body.is_open()) {
+			std::cerr << "Error: failed to open a file" << std::endl;
+			unlink(fileName.c_str());
+			_outBody.close();
+			_isError = true;
+			_errorCode = 500;
+			ERROR();
+			close(_cgiFd);
+			return ;
+		}
+	}
+	unlink(fileName.c_str());
+	close(_cgiFd);
+	return ;
 }
 
 void Response::GET() {
@@ -218,8 +341,8 @@ void Response::GET() {
 	}
 	catch (std::string error) {
 		_isError = true;
-		ERROR();
 		std::cerr << error << std::endl;
+		ERROR();
 	}
 }
 
@@ -269,7 +392,6 @@ void Response::handleRawUpload(const std::string& uploadPath) {
     _statusLine_Headers.append("HTTP/1.0 204 No Content\r\n");
     _statusLine_Headers.append("Connection: close\r\n");
 }
-
 
 void Response::handleMultipartUpload(const std::string& uploadPath) {
     
@@ -389,8 +511,18 @@ void Response::simpleReqsponse() {
 
 void Response::buildResponse() {
 	
+	if (_errorCode != 200) {
+		_isError = true;
+		ERROR();
+		return ;
+	}
 	if (isExtension(_request.getPath())) {
-		_isCgi = true;
+		if (_request.isSimpleRequest()) {
+			_isError = true;
+			_errorCode = 400;
+			ERROR();
+			return ;
+		}
 		CGI();
 		return ;
 	}
@@ -452,18 +584,18 @@ std::string Response::getResponse() {
 		_responseState = DONE;
 		return _return;
 	}
-	else if (_isCgi && _responseState != DONE) {
-			char buffer[BUFFER_SIZE];
-			ssize_t bytes;
+	// else if (_isCgi && _responseState != DONE) {
+	// 	char buffer[BUFFER_SIZE];
+	// 	ssize_t bytes;
 
-			bytes = read(_cgiFd, buffer, BUFFER_SIZE);
-			if (bytes == 0) {
-				close(_cgiFd);
-				_responseState = DONE;
-				return "";
-			}	
-			return std::string(buffer, bytes);
-	}
+	// 	bytes = read(_cgiFd, buffer, BUFFER_SIZE);
+	// 	if (bytes == 0) {
+	// 		close(_cgiFd);
+	// 		_responseState = DONE;
+	// 		return "";
+	// 	}	
+	// 	return std::string(buffer, bytes);
+	// }
 	switch (_responseState) {
 		case STATUSLINE_HEADERS: {
 			_responseState = BODY;

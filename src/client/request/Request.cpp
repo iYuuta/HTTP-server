@@ -143,16 +143,6 @@ void Request::addRequestLine(const std::string &buff) {
 	}
 }
 
-bool Request::isKeyValid(const std::string& line) {
-	std::string tspecials("()<>@,;:\"/[]?={}");
-
-	for (size_t i = 0; i < line.length(); i++) {
-		if ((line[i] >= 0 && line[i] <= 32) || tspecials.find(line[i]) != std::string::npos || line[i] == 127)
-			return false;
-	}
-	return true;
-}
-
 void Request::addHeaders(std::string buff)
 {
 	size_t pos = buff.find(":");

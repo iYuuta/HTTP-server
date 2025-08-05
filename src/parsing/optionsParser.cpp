@@ -27,22 +27,47 @@ bool parseServerName(Server& server, std::vector<Token>::iterator& it)
 bool parseClientMaxBodySize(Server& server, std::vector<Token>::iterator& it)
 {
 	if (!validateOneArg(it))
-		return (false);
+		return false;
+
 	const std::vector<std::string> s = splitNumber(it->getKey());
-	if (s.size() != 2)
-		return (std::cerr << "Invalid " << (it - 1)->getKey() << std::endl, false);
-	if (s.at(1) != "KB")
-		return (std::cerr << (it - 1)->getKey() << " must be in KB" << std::endl, false);
-	try
-	{
-		const unsigned long value = atoiul(s.at(0));
-		server.setMaxAllowedClientRequestSize(value);
+	if (s.size() != 2) {
+		std::cerr << "Invalid " << (it - 1)->getKey() << std::endl;
+		return false;
 	}
-	catch (std::exception& _)
-	{
-		return (std::cerr << "Invalid value " << s.at(0) << std::endl, false);
+	const char* str = s.at(0).c_str();
+	char* endptr;
+	errno = 0;
+
+	unsigned long long baseValue = strtoull(str, &endptr, 10);
+
+	if (errno == ERANGE || endptr == str) {
+		std::cerr << "Invalid numeric value: " << s.at(0) << std::endl;
+		return false;
 	}
-	return (true);
+	if (*endptr != '\0') {
+		std::cerr << "Unexpected characters in number: " << s.at(0) << std::endl;
+		return false;
+	}
+	unsigned long long multiplier = 1;
+
+	if (s.at(1) == "KB")
+		multiplier = 1000;
+	else if (s.at(1) == "MB")
+		multiplier = 1000000;
+	else if (s.at(1) == "GB")
+		multiplier = 1000000000;
+	else {
+		std::cerr << (it - 1)->getKey() << " must be in a valid unit (KB, MB, GB)" << std::endl;
+		return false;
+	}
+
+	if (baseValue > ULLONG_MAX / multiplier) {
+		std::cerr << "Client body size is too large" << std::endl;
+		return false;
+	}
+	size_t value = baseValue * multiplier;
+	server.setMaxAllowedClientRequestSize(value);
+	return true;
 }
 
 bool parseErrorPage(Server& server, std::vector<Token>::iterator& it)

@@ -335,7 +335,7 @@ void Response::GET() {
 		_statusLine_Headers.append("HTTP/1.0 " + intToString(_errorCode) + " OK\r\n");
 		_statusLine_Headers.append("Content-Type: " + _contentType + "\r\n");
 		_statusLine_Headers.append("Content-Length: " + intToString(_contentLen) + "\r\n");
-		_statusLine_Headers.append("Connection: Close\r\n");
+		_statusLine_Headers.append("Connection: Close\r\n\r\n");
 		if (_contentLen > 0)
 			_statusLine_Headers.append("\r\n");
 	}
@@ -390,7 +390,7 @@ void Response::handleRawUpload(const std::string& uploadPath) {
     newFile.close();
 
     _statusLine_Headers.append("HTTP/1.0 204 No Content\r\n");
-    _statusLine_Headers.append("Connection: close\r\n");
+    _statusLine_Headers.append("Connection: close\r\n\r\n");
 }
 
 void Response::handleMultipartUpload(const std::string& uploadPath) {
@@ -422,7 +422,7 @@ void Response::handleMultipartUpload(const std::string& uploadPath) {
     }
 
     _statusLine_Headers.append("HTTP/1.0 201 Created\r\n");
-    _statusLine_Headers.append("Connection: close\r\n");
+    _statusLine_Headers.append("Connection: close\r\n\r\n");
 }
 
 void Response::POST() {

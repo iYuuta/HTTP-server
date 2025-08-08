@@ -23,10 +23,10 @@ void Response::parsePartHeaders(const std::string& headerStr, Multipart& part) {
 		size_t colonPos = line.find(':');
 		if (colonPos != std::string::npos) {
 			std::string name = line.substr(0, colonPos);
-			// if (!isKeyValid(name)) {
-			// 	_errorCode = 400;
-			// 	throw std::string("Bad request");
-			// }
+			if (!isKeyValid(name)) {
+				_errorCode = 400;
+				throw std::string("Bad request");
+			}
 			std::string value = trim(line.substr(colonPos + 1));
 
 			part.headers[name] = value;
@@ -49,19 +49,19 @@ void Response::parsePartHeaders(const std::string& headerStr, Multipart& part) {
 			else if (name == "Content-Type")
 				part.contentType = value;
 		}
-		// else {
-		// 	if (line.empty() || (line[0] != ' ' && line[0] != '\t')) {
-		// 		_errorCode = 400;
-		// 		throw std::string("Bad request");
-		// 	}
-		// 	if (part.headers.empty()) {
-		// 		_errorCode = 400;
-		// 		throw std::string("Bad request");
-		// 	}
-		// 	if (!part.headers.empty()) {
-		// 		part.headers.rbegin()->second = part.headers.rbegin()->second + " " + trim(line);
-		// 	}
-		// }
+		else {
+			if (line.empty() || (line[0] != ' ' && line[0] != '\t')) {
+				_errorCode = 400;
+				throw std::string("Bad request");
+			}
+			if (part.headers.empty()) {
+				_errorCode = 400;
+				throw std::string("Bad request");
+			}
+			if (!part.headers.empty()) {
+				part.headers.rbegin()->second = part.headers.rbegin()->second + " " + trim(line);
+			}
+		}
 	}
 }
 

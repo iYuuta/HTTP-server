@@ -67,13 +67,13 @@ void Response::ERROR() {
 			break;
 	}
 	if (!_errorPageExists) {
-		_errorResponse.append("Content-Type: text/html\r\nContent-Length: 147\r\nConnection: Close\r\n\r\n");
+		_errorResponse.append("Content-Type: text/html\r\nContent-Length: 147\r\nConnection: Close\r\n");
 		_errorResponse.append(DEF_ERROR);
 		return;
 	}
 	_errorResponse.append("Content-Type: text/html\r\n");
 	_errorResponse.append("Content-Length: " + intToString(_contentLen) + "\r\n");
-	_errorResponse.append("Connection: Close\r\n\r\n");
+	_errorResponse.append("Connection: Close\r\n");
 	std::ostringstream ss;
 	ss << _body.rdbuf();
 	_errorResponse += ss.str();
@@ -336,8 +336,6 @@ void Response::GET() {
 		_statusLine_Headers.append("Content-Type: " + _contentType + "\r\n");
 		_statusLine_Headers.append("Content-Length: " + intToString(_contentLen) + "\r\n");
 		_statusLine_Headers.append("Connection: Close\r\n\r\n");
-		if (_contentLen > 0)
-			_statusLine_Headers.append("\r\n");
 	}
 	catch (std::string error) {
 		_isError = true;

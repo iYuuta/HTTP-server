@@ -57,6 +57,8 @@ class Response {
 		std::string							_boundary;
 		std::vector<Multipart>				_multiparts;
 
+		std::vector<std::string>	_cookies;
+
 		void ERROR();
 		void GET();
 		void POST();
@@ -90,6 +92,9 @@ class Response {
 		void isRedirect();
 		enums getResponseState() const ;
 		std::string getResponse();
+
+		void	addCookie(const std::string &cookie);
+		void	buildCookies();
 };
 
 #endif

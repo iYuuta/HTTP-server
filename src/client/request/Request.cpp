@@ -179,6 +179,14 @@ void Request::addHeaders(std::string buff)
 		}
 		_contentLen = static_cast<size_t>(len);
 	}
+	else if (key == "Cookie")
+	{
+		if (value.empty()) {
+			_errorCode = 400;
+			throw (std::string) "Bad request";
+		}
+		parseCookie(value);
+	}
 }
 
 void Request::addBody(const std::string& buff, size_t len)
@@ -265,4 +273,32 @@ std::string& Request::getQueryStrings()
 
 bool Request::isSimpleRequest() {
 	return _simpleRequest;
+}
+
+
+void Request::parseCookie(const std::string &cookie)
+{
+	std::stringstream ss(cookie);
+	std::string		  part;
+	
+	while(std::getline(ss, part, ';'))
+	{
+		size_t start = part.find_first_not_of(" \t");
+		if (start != std::string::npos)
+			part = part.substr(start);
+		
+		size_t equal = part.find('=');
+		if (equal != std::string::npos)
+		{
+			std::string key = part.substr(0, equal);
+			std::string value = part.substr(equal + 1);
+			_cookies[key] = value;
+		} 
+	}
+}
+
+
+std::string Request::getCookie(const std::string &key)
+{
+	return (_cookies[key]);
 }

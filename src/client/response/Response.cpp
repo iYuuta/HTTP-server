@@ -73,6 +73,10 @@ void Response::ERROR() {
 	}
 	_errorResponse.append("Content-Type: text/html\r\n");
 	_errorResponse.append("Content-Length: " + intToString(_contentLen) + "\r\n");
+
+	for (size_t i = 0; i < _cookies.size(); i++)
+         _statusLine_Headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
+
 	_errorResponse.append("Connection: Close\r\n");
 	std::ostringstream ss;
 	ss << _body.rdbuf();
@@ -335,7 +339,13 @@ void Response::GET() {
 		_statusLine_Headers.append("HTTP/1.0 " + intToString(_errorCode) + " OK\r\n");
 		_statusLine_Headers.append("Content-Type: " + _contentType + "\r\n");
 		_statusLine_Headers.append("Content-Length: " + intToString(_contentLen) + "\r\n");
+
+	    for (size_t i = 0; i < _cookies.size(); i++)
+            _statusLine_Headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
+
 		_statusLine_Headers.append("Connection: Close\r\n\r\n");
+
+	
 	}
 	catch (std::string error) {
 		_isError = true;
@@ -388,6 +398,10 @@ void Response::handleRawUpload(const std::string& uploadPath) {
     newFile.close();
 
     _statusLine_Headers.append("HTTP/1.0 204 No Content\r\n");
+
+	for (size_t i = 0; i < _cookies.size(); i++)
+         _statusLine_Headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
+
     _statusLine_Headers.append("Connection: close\r\n\r\n");
 }
 
@@ -420,6 +434,10 @@ void Response::handleMultipartUpload(const std::string& uploadPath) {
     }
 
     _statusLine_Headers.append("HTTP/1.0 201 Created\r\n");
+
+	for (size_t i = 0; i < _cookies.size(); i++)
+         _statusLine_Headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
+
     _statusLine_Headers.append("Connection: close\r\n\r\n");
 }
 
@@ -474,6 +492,10 @@ void Response::DELETE() {
 
 		_statusLine_Headers.clear();
 		_statusLine_Headers.append("HTTP/1.0 204 No Content\r\n");
+
+		for (size_t i = 0; i < _cookies.size(); i++)
+         _statusLine_Headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
+
 		_statusLine_Headers.append("Connection: Close\r\n\r\n");
 		_contentLen = 0;
 
@@ -507,6 +529,26 @@ void Response::simpleReqsponse() {
 	}
 }
 
+void Response::buildCookies() 
+{
+	std::string sessionId = _request.getCookie("session-id");
+	std::cout << "session id : " << sessionId << std::endl;
+	if (sessionId.empty())
+	{
+		std::cout << "First time ?" << std::endl;
+
+		std::stringstream ss;
+		ss << "user-" << rand();
+		std::string newSessionId = ss.str();
+		
+		std::string cookie = "session-id=" + newSessionId + "; Path=/";
+
+		addCookie(cookie);
+	}
+	else
+		std::cout << "Hello " << sessionId << std::endl;
+}
+
 void Response::buildResponse() {
 	
 	if (_errorCode != 200) {
@@ -514,6 +556,9 @@ void Response::buildResponse() {
 		ERROR();
 		return ;
 	}
+
+	buildCookies();
+
 	if (isExtension(_request.getPath())) {
 		if (_request.isSimpleRequest()) {
 			_isError = true;
@@ -637,4 +682,9 @@ void Response::isRedirect() {
 
 enums Response::getResponseState() const {
 	return _responseState;
+}
+
+void Response::addCookie(const std::string &cookie)
+{
+	_cookies.push_back(cookie);
 }

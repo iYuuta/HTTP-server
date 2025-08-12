@@ -72,7 +72,7 @@
 				</form>
 			</section>
 
-			<!-- POST to CGI -->
+			<!-- CGI: GET or POST or DELETE -->
 			<section
 				class="rounded-2xl border border-slate-200/60 bg-white/70 p-6 shadow-lg ring-1 ring-black/5 backdrop-blur transition hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/70">
 				<div class="mb-4 flex items-center gap-3">
@@ -83,9 +83,9 @@
 								d="M3 6a3 3 0 0 1 3-3h4l2 2h6a3 3 0 0 1 3 3v1H3V6Zm0 3h18v9a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V9Zm4 2v2h10v-2H7Z" />
 						</svg>
 					</span>
-					<h2 class="text-lg font-semibold">POST to CGI</h2>
+					<h2 class="text-lg font-semibold">CGI Request (GET / POST / DELETE)</h2>
 				</div>
-				<form id="cgiForm" method="post" class="space-y-4">
+				<form id="cgiForm" method="post" onsubmit="submitCgi(event)" class="space-y-4">
 					<div>
 						<label for="cgi-script" class="mb-1 block text-sm font-medium">Choose CGI script</label>
 						<select id="cgi-script" onchange="updateAction()"
@@ -93,6 +93,15 @@
 							<option value="/cgi-bin/python-cgi.py">python-cgi.py</option>
 							<option value="/cgi-bin/bash-cgi.sh">bash-cgi.sh</option>
 							<option value="/cgi-bin/php-cgi.php">php-cgi.php</option>
+						</select>
+					</div>
+					<div>
+						<label for="cgi-method" class="mb-1 block text-sm font-medium">HTTP Method</label>
+						<select id="cgi-method"
+							class="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm transition placeholder-slate-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+							<option value="GET">GET</option>
+							<option value="POST" selected>POST</option>
+							<option value="DELETE">DELETE</option>
 						</select>
 					</div>
 					<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -113,8 +122,10 @@
 							fill="currentColor">
 							<path d="M5 12h14v2H5v-2Zm0-4h14v2H5V8Zm0 8h14v2H5v-2Z" />
 						</svg>
-						POST to CGI
+						Send to CGI
 					</button>
+					<pre id="cgiResult"
+						class="mt-3 whitespace-pre-wrap rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-200"></pre>
 				</form>
 			</section>
 
@@ -221,6 +232,44 @@
 			if (select && form) form.action = select.value;
 		}
 
+		async function submitCgi(e) {
+			e.preventDefault();
+			const form = document.getElementById('cgiForm');
+			const methodSel = document.getElementById('cgi-method');
+			const result = document.getElementById('cgiResult');
+			const name = document.getElementById('name');
+			const message = document.getElementById('message');
+			if (!form || !methodSel || !result || !name) return;
+			const action = form.action || document.getElementById('cgi-script')?.value || '/cgi-bin/python-cgi.py';
+			const method = (methodSel.value || 'POST').toUpperCase();
+			result.textContent = 'Sending request...';
+			try {
+				let res;
+				if (method === 'DELETE') {
+					// Encode fields into query string for DELETE
+					const params = new URLSearchParams();
+					params.set('name', name.value || '');
+					params.set('message', message.value || '');
+					const url = action + (action.includes('?') ? '&' : '?') + params.toString();
+					res = await fetch(url, { method: 'DELETE' });
+				} else {
+					// Default POST as application/x-www-form-urlencoded
+					const body = new URLSearchParams();
+					body.set('name', name.value || '');
+					body.set('message', message.value || '');
+					res = await fetch(action, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+						body: body.toString(),
+					});
+				}
+				const text = await res.text();
+				result.textContent = `Status: ${res.status}\n\n${text}`;
+			} catch (err) {
+				result.textContent = 'Error: ' + (err?.message || String(err));
+			}
+		}
+
 		function updateUploadAction() {
 			const input = document.getElementById('uploadPath');
 			const form = document.getElementById('uploadForm');
@@ -265,6 +314,9 @@
 			}
 		}
 
+		document.addEventListener('DOMContentLoaded', () => {
+			updateAction();
+		});
 	</script>
 </body>
 

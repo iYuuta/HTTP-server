@@ -408,25 +408,35 @@ void Response::buildIndex() {
 		throw (std::string) "Open failed";
 		return ;
 	}
-	out << "<!DOCTYPE html>\n<html>\n<head>\n<title>Index of " << path << "</title>\n"
-		<< "<meta charset=\"utf-8\">\n<style>\n"
-		<< "body { font-family: Arial, sans-serif; }\n"
-		<< "table { border-collapse: collapse; width: 100%; }\n"
-		<< "th, td { padding: 8px; border-bottom: 1px solid #ddd; }\n"
-		<< "a { text-decoration: none; color: #0366d6; }\n"
-		<< "a:hover { text-decoration: underline; }\n"
-		<< "</style>\n</head>\n<body>\n"
-		<< "<h1>Index of " <<  path << "</h1>\n<hr>\n<table>\n"
-		<< "<tr><th>Name</th></tr>\n";
+	out << "<!DOCTYPE html>\n<html lang=\"en\" class=\"h-full\">\n<head>\n"
+		<< "<meta charset=\"UTF-8\" />\n"
+		<< "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n"
+		<< "<title>Index of " << path << "</title>\n"
+		<< "<script src=\"https://cdn.tailwindcss.com\"></script>\n"
+		<< "</head>\n"
+		<< "<body class=\"min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 text-slate-800 antialiased dark:from-slate-900 dark:to-slate-950 dark:text-slate-200\">\n"
+		<< "<main class=\"mx-auto max-w-6xl p-6\">\n"
+		<< "<div class=\"rounded-2xl border border-slate-200/60 bg-white/70 p-6 shadow-lg ring-1 ring-black/5 backdrop-blur dark:border-slate-800 dark:bg-slate-900/70\">\n"
+		<< "<div class=\"mb-4 flex items-center gap-3\">\n"
+		<< "<span class=\"inline-flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300\">\n"
+		<< "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-5 w-5\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M3 6a3 3 0 0 1 3-3h4l2 2h6a3 3 0 0 1 3 3v1H3V6Zm0 3h18v9a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V9Zm4 2v2h10v-2H7Z\" /></svg>\n"
+		<< "</span>\n"
+		<< "<h1 class=\"text-2xl font-semibold tracking-tight\">Index of " << path << "</h1>\n"
+		<< "</div>\n"
+		<< "<table class=\"w-full text-left\">\n"
+		<< "<thead><tr class=\"border-b border-slate-200/60 dark:border-slate-800\"><th class=\"p-3\">Name</th></tr></thead>\n"
+		<< "<tbody>\n";
+
 	dirent *entry;
 	while ((entry = readdir(dir)) != NULL) {
 		std::string name = entry->d_name;
 
 		if (name == "." || name == "..")
 			continue;
-		out << "<tr><td onclick=\"window.location.href+=\'/" << name <<"\' \">" << name << "</td></tr>\n";
+		out << "<tr class=\"border-b border-slate-200/60 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer\" onclick=\"window.location.href+='" << name << (isDirectory((_location->getRoute() + _request.getPath() + name).c_str()) ? "/" : "") << "'\">"
+			<< "<td class=\"p-3\">" << name << "</td></tr>\n";
 	}
-	out << "</table>\n<hr>\n</body>\n</html>\n";
+	out << "</tbody>\n</table>\n</div>\n</main>\n</body>\n</html>\n";
 	closedir(dir);
 	out.close();
 	_body.open(fileName.c_str(), std::ios::in | std::ios::binary);

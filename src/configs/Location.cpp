@@ -60,24 +60,6 @@ bool Location::isMethodValid(const HttpRequestMethod& method)
 	return false;
 }
 
-void Location::printMethods()
-{
-	for (std::vector<HttpRequestMethod>::iterator it = _methods.begin(); it != _methods.end(); ++it)
-	{
-		switch (*it)
-		{
-			case Get: std::cout << "Method: GET\n";
-				break;
-			case Post: std::cout << "Method: POST\n";
-				break;
-			case Delete: std::cout << "Method: DELETE\n";
-				break;
-			default: std::cout << "Method: Unsupported\n";
-				break;
-		}
-	}
-}
-
 const std::string& Location::getUrl()
 {
 	return _url;

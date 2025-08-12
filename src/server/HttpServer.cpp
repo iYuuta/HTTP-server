@@ -139,7 +139,6 @@ void HttpServer::listen()
 void HttpServer::handleNewConnection(pollfd& pollFd)
 {
 	Server& server = getServerByFd(pollFd.fd);
-	std::cout << "New connection" << std::endl;
 	sockaddr_in address = server.getSocketAddress();
 	socklen_t socketLen = sizeof(address);
 	const int clientFd = accept(pollFd.fd, (struct sockaddr*)&address, &socketLen);

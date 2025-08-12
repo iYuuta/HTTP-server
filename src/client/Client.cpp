@@ -35,7 +35,6 @@ void Client::parseRequest()
 		if (request.getParseState() == DONE)
 		{
 			_requestDone = true;
-			// std::cout << request << std::endl;
 			if (!isRequestValid()) {
 				response.setErrorCode(_errorCode);
 				return ;
@@ -45,7 +44,7 @@ void Client::parseRequest()
 	catch (std::string error) {
 		response.setErrorCode(request.getErrorCode());
 		_requestDone = true;
-		std::cerr << "Error: " << error << " -> " << request.getErrorCode() << std::endl;
+		std::cerr << "Error: " << error << std::endl;
 	}
 }
 
@@ -56,9 +55,6 @@ void Client::createResponse() {
 void Client::writeData() {
 	const std::string& buff = response.getResponse();
 	write(_fd, buff.c_str(), buff.size());
-	// std::cout << "*************************************\n";
-	// write(1, buff.c_str(), buff.size());
-	// std::cout << "*************************************\n";
 }
 
 bool Client::isRequestDone() {
@@ -73,41 +69,4 @@ bool Client::isFinished() {
 	if (response.getResponseState() == DONE)
 		return true;
 	return false;
-}
-
-std::ostream& operator<<(std::ostream& os, Request& req)
-{
-	os << "=== HTTP Request ===\n";
-
-	switch (req.getMeth())
-	{
-	case Get: os << "Method: GET\n";
-		break;
-	case Post: os << "Method: POST\n";
-		break;
-	case Delete: os << "Method: DELETE\n";
-		break;
-	default: os << "Method: Unsupported\n";
-		break;
-	}
-
-	os << "Path: " << req.getPath() << "\n";
-	os << "Version: " << req.getVersion() << "\n";
-
-	os << "\nHeaders:\n";
-	for (std::map<std::string, std::string>::iterator it = req.getHeaders().begin(); it != req.getHeaders().end(); it++)
-	{
-		os << it->first << ": " << it->second << "\n";
-	}
-
-	os << "\nqueryStrings:\n" << req.getQueryStrings() << std::endl;
-	if (req.getContentLen() > 0)
-	{
-		os << "\nBody File Content:\n";
-		os << req.getBodyFile().rdbuf();
-		os << "\nContent-Length: " << req.getContentLen() << "\n";
-		os << "Received Bytes: " << req.getReceivedBytes() << "\n";
-	}
-	os << "====================\n";
-	return os;
 }

@@ -468,7 +468,6 @@ void Response::getBody() {
 	if (stat(fileName.c_str(), &fileStat) == 0)
 		_contentLen = fileStat.st_size;
 	else {
-		std::cout << fileName << std::endl;
 		_errorCode = 404;
 		throw (std::string) "file not found";
 	}
@@ -594,11 +593,8 @@ void Response::simpleReqsponse() {
 void Response::buildCookies() 
 {
 	std::string sessionId = _request.getCookie("session-id");
-	std::cout << "session id : " << sessionId << std::endl;
 	if (sessionId.empty())
 	{
-		std::cout << "First time ?" << std::endl;
-
 		std::stringstream ss;
 		ss << "user-" << rand();
 		std::string newSessionId = ss.str();
@@ -607,8 +603,6 @@ void Response::buildCookies()
 
 		addCookie(cookie);
 	}
-	else
-		std::cout << "Hello " << sessionId << std::endl;
 }
 
 void Response::buildResponse() {
@@ -661,7 +655,6 @@ std::string Response::getResponse() {
 		if (_body.is_open())
 			_body.close();
 		_responseState = DONE;
-		std::cout << _errorResponse << std::endl;
 		return _errorResponse;
 	}
 	if (_request.isSimpleRequest()) {

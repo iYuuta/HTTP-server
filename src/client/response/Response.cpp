@@ -510,6 +510,8 @@ void Response::POST() {
 	}
 	try {
 		std::string uploadPath = _location->getUploadStore();
+		if (uploadPath.empty())
+			uploadPath = _location->getRoute();
 		validateUploadPath(uploadPath);
 		
 		std::string contentType = _request.getHeader("Content-Type");

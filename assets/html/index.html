@@ -118,7 +118,7 @@
 				</form>
 			</section>
 
-			<!-- File Upload to /uploads -->
+			<!-- File Upload to arbitrary path (like GET) -->
 			<section
 				class="rounded-2xl border border-slate-200/60 bg-white/70 p-6 shadow-lg ring-1 ring-black/5 backdrop-blur transition hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/70">
 				<div class="mb-4 flex items-center gap-3">
@@ -129,9 +129,15 @@
 								d="M19 15v4H5v-4H3v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4h-2Zm-6-1 4-4-1.41-1.41L13 10.17V2h-2v8.17L8.41 8.59 7 10l6 6Z" />
 						</svg>
 					</span>
-					<h2 class="text-lg font-semibold">Upload File to /uploads</h2>
+					<h2 class="text-lg font-semibold">Upload File (choose endpoint)</h2>
 				</div>
-				<form action="/uploads" method="post" enctype="multipart/form-data" class="space-y-4">
+				<form id="uploadForm" action="/uploads" method="post" enctype="multipart/form-data" class="space-y-4">
+					<div>
+						<label for="uploadPath" class="mb-1 block text-sm font-medium">Endpoint path</label>
+						<input type="text" id="uploadPath" placeholder="/uploads" value="/uploads"
+							class="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm transition placeholder-slate-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+							oninput="updateUploadAction()" />
+					</div>
 					<div>
 						<label for="file" class="mb-1 block text-sm font-medium">Choose a file</label>
 						<input type="file" name="file" id="file"
@@ -148,7 +154,7 @@
 				</form>
 			</section>
 
-			<!-- DELETE Request via JS -->
+			<!-- DELETE Request via JS (choose path like GET) -->
 			<section
 				class="rounded-2xl border border-slate-200/60 bg-white/70 p-6 shadow-lg ring-1 ring-black/5 backdrop-blur transition hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/70">
 				<div class="mb-4 flex items-center gap-3">
@@ -158,13 +164,12 @@
 							<path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12ZM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4Z" />
 						</svg>
 					</span>
-					<h2 class="text-lg font-semibold">DELETE Request to /uploads</h2>
+					<h2 class="text-lg font-semibold">DELETE Request (choose path)</h2>
 				</div>
 				<div class="space-y-4">
 					<div>
-						<label for="delPath" class="mb-1 block text-sm font-medium">File to delete (relative to
-							/uploads)</label>
-						<input type="text" id="delPath" placeholder="example.txt"
+						<label for="delPath" class="mb-1 block text-sm font-medium">Path to DELETE</label>
+						<input type="text" id="delPath" placeholder="/uploads/example.txt"
 							class="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm transition placeholder-slate-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-rose-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" />
 					</div>
 					<button onclick="sendDelete()"
@@ -216,6 +221,16 @@
 			if (select && form) form.action = select.value;
 		}
 
+		function updateUploadAction() {
+			const input = document.getElementById('uploadPath');
+			const form = document.getElementById('uploadForm');
+			if (!input || !form) return;
+			let path = (input.value || '').trim();
+			if (!path) return; // leave previous action
+			if (!path.startsWith('/')) path = '/' + path;
+			form.action = path;
+		}
+
 		function submitGet(e) {
 			e.preventDefault();
 			const input = document.getElementById('getPath');
@@ -240,7 +255,9 @@
 			}
 			result.innerText = 'Sending request...';
 			try {
-				const res = await fetch(`/uploads/${encodeURIComponent(file)}`, { method: 'DELETE' });
+				let path = file;
+				if (!path.startsWith('/')) path = '/' + path;
+				const res = await fetch(path, { method: 'DELETE' });
 				const text = await res.text();
 				result.innerText = `Status: ${res.status}\n\n${text}`;
 			} catch (e) {

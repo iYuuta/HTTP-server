@@ -16,7 +16,7 @@ class Location
 		bool							_autoindex;
 		std::string						_index;
 		std::string						_uploadStore;
-		std::string						_cgiExt;
+		std::vector<std::string>		_cgiExt;
 		std::pair<int, std::string>		_return;
 	public:
 		Location();
@@ -27,7 +27,6 @@ class Location
 		void				setIndex(const std::string &index);
 		void				setUploadStore(const std::string &store);
 		void				setReturn(const int &code, const std::string &page);
-		void				setCgiExt(const std::string &ext);
 		bool				isMethodValid(const HttpRequestMethod &method);
 		bool				isRedirect();
 		const std::string&	getUrl();
@@ -37,6 +36,7 @@ class Location
 		const std::string&	getUploadStore();
 		bool				autoIndex();
 		void				printMethods();
+		void				addCgiExt(const std::string &ext);
 };
 
 #endif

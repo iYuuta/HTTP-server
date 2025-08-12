@@ -41,3 +41,17 @@ bool validateMultiArgs(const std::vector<Token>::iterator& it, int args)
 		std::cerr << "key: " << (it - 1)->getKey() << " requires " << args << " arguments" << std::endl;
 	return (size == args);
 }
+
+bool validateAtLeast(const std::vector<Token>::iterator& it, int min)
+{
+	int size = 1;
+
+	while ((it + size)->getToken() != Semicolon)
+		size++;
+	if (size < min)
+	{
+		std::cerr << "key: " << (it - 1)->getKey() << " requires at least " << min << " arguments" << std::endl;
+		return (false);
+	}
+	return (true);
+}

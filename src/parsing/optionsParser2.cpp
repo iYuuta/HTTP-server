@@ -57,9 +57,11 @@ bool parseLocationUploadStore(Location& location, std::vector<Token>::iterator& 
 
 bool parseLocationCgiExt(Location& location, std::vector<Token>::iterator& it)
 {
-	if (!validateOneArg(it))
-		return (false);
-	location.setCgiExt(it->getKey());
+	while (it->getToken() != Semicolon)
+	{
+		location.addCgiExt(it->getKey());
+		++it;
+	}
 	return (true);
 }
 

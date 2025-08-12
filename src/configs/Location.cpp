@@ -50,11 +50,6 @@ void Location::setReturn(const int& code, const std::string& page)
 	this->_return = std::make_pair(code, page);
 }
 
-void Location::setCgiExt(const std::string& ext)
-{
-	_cgiExt = ext;
-}
-
 bool Location::isMethodValid(const HttpRequestMethod& method)
 {
 	for (std::vector<HttpRequestMethod>::iterator it = _methods.begin(); it != _methods.end(); ++it)
@@ -106,4 +101,9 @@ const std::string& Location::getUploadStore()
 bool Location::autoIndex()
 {
 	return _autoindex;
+}
+
+void Location::addCgiExt(const std::string &ext)
+{
+	_cgiExt.push_back(ext);
 }

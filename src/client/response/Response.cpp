@@ -26,7 +26,7 @@ _bytesSent(0) {
 void Response::ERROR() {
 	std::string errorFile = _errorPages[_errorCode];
 	struct stat fileStat;
- 
+
 	if (_body.is_open())
 		_body.close();
 	if (errorFile.length() == 0)
@@ -67,7 +67,7 @@ void Response::ERROR() {
 			break;
 	}
 	if (!_errorPageExists) {
-		_errorResponse.append("Content-Type: text/html\r\nContent-Length: 147\r\nConnection: Close\r\n");
+		_errorResponse.append("Content-Type: text/html\r\nContent-Length: 147\r\nConnection: Close\r\n\r\n");
 		_errorResponse.append(DEF_ERROR);
 		return;
 	}
@@ -77,7 +77,7 @@ void Response::ERROR() {
 	for (size_t i = 0; i < _cookies.size(); i++)
 		 _statusLine_Headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
 
-	_errorResponse.append("Connection: Close\r\n");
+	_errorResponse.append("Connection: Close\r\n\r\n");
 	std::ostringstream ss;
 	ss << _body.rdbuf();
 	_errorResponse += ss.str();
@@ -391,7 +391,7 @@ void Response::CGI() {
 
 void Response::GET() {
 	if (_errorCode != 200 && _errorCode != -1) {
-		_isError = true;
+		std::cout << "her\n";
 		ERROR();
 		return ;
 	}
@@ -658,6 +658,7 @@ std::string Response::getResponse() {
 		if (_body.is_open())
 			_body.close();
 		_responseState = DONE;
+		std::cout << _errorResponse << std::endl;
 		return _errorResponse;
 	}
 	if (_request.isSimpleRequest()) {

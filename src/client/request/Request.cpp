@@ -120,6 +120,29 @@ bool Request::isValidRequestLine(const std::string& line) {
 	return true;
 }
 
+void Request::decodeUrl() {
+	std::string newPath;
+	
+	for (size_t i = 0; i < _path.length(); i++) {
+		if (_path[i] == '%') {
+			if (i + 2 >= _path.length()) {
+				_errorCode = 400;
+				return ;
+			}
+			if (std::string("0123456789ABCDEFabcdef").find(_path[i + 1]) == std::string::npos ||
+			std::string("0123456789ABCDEFabcdef").find(_path[i + 2]) == std::string::npos) {
+				_errorCode = 400;
+				return ;
+			}
+			newPath += hexToAscii(_path[i + 1], _path[i + 2]);
+			i += 2;
+		}
+		else
+			newPath += _path[i];
+	}
+	_path = newPath;
+}
+
 void Request::addRequestLine(const std::string &buff) {
 	std::istringstream parser(buff);
 	std::string method;
@@ -144,6 +167,8 @@ void Request::addRequestLine(const std::string &buff) {
 		_queryString = _path.substr(pos + 1);
 		_path = _path.substr(0, pos);
 	}
+	if (_path.find('%') != std::string::npos)
+		decodeUrl();
 }
 
 void Request::addHeaders(std::string buff)

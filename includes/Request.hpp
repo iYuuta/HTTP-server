@@ -33,6 +33,7 @@ class Request {
 		void					addHeaders(std::string buff);
 		void					addBody(const std::string& buff, size_t len);
 		void					setPath(const std::string& path);
+		void					decodeUrl();
 
 		bool					isValidRequestLine(const std::string& line);
 		const HttpRequestMethod	&getMeth() const ;

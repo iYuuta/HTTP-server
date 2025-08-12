@@ -171,3 +171,20 @@ bool isKeyValid(const std::string& line) {
 	}
 	return true;
 }
+
+int hexCharToInt(char c) {
+    c = std::toupper(c);
+    if (c >= '0' && c <= '9')
+        return c - '0';
+    else if (c >= 'A' && c <= 'F')
+        return c - 'A' + 10;
+    return -1;
+}
+
+char hexToAscii(char a, char b) {
+    int hi = hexCharToInt(toupper(a));
+    int lo = hexCharToInt(toupper(b));
+    if (hi == -1 || lo == -1)
+        return 0;
+    return static_cast<char>((hi << 4) | lo);
+}

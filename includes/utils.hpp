@@ -19,6 +19,7 @@
 # include <sys/wait.h>
 # include <dirent.h>
 # include "HttpRequestMethod.hpp"
+# include "Location.hpp"
 
 #define BUFFER_SIZE 4096
 
@@ -43,7 +44,7 @@ std::string trim(const std::string& s);
 std::string generateRandomName();
 bool isRegularFile(const std::string& path);
 bool isDirectory(const std::string& path);
-bool isExtension(const std::string& path);
+bool isExtension(const std::string& path, std::vector<std::string> _ext);
 std::string getExtension(const std::string& path);
 std::string methodToStr(HttpRequestMethod meth);
 bool isKeyValid(const std::string& line);

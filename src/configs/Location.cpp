@@ -98,6 +98,11 @@ const std::string& Location::getUploadStore()
 	return _uploadStore;
 }
 
+const std::vector<std::string> Location::getExt()
+{
+	return _cgiExt;
+}
+
 bool Location::autoIndex()
 {
 	return _autoindex;

@@ -22,6 +22,7 @@ class Location
 		Location();
 		void				setUrl(const std::string &url);
 		void				addMethod(const HttpRequestMethod &method);
+		void				addCgiExt(const std::string &ext);
 		void				setRoute(const std::string &route);
 		void				setAutoIndex(const bool &autoindex);
 		void				setIndex(const std::string &index);
@@ -34,9 +35,9 @@ class Location
 		const std::string&	getRoute();
 		const std::string&	getIndex();
 		const std::string&	getUploadStore();
+		const std::vector<std::string>	getExt();
 		bool				autoIndex();
 		void				printMethods();
-		void				addCgiExt(const std::string &ext);
 };
 
 #endif

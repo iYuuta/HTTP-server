@@ -135,7 +135,7 @@ std::string getExtension(const std::string& path) {
 	return "";
 }
 
-bool isExtension(const std::string& path) {
+bool isExtension(const std::string& path, std::vector<std::string> _ext) {
 	size_t slashPos = path.find_last_of('/');
 	size_t dotPos = path.find_last_of('.');
 	std::string ext;
@@ -143,8 +143,9 @@ bool isExtension(const std::string& path) {
 	if (dotPos == std::string::npos || (slashPos != std::string::npos && dotPos < slashPos))
 		return false;
 	ext = path.substr(dotPos);
-	if (ext == ".py" || ext == ".php" || ext == ".sh")
-		return true;
+	for (std::vector<std::string>::iterator it = _ext.begin(); it != _ext.end(); it++)
+		if (*it == ext)
+			return true;
 	return false;
 }
 

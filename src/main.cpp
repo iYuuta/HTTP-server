@@ -5,6 +5,7 @@ int main (int ac, char **av)
 {
     // Config      conf("configs/test.conf");
     ac = 1;
+    ac++;
     Config      conf(av[1]);
     HttpServer  server(conf);
 

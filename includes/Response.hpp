@@ -68,6 +68,7 @@ class Response {
 		void simpleReqsponse();
 
 		void getBody();
+		void buildIndex();
 		void initCgi();
 		void executeCgi();
 		bool addCgiHeaders(const std::string& line);

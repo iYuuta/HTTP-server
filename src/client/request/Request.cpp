@@ -40,7 +40,10 @@ void Request::parseData(const char* data, size_t len)
 				throw (std::string) "Unsupported method";
 			}
 			_buffer.erase(0, pos + 2);
-			_parseState = HEADERS;
+			if (_simpleRequest)
+				_parseState = DONE;
+			else
+				_parseState = HEADERS;
 		}
 		else if (_parseState == HEADERS)
 		{

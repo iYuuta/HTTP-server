@@ -11,11 +11,13 @@
 # include <map>
 # include <ctime>
 # include <cerrno>
+# include <climits>
 # include <cstdlib>
 # include <sys/stat.h>
 # include <unistd.h>
 # include <fcntl.h>
 # include <sys/wait.h>
+# include <dirent.h>
 # include "HttpRequestMethod.hpp"
 
 #define BUFFER_SIZE 4096

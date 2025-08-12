@@ -136,7 +136,6 @@ void HttpServer::listen()
 	}
 }
 
-
 void HttpServer::handleNewConnection(pollfd& pollFd)
 {
 	Server& server = getServerByFd(pollFd.fd);

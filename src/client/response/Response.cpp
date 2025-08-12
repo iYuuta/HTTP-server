@@ -19,8 +19,8 @@ _bytesSent(0) {
 	_env.clear();
 	_status.clear();
 	_cgiExt.clear();
-    _envPtr.clear();
-    _return.clear();
+	_envPtr.clear();
+	_return.clear();
 }
 
 void Response::ERROR() {
@@ -75,12 +75,61 @@ void Response::ERROR() {
 	_errorResponse.append("Content-Length: " + intToString(_contentLen) + "\r\n");
 
 	for (size_t i = 0; i < _cookies.size(); i++)
-         _statusLine_Headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
+		 _statusLine_Headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
 
 	_errorResponse.append("Connection: Close\r\n");
 	std::ostringstream ss;
 	ss << _body.rdbuf();
 	_errorResponse += ss.str();
+}
+
+void Response::buildIndex() {
+	DIR *dir = opendir((_location->getRoute() + _request.getPath()).c_str());
+	std::string fileName = generateRandomName();
+	std::string path;
+	std::ofstream out;
+
+	if (_request.getPath() == "/")
+		path = _location->getUrl();
+	else
+		path = _request.getPath();
+	out.open(fileName.c_str());
+	if (!out.is_open()) {
+		_errorCode = 500;
+		throw (std::string) "Open failed";
+		return ;
+	}
+	out << "<!DOCTYPE html>\n<html>\n<head>\n<title>Index of " << path << "</title>\n"
+		<< "<meta charset=\"utf-8\">\n<style>\n"
+		<< "body { font-family: Arial, sans-serif; }\n"
+		<< "table { border-collapse: collapse; width: 100%; }\n"
+		<< "th, td { padding: 8px; border-bottom: 1px solid #ddd; }\n"
+		<< "a { text-decoration: none; color: #0366d6; }\n"
+		<< "a:hover { text-decoration: underline; }\n"
+		<< "</style>\n</head>\n<body>\n"
+		<< "<h1>Index of " <<  path << "</h1>\n<hr>\n<table>\n"
+		<< "<tr><th>Name</th></tr>\n";
+	dirent *entry;
+	while ((entry = readdir(dir)) != NULL) {
+		std::string name = entry->d_name;
+
+		if (name == "." || name == "..")
+			continue;
+		out << "<tr><td onclick=\"window.location.href+=\'/" << name <<"\' \">" << name << "</td></tr>\n";
+	}
+	out << "</table>\n<hr>\n</body>\n</html>\n";
+	closedir(dir);
+	out.close();
+	_body.open(fileName.c_str(), std::ios::in | std::ios::binary);
+	if (!_body.is_open()) {
+		_errorCode = 500;
+		throw (std::string) "failed to open a file";
+	}
+	struct stat fileStat;
+	stat(fileName.c_str(), &fileStat);
+	_contentLen = fileStat.st_size;
+	_contentType = "text/html";
+	unlink(fileName.c_str());
 }
 
 void Response::getBody() {
@@ -89,8 +138,19 @@ void Response::getBody() {
 	std::string fileName = _location->getRoute() + _request.getPath();
 
 	if (isDirectory(fileName)) {
-		if (_location->autoIndex())
-			fileName += _location->getIndex();
+		if (_location->autoIndex()) {
+			if (!_location->getIndex().empty())
+				fileName += _location->getIndex();
+			else {
+				try {
+					buildIndex();
+					return ;
+				}
+				catch (std::string err) {
+					throw err;
+				}
+			}
+		}
 		else {
 			_errorCode = 404;
 			throw (std::string) "AutoIndex off and no index file";
@@ -112,23 +172,23 @@ void Response::getBody() {
 }
 
 void Response::initCgi() {
-    _cgiExt = getExtension(_request.getPath());
-    _env.clear();
+	_cgiExt = getExtension(_request.getPath());
+	_env.clear();
 
-    _env.push_back("REQUEST_METHOD=" + methodToStr(_request.getMeth()));
-    _env.push_back("CONTENT_LENGTH=" + intToString(_request.getContentLen()));
-    _env.push_back("CONTENT_TYPE=" + _request.getHeader("Content-Type"));
-    _env.push_back("SCRIPT_NAME=" + _location->getRoute() + _request.getPath());
-    _env.push_back("SERVER_PROTOCOL=HTTP/1.0");
-    _env.push_back("GATEWAY_INTERFACE=CGI/1.1");
-    _env.push_back("SERVER_SOFTWARE=Webserv/1.0");
-    _env.push_back("HTTP_HOST=" + _request.getHeader("Host"));
+	_env.push_back("REQUEST_METHOD=" + methodToStr(_request.getMeth()));
+	_env.push_back("CONTENT_LENGTH=" + intToString(_request.getContentLen()));
+	_env.push_back("CONTENT_TYPE=" + _request.getHeader("Content-Type"));
+	_env.push_back("SCRIPT_NAME=" + _location->getRoute() + _request.getPath());
+	_env.push_back("SERVER_PROTOCOL=HTTP/1.0");
+	_env.push_back("GATEWAY_INTERFACE=CGI/1.1");
+	_env.push_back("SERVER_SOFTWARE=Webserv/1.0");
+	_env.push_back("HTTP_HOST=" + _request.getHeader("Host"));
 
-    if (!_request.getQueryStrings().empty())
-        _env.push_back("QUERY_STRING=" + _request.getQueryStrings());
-    for (size_t i = 0; i < _env.size(); ++i)
-        _envPtr.push_back(const_cast<char*>(_env[i].c_str()));
-    _envPtr.push_back(nullptr);
+	if (!_request.getQueryStrings().empty())
+		_env.push_back("QUERY_STRING=" + _request.getQueryStrings());
+	for (size_t i = 0; i < _env.size(); ++i)
+		_envPtr.push_back(const_cast<char*>(_env[i].c_str()));
+	_envPtr.push_back(NULL);
 }
 
 void Response::executeCgi() {
@@ -179,13 +239,13 @@ void Response::executeCgi() {
 		close(_cgiFd);
 		std::string file = _request.getPath();
 		file = file.erase(0, 1);
-		char *argv[] = {const_cast<char*>(_cgiExt.c_str()), const_cast<char*>(file.c_str()), nullptr};
+		char *argv[] = {const_cast<char*>(_cgiExt.c_str()), const_cast<char*>(file.c_str()), NULL};
 		execve(_cgiExt.c_str(), argv, _envPtr.data());
 		exit(500);
 	}
 	else {
 		int status;
-    	waitpid(pid, &status, 0);
+		waitpid(pid, &status, 0);
 		unlink(_request.getFileName().c_str());
 		close(fd);
 		if (status == 500) {
@@ -246,14 +306,15 @@ void Response::CGI() {
 		return ;
 	}
 	_statusLine_Headers.append("HTTP/1.0 200 OK\r\n");
-	ssize_t bytes;
-	char buffer[BUFFER_SIZE];
+	char		buffer[BUFFER_SIZE];
+	ssize_t		bytes;
 	std::string strbuff;
 	std::string line;
 	std::string fileName;
+	
 	bool body = false;
 	fileName = generateRandomName();
-	_outBody.open(fileName);
+	_outBody.open(fileName.c_str());
 	if (!_outBody.is_open()) {
 		std::cerr << "Error: failed to open a file" << std::endl;
 		_isError = true;
@@ -311,7 +372,7 @@ void Response::CGI() {
 			_contentLen = fileStat.st_size;
 		}
 		_outBody.close();
-		_body.open(fileName);
+		_body.open(fileName.c_str());
 		if (!_body.is_open()) {
 			std::cerr << "Error: failed to open a file" << std::endl;
 			unlink(fileName.c_str());
@@ -340,12 +401,10 @@ void Response::GET() {
 		_statusLine_Headers.append("Content-Type: " + _contentType + "\r\n");
 		_statusLine_Headers.append("Content-Length: " + intToString(_contentLen) + "\r\n");
 
-	    for (size_t i = 0; i < _cookies.size(); i++)
-            _statusLine_Headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
+		for (size_t i = 0; i < _cookies.size(); i++)
+			_statusLine_Headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
 
 		_statusLine_Headers.append("Connection: Close\r\n\r\n");
-
-	
 	}
 	catch (std::string error) {
 		_isError = true;
@@ -355,113 +414,113 @@ void Response::GET() {
 }
 
 void Response::validateUploadPath(const std::string& uploadPath) {
-    if (uploadPath.empty()) {
-        _errorCode = 403;
-        throw std::runtime_error("File uploads are not configured for this location.");
-    }
+	if (uploadPath.empty()) {
+		_errorCode = 403;
+		throw std::runtime_error("File uploads are not configured for this location.");
+	}
 
-    struct stat dirStat;
-    if (stat(uploadPath.c_str(), &dirStat) != 0) {
-        if (mkdir(uploadPath.c_str(), 0755) != 0) {
-            _errorCode = 500;
-            throw std::runtime_error("Failed to create upload directory.");
-        }
-    } else if (!S_ISDIR(dirStat.st_mode)) {
-        _errorCode = 500;
-        throw std::runtime_error("Upload path exists but is not a directory.");
-    }
+	struct stat dirStat;
+	if (stat(uploadPath.c_str(), &dirStat) != 0) {
+		if (mkdir(uploadPath.c_str(), 0755) != 0) {
+			_errorCode = 500;
+			throw std::runtime_error("Failed to create upload directory.");
+		}
+	} else if (!S_ISDIR(dirStat.st_mode)) {
+		_errorCode = 500;
+		throw std::runtime_error("Upload path exists but is not a directory.");
+	}
 }
 
 void Response::handleRawUpload(const std::string& uploadPath) {
-    std::string requestPath = _request.getPath();
-    std::string filename = requestPath.substr(requestPath.find_last_of('/') + 1);
-    if (filename.empty() || filename == "/") {
-        _errorCode = 400;
-        throw std::runtime_error("Cannot upload body to a directory");
-    }
-    std::string filePath = uploadPath + "/" + filename;
+	std::string requestPath = _request.getPath();
+	std::string filename = requestPath.substr(requestPath.find_last_of('/') + 1);
+	if (filename.empty() || filename == "/") {
+		_errorCode = 400;
+		throw std::runtime_error("Cannot upload body to a directory");
+	}
+	std::string filePath = uploadPath + "/" + filename;
 
-    std::ofstream newFile(filePath.c_str(), std::ios::out | std::ios::binary);
-    if (!newFile.is_open()) {
-        _errorCode = 500;
-        throw std::runtime_error("Failed to create the file on the server.");
-    }
+	std::ofstream newFile(filePath.c_str(), std::ios::out | std::ios::binary);
+	if (!newFile.is_open()) {
+		_errorCode = 500;
+		throw std::runtime_error("Failed to create the file on the server.");
+	}
 
-    std::ifstream& bodyFile = const_cast<std::ifstream&>(_request.getBodyFile());
-    if (!bodyFile.is_open()) {
-        _errorCode = 500;
-        throw std::runtime_error("Failed to open request body file.");
-    }
+	std::ifstream& bodyFile = const_cast<std::ifstream&>(_request.getBodyFile());
+	if (!bodyFile.is_open()) {
+		_errorCode = 500;
+		throw std::runtime_error("Failed to open request body file.");
+	}
 
-    newFile << bodyFile.rdbuf();
-    bodyFile.close();
-    newFile.close();
+	newFile << bodyFile.rdbuf();
+	bodyFile.close();
+	newFile.close();
 
-    _statusLine_Headers.append("HTTP/1.0 204 No Content\r\n");
+	_statusLine_Headers.append("HTTP/1.0 204 No Content\r\n");
 
 	for (size_t i = 0; i < _cookies.size(); i++)
-         _statusLine_Headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
+		 _statusLine_Headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
 
-    _statusLine_Headers.append("Connection: close\r\n\r\n");
+	_statusLine_Headers.append("Connection: close\r\n\r\n");
 }
 
 void Response::handleMultipartUpload(const std::string& uploadPath) {
-    
-    parseMultipartBody();
+		
+	parseMultipartBody();
 
-    for (size_t i = 0; i < _multiparts.size(); i++) {
-        const Multipart& part = _multiparts[i];
-        if (part.isFile && !part.contentDispositionFilename.empty()) {
-            std::string finalFilePath = uploadPath + "/" + part.contentDispositionFilename;
-            
-            std::ifstream src(part.tempFilePath.c_str(), std::ios::binary);
-            std::ofstream dst(finalFilePath.c_str(), std::ios::binary);
+	for (size_t i = 0; i < _multiparts.size(); i++) {
+		const Multipart& part = _multiparts[i];
+		if (part.isFile && !part.contentDispositionFilename.empty()) {
+			std::string finalFilePath = uploadPath + "/" + part.contentDispositionFilename;
+			
+			std::ifstream src(part.tempFilePath.c_str(), std::ios::binary);
+			std::ofstream dst(finalFilePath.c_str(), std::ios::binary);
 
-            if (!src.is_open() || !dst.is_open()) {
-                _errorCode = 500;
-                unlink(part.tempFilePath.c_str());
-                throw std::runtime_error("Failed to open streams for file copy.");
-            }
-            
-            dst << src.rdbuf();
-            src.close();
-            dst.close();
-            
-            unlink(part.tempFilePath.c_str());
-        } else if (part.isFile) {
-            unlink(part.tempFilePath.c_str());
-        }
-    }
+			if (!src.is_open() || !dst.is_open()) {
+				_errorCode = 500;
+				unlink(part.tempFilePath.c_str());
+				throw std::runtime_error("Failed to open streams for file copy.");
+			}
+			
+			dst << src.rdbuf();
+			src.close();
+			dst.close();
+			
+			unlink(part.tempFilePath.c_str());
+		} else if (part.isFile) {
+			unlink(part.tempFilePath.c_str());
+		}
+	}
 
-    _statusLine_Headers.append("HTTP/1.0 201 Created\r\n");
+	_statusLine_Headers.append("HTTP/1.0 201 Created\r\n");
 
 	for (size_t i = 0; i < _cookies.size(); i++)
-         _statusLine_Headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
+		 _statusLine_Headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
 
-    _statusLine_Headers.append("Connection: close\r\n\r\n");
+	_statusLine_Headers.append("Connection: close\r\n\r\n");
 }
 
 void Response::POST() {
-    if (_errorCode != 200 && _errorCode != -1) {
-        _isError = true;
-        ERROR();
-        return;
-    }
-    try {
-        std::string uploadPath = _location->getUploadStore();
-        validateUploadPath(uploadPath);
-        
-        std::string contentType = _request.getHeader("Content-Type");
-        if (contentType.find("multipart/form-data") != std::string::npos)
-            handleMultipartUpload(uploadPath);
-        else
-            handleRawUpload(uploadPath);
-        _contentLen = 0;
-    } catch (const std::exception& e) {
-        _isError = true;
-        ERROR();
-        std::cerr << "POST Error: " << e.what() << std::endl;
-    }
+	if (_errorCode != 200 && _errorCode != -1) {
+		_isError = true;
+		ERROR();
+		return;
+	}
+	try {
+		std::string uploadPath = _location->getUploadStore();
+		validateUploadPath(uploadPath);
+		
+		std::string contentType = _request.getHeader("Content-Type");
+		if (contentType.find("multipart/form-data") != std::string::npos)
+			handleMultipartUpload(uploadPath);
+		else
+			handleRawUpload(uploadPath);
+		_contentLen = 0;
+	} catch (const std::exception& e) {
+		_isError = true;
+		ERROR();
+		std::cerr << "POST Error: " << e.what() << std::endl;
+	}
 }
 
 void Response::DELETE() {
@@ -494,7 +553,7 @@ void Response::DELETE() {
 		_statusLine_Headers.append("HTTP/1.0 204 No Content\r\n");
 
 		for (size_t i = 0; i < _cookies.size(); i++)
-         _statusLine_Headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
+		 _statusLine_Headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
 
 		_statusLine_Headers.append("Connection: Close\r\n\r\n");
 		_contentLen = 0;
@@ -627,18 +686,6 @@ std::string Response::getResponse() {
 		_responseState = DONE;
 		return _return;
 	}
-	// else if (_isCgi && _responseState != DONE) {
-	// 	char buffer[BUFFER_SIZE];
-	// 	ssize_t bytes;
-
-	// 	bytes = read(_cgiFd, buffer, BUFFER_SIZE);
-	// 	if (bytes == 0) {
-	// 		close(_cgiFd);
-	// 		_responseState = DONE;
-	// 		return "";
-	// 	}	
-	// 	return std::string(buffer, bytes);
-	// }
 	switch (_responseState) {
 		case STATUSLINE_HEADERS: {
 			_responseState = BODY;

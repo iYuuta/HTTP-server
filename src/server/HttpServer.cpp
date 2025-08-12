@@ -37,8 +37,9 @@ void HttpServer::insertNewClient(const int& clientId, Server& server)
 {
 	if (isClientExists(clientId))
 		return;
-	_clients.insert(std::make_pair(clientId, new Client(clientId, server, server.getErrorPages())));
-}
+	Client *client = new Client(clientId, server, server.getErrorPages());
+	if (!(_clients.insert(std::make_pair(clientId, client)).second))
+		delete client;}
 
 bool HttpServer::isClientExists(const int& clientId)
 {

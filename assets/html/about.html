@@ -1,17 +1,71 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
+
 <head>
-    <meta charset="UTF-8" />
-    <title>About Us</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 40px; }
-        img { max-width: 300px; }
-    </style>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>About Us</title>
+	<script src="https://cdn.tailwindcss.com"></script>
+	<meta name="color-scheme" content="light dark" />
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 </head>
-<body>
-    <h1>About Us</h1>
-    <p>We are testing a simple website with multiple pages.</p>
-    <img src="images/test-image.jpg" alt="Test Image" />
-    <p><a href="index.html">Back to Home</a></p>
+
+<body
+	class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 text-slate-800 antialiased dark:from-slate-900 dark:to-slate-950 dark:text-slate-200">
+	<header
+		class="sticky top-0 z-10 border-b border-slate-200/60 bg-white/70 backdrop-blur dark:bg-slate-900/60 dark:border-slate-800">
+		<div class="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
+			<div class="flex items-center gap-3">
+				<span
+					class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+						stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+							d="M3 7h18M3 12h18M3 17h18" />
+					</svg>
+				</span>
+				<h1 class="text-2xl font-semibold tracking-tight">About Us</h1>
+			</div>
+		</div>
+	</header>
+
+	<main class="mx-auto max-w-6xl p-6">
+		<section
+			class="rounded-2xl border border-slate-200/60 bg-white/70 p-6 shadow-lg ring-1 ring-black/5 backdrop-blur transition hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/70">
+			<div class="mb-6 flex items-center gap-3">
+				<span
+					class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-300">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+						<path d="M11 7h2v2h-2V7Zm0 4h2v6h-2v-6Zm1-9a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Z" />
+					</svg>
+				</span>
+				<h2 class="text-lg font-semibold">Who we are</h2>
+			</div>
+
+			<div class="grid grid-cols-1 gap-6 md:grid-cols-2 items-start">
+				<div class="space-y-4">
+					<p class="text-slate-700 leading-relaxed dark:text-slate-300">
+						We are testing a simple website with multiple pages. This page helps verify static file serving
+						and overall site navigation with a clean, modern UI.
+					</p>
+					<a href="index.html"
+						class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+							<path d="M14 7l-5 5 5 5V7Z" />
+						</svg>
+						Back to Home
+					</a>
+				</div>
+
+				<div class="justify-self-center md:justify-self-end">
+					<img src="/images/image1.jpg" alt="Sample image"
+						class="h-auto w-full max-w-sm rounded-xl border border-slate-200 shadow-sm dark:border-slate-800" />
+				</div>
+			</div>
+		</section>
+	</main>
+
 </body>
+
 </html>

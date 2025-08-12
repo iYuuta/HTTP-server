@@ -1,99 +1,254 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
+
 <head>
-  <meta charset="UTF-8" />
-  <title>Webserver Test Panel</title>
-  <style>
-    body { font-family: sans-serif; margin: 40px; }
-    section { border: 1px solid #ccc; padding: 20px; margin-bottom: 30px; border-radius: 8px; }
-    h2 { color: #333; }
-    label { display: block; margin: 8px 0 4px; }
-    input, textarea, select { width: 100%; max-width: 400px; padding: 8px; }
-    button { margin-top: 10px; padding: 8px 16px; }
-  </style>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Webserver Test Panel</title>
+	<script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <h1>Webserver Functionality Test</h1>
 
-  <!-- GET Request -->
-  <section>
-    <h2>GET Request Test</h2>
-    <form action="/images/image1.jpg" method="get">
-      <button type="submit">GET /images/image1.jpg</button>
-    </form>
-  </section>
+<body
+	class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 text-slate-800 antialiased dark:from-slate-900 dark:to-slate-950 dark:text-slate-200">
+	<header
+		class="sticky top-0 z-10 border-b border-slate-200/60 bg-white/70 backdrop-blur dark:bg-slate-900/60 dark:border-slate-800">
+		<div class="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
+			<div class="flex items-center gap-3">
+				<span
+					class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg">
+					<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+						stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+							d="M3 7h18M3 12h18M3 17h18" />
+					</svg>
+				</span>
+				<h1 class="text-2xl font-semibold tracking-tight">Webserver Functionality Test</h1>
+			</div>
+			<nav class="hidden sm:flex items-center gap-6 text-sm">
+				<a href="about.html"
+					class="text-slate-700 transition hover:text-slate-900 dark:text-slate-300 dark:hover:text-white">About</a>
+				<a href="contact.html"
+					class="text-slate-700 transition hover:text-slate-900 dark:text-slate-300 dark:hover:text-white">Contact</a>
+				<a href="gallery.html"
+					class="text-slate-700 transition hover:text-slate-900 dark:text-slate-300 dark:hover:text-white">Gallery</a>
+			</nav>
+		</div>
+	</header>
 
-  <!-- POST to CGI -->
-  <section>
-    <h2>POST to CGI</h2>
+	<main class="mx-auto max-w-6xl p-6">
+		<div
+			class="mb-6 rounded-xl border border-blue-200/60 bg-gradient-to-r from-blue-50 to-indigo-50 px-5 py-4 text-sm text-blue-900 shadow-sm dark:border-indigo-800/50 dark:from-slate-800 dark:to-slate-900 dark:text-indigo-100">
+			Use these controls to verify GET, POST (CGI), file uploads, DELETE, and redirects on your webserver.
+		</div>
 
-    <!-- Select CGI Script -->
-    <form id="cgiForm" method="post">
-      <label for="cgi-script">Choose CGI script:</label>
-      <select id="cgi-script" onchange="updateAction()">
-        <option value="/cgi-bin/python-cgi.py">python-cgi.py</option>
-        <option value="/cgi-bin/bash-cgi.sh">bash-cgi.sh</option>
-        <option value="/cgi-bin/php-cgi.php">php-cgi.php</option>
-      </select>
+		<div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+			<!-- GET Request -->
+			<section
+				class="rounded-2xl border border-slate-200/60 bg-white/70 p-6 shadow-lg ring-1 ring-black/5 backdrop-blur transition hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/70">
+				<div class="mb-4 flex items-center gap-3">
+					<span
+						class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+							<path
+								d="M12 3l-4 4h3v7h2V7h3l-4-4Zm7 16H5v-2H3v2a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2h-2v2Z" />
+						</svg>
+					</span>
+					<h2 class="text-lg font-semibold">GET Request Test</h2>
+				</div>
+				<form id="getForm" onsubmit="submitGet(event)" class="space-y-3">
+					<div>
+						<label for="getPath" class="mb-1 block text-sm font-medium">Path to GET</label>
+						<input id="getPath" type="text" placeholder="/images/image1.jpg"
+							class="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm transition placeholder-slate-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" />
+					</div>
+					<button type="submit"
+						class="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-white shadow transition hover:from-blue-500 hover:to-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-90" viewBox="0 0 24 24"
+							fill="currentColor">
+							<path d="M12 2a10 10 0 1 0 10 10A10.011 10.011 0 0 0 12 2Zm1 14.59L8.41 12 13 7.41V16.6Z" />
+						</svg>
+						Send GET
+					</button>
+				</form>
+			</section>
 
-      <label for="name">Name:</label>
-      <input type="text" name="name" required>
+			<!-- POST to CGI -->
+			<section
+				class="rounded-2xl border border-slate-200/60 bg-white/70 p-6 shadow-lg ring-1 ring-black/5 backdrop-blur transition hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/70">
+				<div class="mb-4 flex items-center gap-3">
+					<span
+						class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-300">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+							<path
+								d="M3 6a3 3 0 0 1 3-3h4l2 2h6a3 3 0 0 1 3 3v1H3V6Zm0 3h18v9a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V9Zm4 2v2h10v-2H7Z" />
+						</svg>
+					</span>
+					<h2 class="text-lg font-semibold">POST to CGI</h2>
+				</div>
+				<form id="cgiForm" method="post" class="space-y-4">
+					<div>
+						<label for="cgi-script" class="mb-1 block text-sm font-medium">Choose CGI script</label>
+						<select id="cgi-script" onchange="updateAction()"
+							class="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm transition placeholder-slate-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+							<option value="/cgi-bin/python-cgi.py">python-cgi.py</option>
+							<option value="/cgi-bin/bash-cgi.sh">bash-cgi.sh</option>
+							<option value="/cgi-bin/php-cgi.php">php-cgi.php</option>
+						</select>
+					</div>
+					<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+						<div>
+							<label for="name" class="mb-1 block text-sm font-medium">Name</label>
+							<input id="name" type="text" name="name" required
+								class="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm transition placeholder-slate-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" />
+						</div>
+						<div class="sm:col-span-2">
+							<label for="message" class="mb-1 block text-sm font-medium">Message</label>
+							<textarea id="message" name="message" rows="4"
+								class="block w-full resize-y rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm transition placeholder-slate-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"></textarea>
+						</div>
+					</div>
+					<button type="submit"
+						class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-white shadow transition hover:bg-emerald-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-90" viewBox="0 0 24 24"
+							fill="currentColor">
+							<path d="M5 12h14v2H5v-2Zm0-4h14v2H5V8Zm0 8h14v2H5v-2Z" />
+						</svg>
+						POST to CGI
+					</button>
+				</form>
+			</section>
 
-      <label for="message">Message:</label>
-      <textarea name="message" rows="4"></textarea>
+			<!-- File Upload to /uploads -->
+			<section
+				class="rounded-2xl border border-slate-200/60 bg-white/70 p-6 shadow-lg ring-1 ring-black/5 backdrop-blur transition hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/70">
+				<div class="mb-4 flex items-center gap-3">
+					<span
+						class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-300">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+							<path
+								d="M19 15v4H5v-4H3v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4h-2Zm-6-1 4-4-1.41-1.41L13 10.17V2h-2v8.17L8.41 8.59 7 10l6 6Z" />
+						</svg>
+					</span>
+					<h2 class="text-lg font-semibold">Upload File to /uploads</h2>
+				</div>
+				<form action="/uploads" method="post" enctype="multipart/form-data" class="space-y-4">
+					<div>
+						<label for="file" class="mb-1 block text-sm font-medium">Choose a file</label>
+						<input type="file" name="file" id="file"
+							class="block w-full cursor-pointer rounded-lg border border-dashed border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 shadow-sm transition file:mr-4 file:rounded-md file:border-0 file:bg-purple-600 file:px-4 file:py-2 file:text-sm file:font-medium file:text-white hover:border-slate-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:file:bg-purple-500" />
+					</div>
+					<button type="submit"
+						class="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-4 py-2 text-white shadow transition hover:bg-purple-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-90" viewBox="0 0 24 24"
+							fill="currentColor">
+							<path d="M5 20h14v-2H5v2ZM11 4v8.17L8.41 9.59 7 11l5 5 5-5-1.41-1.41L13 12.17V4h-2Z" />
+						</svg>
+						Upload
+					</button>
+				</form>
+			</section>
 
-      <button type="submit">POST to CGI</button>
-    </form>
-  </section>
+			<!-- DELETE Request via JS -->
+			<section
+				class="rounded-2xl border border-slate-200/60 bg-white/70 p-6 shadow-lg ring-1 ring-black/5 backdrop-blur transition hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/70">
+				<div class="mb-4 flex items-center gap-3">
+					<span
+						class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-300">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+							<path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12ZM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4Z" />
+						</svg>
+					</span>
+					<h2 class="text-lg font-semibold">DELETE Request to /uploads</h2>
+				</div>
+				<div class="space-y-4">
+					<div>
+						<label for="delPath" class="mb-1 block text-sm font-medium">File to delete (relative to
+							/uploads)</label>
+						<input type="text" id="delPath" placeholder="example.txt"
+							class="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm transition placeholder-slate-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-rose-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" />
+					</div>
+					<button onclick="sendDelete()"
+						class="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-white shadow transition hover:bg-rose-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-90" viewBox="0 0 24 24"
+							fill="currentColor">
+							<path
+								d="M9 3h6l1 1h4v2H4V4h4l1-1Zm-1 8h2v6H8v-6Zm6 0h2v6h-2v-6ZM6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12Z" />
+						</svg>
+						Send DELETE
+					</button>
+					<pre id="deleteResult"
+						class="whitespace-pre-wrap rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-200"></pre>
+				</div>
+			</section>
 
-  <!-- File Upload to /uploads -->
-  <section>
-    <h2>Upload File to /uploads</h2>
-    <form action="/uploads" method="post" enctype="multipart/form-data">
-      <label for="file">Choose a file:</label>
-      <input type="file" name="file" id="file">
-      <button type="submit">Upload</button>
-    </form>
-  </section>
+			<!-- Redirect Test -->
+			<section
+				class="rounded-2xl border border-slate-200/60 bg-white/70 p-6 shadow-lg ring-1 ring-black/5 backdrop-blur transition hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/70">
+				<div class="mb-4 flex items-center gap-3">
+					<span
+						class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-300">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+							<path d="M10 19l7-7-7-7v14Zm-6 0V5h2v14H4Z" />
+						</svg>
+					</span>
+					<h2 class="text-lg font-semibold">Redirect Test</h2>
+				</div>
+				<form action="/redirect" method="get">
+					<button type="submit"
+						class="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-white shadow transition hover:bg-amber-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900">
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-90" viewBox="0 0 24 24"
+							fill="currentColor">
+							<path d="M13 5l7 7-7 7v-4H4v-6h9V5Z" />
+						</svg>
+						Go to /redirect
+					</button>
+				</form>
+			</section>
+		</div>
+	</main>
 
-  <!-- DELETE Request via JS -->
-  <section>
-    <h2>DELETE Request to /uploads</h2>
-    <label for="delPath">File to delete (relative to /uploads):</label>
-    <input type="text" id="delPath" placeholder="example.txt" />
-    <button onclick="sendDelete()">Send DELETE</button>
-    <p id="deleteResult"></p>
-  </section>
+	<!-- Footer removed -->
 
-  <!-- Redirect Test -->
-  <section>
-    <h2>Redirect Test</h2>
-    <form action="/redirect" method="get">
-      <button type="submit">Go to /redirect</button>
-    </form>
-  </section>
+	<script>
+		function updateAction() {
+			const select = document.getElementById("cgi-script");
+			const form = document.getElementById("cgiForm");
+			if (select && form) form.action = select.value;
+		}
 
-  <script>
-    function updateAction() {
-      const select = document.getElementById("cgi-script");
-      const form = document.getElementById("cgiForm");
-      form.action = select.value;
-    }
+		function submitGet(e) {
+			e.preventDefault();
+			const input = document.getElementById('getPath');
+			if (!input) return;
+			let path = (input.value || '').trim();
+			if (!path) {
+				input.focus();
+				input.classList.add('ring-2', 'ring-rose-500');
+				setTimeout(() => input.classList.remove('ring-2', 'ring-rose-500'), 800);
+				return;
+			}
+			if (!path.startsWith('/')) path = '/' + path; // ensure absolute path
+			window.location.href = path;
+		}
 
-    async function sendDelete() {
-      const file = document.getElementById('delPath').value;
-      const result = document.getElementById('deleteResult');
-      try {
-        const res = await fetch(`/uploads/${file}`, { method: 'DELETE' });
-        const text = await res.text();
-        result.innerText = `Status: ${res.status}\n\n${text}`;
-      } catch (e) {
-        result.innerText = 'Error sending DELETE: ' + e.message;
-      }
-    }
+		async function sendDelete() {
+			const file = document.getElementById('delPath').value.trim();
+			const result = document.getElementById('deleteResult');
+			if (!file) {
+				result.innerText = 'Please enter a file name.';
+				return;
+			}
+			result.innerText = 'Sending request...';
+			try {
+				const res = await fetch(`/uploads/${encodeURIComponent(file)}`, { method: 'DELETE' });
+				const text = await res.text();
+				result.innerText = `Status: ${res.status}\n\n${text}`;
+			} catch (e) {
+				result.innerText = 'Error sending DELETE: ' + e.message;
+			}
+		}
 
-    // Set initial action
-    updateAction();
-  </script>
+	</script>
 </body>
+
 </html>

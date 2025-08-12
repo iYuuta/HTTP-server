@@ -394,6 +394,12 @@ void Response::ERROR() {
 
 void Response::buildIndex() {
 	DIR *dir = opendir((_location->getRoute() + _request.getPath()).c_str());
+	if (!dir)
+	{
+		_errorCode = 403;
+		throw (std::string) "Permission Denied";
+		return ;
+	}
 	std::string fileName = generateRandomName();
 	std::string path;
 	std::ofstream out;

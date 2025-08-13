@@ -5,40 +5,205 @@
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<title>500 Internal Server Error</title>
-	<script src="https://cdn.tailwindcss.com"></script>
 	<meta name="color-scheme" content="light dark" />
+	<style>
+		:root {
+			color-scheme: light dark
+		}
+
+		html,
+		body {
+			height: 100%
+		}
+
+		body {
+			margin: 0;
+			font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji';
+			background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+			color: #0f172a;
+			-webkit-font-smoothing: antialiased;
+			-moz-osx-font-smoothing: grayscale
+		}
+
+		@media (prefers-color-scheme:dark) {
+			body {
+				background: linear-gradient(135deg, #0f172a, #020617);
+				color: #e2e8f0
+			}
+		}
+
+		.container {
+			max-width: 56rem;
+			margin: 0 auto;
+			padding: 1.5rem
+		}
+
+		.site-header {
+			position: sticky;
+			top: 0;
+			z-index: 10;
+			backdrop-filter: blur(8px);
+			-webkit-backdrop-filter: blur(8px);
+			background: rgba(255, 255, 255, .7);
+			border-bottom: 1px solid rgba(15, 23, 42, .12)
+		}
+
+		@media (prefers-color-scheme:dark) {
+			.site-header {
+				background: rgba(2, 6, 23, .6);
+				border-bottom-color: rgba(148, 163, 184, .2)
+			}
+		}
+
+		.header-inner {
+			display: flex;
+			align-items: center;
+			gap: .75rem;
+			padding-block: 1rem
+		}
+
+		.brand-icon {
+			display: inline-flex;
+			height: 2.5rem;
+			width: 2.5rem;
+			align-items: center;
+			justify-content: center;
+			border-radius: .75rem;
+			color: #fff;
+			background: linear-gradient(135deg, #3b82f6, #4f46e5);
+			box-shadow: 0 10px 15px -3px rgba(0, 0, 0, .2), 0 4px 6px -4px rgba(0, 0, 0, .2)
+		}
+
+		.title {
+			font-size: 1.5rem;
+			font-weight: 600;
+			letter-spacing: -.01em
+		}
+
+		.card {
+			border-radius: 1rem;
+			border: 1px solid rgba(15, 23, 42, .12);
+			background: rgba(255, 255, 255, .7);
+			padding: 2rem;
+			box-shadow: 0 10px 15px -3px rgba(0, 0, 0, .1), 0 4px 6px -4px rgba(0, 0, 0, .1);
+			text-align: center
+		}
+
+		@media (prefers-color-scheme:dark) {
+			.card {
+				background: rgba(2, 6, 23, .7);
+				border-color: rgba(148, 163, 184, .2)
+			}
+		}
+
+		.icon {
+			display: inline-flex;
+			height: 3rem;
+			width: 3rem;
+			border-radius: .75rem;
+			align-items: center;
+			justify-content: center;
+			margin: 0 auto 1rem
+		}
+
+		.icon.amber {
+			background: #fef3c7;
+			color: #d97706
+		}
+
+		.icon.rose {
+			background: #fee2e2;
+			color: #e11d48
+		}
+
+		@media (prefers-color-scheme:dark) {
+			.icon.amber {
+				background: rgba(245, 158, 11, .2);
+				color: #fcd34d
+			}
+
+			.icon.rose {
+				background: rgba(225, 29, 72, .2);
+				color: #fda4af
+			}
+		}
+
+		.muted {
+			color: #334155
+		}
+
+		@media (prefers-color-scheme:dark) {
+			.muted {
+				color: #cbd5e1
+			}
+		}
+
+		.btn {
+			display: inline-flex;
+			align-items: center;
+			gap: .5rem;
+			border-radius: .6rem;
+			padding: .5rem 1rem;
+			color: #fff;
+			border: 0;
+			cursor: pointer;
+			box-shadow: 0 1px 2px rgba(0, 0, 0, .08)
+		}
+
+		.btn-blue {
+			background: #2563eb
+		}
+
+		.btn-blue:hover {
+			filter: brightness(1.05)
+		}
+
+		.spaced-top {
+			margin-top: 1.5rem
+		}
+
+		.h-5 {
+			height: 1.25rem
+		}
+
+		.w-5 {
+			width: 1.25rem
+		}
+
+		.h-6 {
+			height: 1.5rem
+		}
+
+		.w-6 {
+			width: 1.5rem
+		}
+	</style>
 </head>
 
-<body
-	class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 text-slate-800 antialiased dark:from-slate-900 dark:to-slate-950 dark:text-slate-200">
-	<header
-		class="sticky top-0 z-10 border-b border-slate-200/60 bg-white/70 backdrop-blur dark:bg-slate-900/60 dark:border-slate-800">
-		<div class="mx-auto max-w-4xl px-6 py-4 flex items-center gap-3">
-			<span
-				class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg">
+<body>
+	<header class="site-header">
+		<div class="container header-inner" style="max-width:56rem">
+			<span class="brand-icon">
 				<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
 					stroke="currentColor">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
 						d="M3 7h18M3 12h18M3 17h18" />
 				</svg>
 			</span>
-			<h1 class="text-2xl font-semibold tracking-tight">500 Internal Server Error</h1>
+			<h1 class="title">500 Internal Server Error</h1>
 		</div>
 	</header>
-	<main class="mx-auto max-w-4xl p-6">
-		<section
-			class="rounded-2xl border border-slate-200/60 bg-white/70 p-8 text-center shadow-lg ring-1 ring-black/5 backdrop-blur dark:border-slate-800 dark:bg-slate-900/70">
-			<div
-				class="mx-auto mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-300">
+	<main class="container" style="max-width:56rem">
+		<section class="card" style="text-align:center; padding:2rem">
+			<div class="icon rose" style="margin:0 auto 1rem; height:3rem; width:3rem;">
 				<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor">
 					<path
 						d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm2.83 11.41-1.42 1.42L12 12.83l-1.41 1.41-1.42-1.41L10.59 12 9.17 10.59l1.42-1.42L12 10.59l1.41-1.42 1.42 1.42L13.41 12l1.42 1.41Z" />
 				</svg>
 			</div>
-			<p class="text-slate-700 dark:text-slate-300">Sorry, something went wrong on the server.</p>
-			<div class="mt-6">
-				<a href="/"
-					class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+			<p class="muted">Sorry, something went wrong on the server.</p>
+			<div class="spaced-top">
+				<a href="/" class="btn btn-blue">
 					<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
 						<path d="M14 7l-5 5 5 5V7Z" />
 					</svg>

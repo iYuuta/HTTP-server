@@ -5,70 +5,56 @@
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<title>Gallery</title>
-	<script src="https://cdn.tailwindcss.com"></script>
 	<meta name="color-scheme" content="light dark" />
+	<link rel="stylesheet" href="style.css" />
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 </head>
 
-<body
-	class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 text-slate-800 antialiased dark:from-slate-900 dark:to-slate-950 dark:text-slate-200">
-	<header
-		class="sticky top-0 z-10 border-b border-slate-200/60 bg-white/70 backdrop-blur dark:bg-slate-900/60 dark:border-slate-800">
-		<div class="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
-			<div class="flex items-center gap-3">
-				<span
-					class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg">
+<body>
+	<header class="site-header">
+		<div class="container header-inner">
+			<div class="brand">
+				<span class="brand-icon">
 					<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
 						stroke="currentColor">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
 							d="M3 7h18M3 12h18M3 17h18" />
 					</svg>
 				</span>
-				<h1 class="text-2xl font-semibold tracking-tight">Gallery</h1>
+				<h1 class="title">Gallery</h1>
 			</div>
 		</div>
 	</header>
 
-	<main class="mx-auto max-w-6xl p-6">
-		<section
-			class="rounded-2xl border border-slate-200/60 bg-white/70 p-6 shadow-lg ring-1 ring-black/5 backdrop-blur transition hover:shadow-xl dark:border-slate-800 dark:bg-slate-900/70">
-			<div class="mb-6 flex items-center gap-3">
-				<span
-					class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-300">
+	<main class="container">
+		<section class="card">
+			<div class="section-title">
+				<span class="icon amber">
 					<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
 						<path d="M4 5h16v14H4V5Zm2 2v10h12V7H6Zm2 8l3-4 2 3 2-3 3 4H8Z" />
 					</svg>
 				</span>
-				<h2 class="text-lg font-semibold">Photo Gallery</h2>
+				<h2 class="h2">Photo Gallery</h2>
 			</div>
 
-			<div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
-				<a href="/images/image1.jpg"
-					class="group block overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md dark:border-slate-800 dark:bg-slate-800">
-					<img src="/images/image1.jpg" alt="Photo 1"
-						class="aspect-square w-full object-cover transition duration-200 group-hover:scale-[1.02]" />
+			<div class="gallery-grid">
+				<a href="/images/image1.jpg" class="img-link">
+					<img src="/images/image1.jpg" alt="Photo 1" class="img-thumb" />
 				</a>
-				<a href="/images/image2.jpg"
-					class="group block overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md dark:border-slate-800 dark:bg-slate-800">
-					<img src="/images/image2.jpg" alt="Photo 2"
-						class="aspect-square w-full object-cover transition duration-200 group-hover:scale-[1.02]" />
+				<a href="/images/image2.jpg" class="img-link">
+					<img src="/images/image2.jpg" alt="Photo 2" class="img-thumb" />
 				</a>
-				<a href="/images/image3.jpg"
-					class="group block overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md dark:border-slate-800 dark:bg-slate-800">
-					<img src="/images/image3.jpg" alt="Photo 3"
-						class="aspect-square w-full object-cover transition duration-200 group-hover:scale-[1.02]" />
+				<a href="/images/image3.jpg" class="img-link">
+					<img src="/images/image3.jpg" alt="Photo 3" class="img-thumb" />
 				</a>
-				<a href="/images/image4.png"
-					class="group block overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md dark:border-slate-800 dark:bg-slate-800">
-					<img src="/images/image4.png" alt="Photo 4"
-						class="aspect-square w-full object-cover transition duration-200 group-hover:scale-[1.02]" />
+				<a href="/images/image4.png" class="img-link">
+					<img src="/images/image4.png" alt="Photo 4" class="img-thumb" />
 				</a>
 			</div>
 
-			<div class="mt-6">
-				<a href="index.html"
-					class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200">
+			<div class="spaced-top">
+				<a href="index.html" class="link">
 					<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
 						<path d="M14 7l-5 5 5 5V7Z" />
 					</svg>

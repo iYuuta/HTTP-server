@@ -3,12 +3,14 @@
 
 int main (int ac, char **av)
 {
-    // Config      conf("configs/test.conf");
-    // ac = 1;
-    // ac++;
-    (void)ac;
-    Config      conf(av[1]);
-    HttpServer  server(conf);
+    if (ac != 2)
+        return (std::cout << "usage: ./webserv config_file_path" << std::endl, 1);
 
+    Config      conf(av[1]);
+
+    if (conf.fail())
+        return (conf.getErrorCode());
+
+    HttpServer  server(conf);
     return (server.startAll());
 }

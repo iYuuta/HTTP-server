@@ -10,9 +10,10 @@ class Config
 		Config(const std::string& input);
 		void addServer(const Server& server);
 		std::vector<Server>& getServers();
-
+		const int &getErrorCode() const;
+		bool fail() const;
 	private:
-		short _errorCode;
+		int _errorCode;
 		std::vector<Server> _servers;
 		void parseConfig(const std::string& input);
 };

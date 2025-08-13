@@ -12,11 +12,12 @@ void Config::parseConfig(const std::string& input)
 
 	if (conf.fail())
 	{
-		_errorCode = 1;
+		std::cout << "Error: " << strerror(errno) << ": " << input << std::endl;
+		_errorCode = 2;
 		return;
 	}
 	if (!parseServers(conf, *this))
-		_errorCode = 2;
+		_errorCode = 3;
 	conf.close();
 }
 
@@ -28,4 +29,14 @@ void Config::addServer(const Server& server)
 std::vector<Server>& Config::getServers()
 {
 	return (_servers);
+}
+
+const int &Config::getErrorCode() const
+{
+	return (_errorCode);
+}
+
+bool Config::fail() const
+{
+	return (_errorCode != 0);
 }

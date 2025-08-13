@@ -8,7 +8,6 @@ _location(location),
 _errorPages(error),
 _contentLen(0),
 _errorCode(200),
-_cgiFd(-1),
 _isError(false),
 _isCgi(false),
 _isRedirect(false),
@@ -149,6 +148,7 @@ void Response::executeCgi() {
 		_errorCode = 500;
 		throw (std::string) "failed to open a file";
 	}
+	std::cout << _request.getFileName() << std::endl;
 	if (_request.getContentLen() > 0) {
 		fd = open(_request.getFileName().c_str(), O_RDONLY);
 		if (fd < 0) {

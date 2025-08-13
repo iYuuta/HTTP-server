@@ -58,7 +58,7 @@ void tokenization(std::vector<Token>& tokens)
 bool validateTokens(std::vector<Token>& tokens)
 {
 	if (tokens.empty())
-		return (std::cerr << "Empty configs!!" << std::endl, false);
+		return (std::cerr << "Empty config file!!" << std::endl, false);
 	std::vector<Token>::iterator it = tokens.begin();
 	const std::vector<Token>::iterator end = tokens.end();
 	ssize_t						brackets = 0;

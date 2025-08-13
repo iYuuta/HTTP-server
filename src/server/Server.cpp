@@ -1,6 +1,6 @@
 #include "../../includes/Server.hpp"
 
-Server::Server(): _fd(-1), _port(-1)
+Server::Server(): _fd(-1), _port(-1), _maxAllowedClientRequestSize(1024 * 1024 * 1024)
 {
 }
 

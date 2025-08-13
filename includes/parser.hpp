@@ -20,5 +20,7 @@ bool parseLocationIndex(Location& location, std::vector<Token>::iterator& it);
 bool parseLocationUploadStore(Location& location, std::vector<Token>::iterator& it);
 bool parseLocationReturn(Location& location, std::vector<Token>::iterator& it);
 bool parseLocationCgiExt(Location& location, std::vector<Token>::iterator& it);
+bool validateServer(Server &server);
+bool validateLocation(Location &location);
 
 #endif

@@ -127,6 +127,8 @@ bool parseLocation(Server& server, std::vector<Token>::iterator& it)
 			brackets--;
 		++it;
 	}
+	if (!validateLocation(location))
+		return (false);
 	server.addLocation(location);
 	return (true);
 }

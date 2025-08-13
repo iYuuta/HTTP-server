@@ -64,6 +64,8 @@ static bool parseServer(std::vector<Token>::iterator& it, Config& conf)
 			brackets--;
 		++it;
 	}
+	if (!validateServer(server))
+		return (false);
 	conf.addServer(server);
 	return (true);
 }

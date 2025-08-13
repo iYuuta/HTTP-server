@@ -30,6 +30,7 @@ void Client::parseRequest()
 		response.setErrorCode(500);
 		return;
 	}
+	buffer[len] = '\0';
 	try {
 		request.parseData(buffer, len);
 		if (request.getParseState() == DONE)

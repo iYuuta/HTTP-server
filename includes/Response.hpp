@@ -81,7 +81,6 @@ class Response {
 		void parsePartHeaders(const std::string& headerStr, Multipart& part);
 		void parseMultipartBody();
 		
-
 		Response();
 
 	public:

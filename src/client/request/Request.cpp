@@ -1,13 +1,20 @@
 #include "../../../includes/Request.hpp"
 
 Request::Request():
-	 _method(Unsupported),_parseState(REQUESLINE), _contentLen(0), _receivedBytes(0), _errorCode(-1), _simpleRequest(false)
+_method(Unsupported),
+_parseState(REQUESLINE),
+_contentLen(0),
+_receivedBytes(0),
+_errorCode(-1),
+_simpleRequest(false)
 {
 	_buffer.clear();
 	_path.clear();
 	_version.clear();
-	_bodyFileName.clear();
+	_headers.clear();
 	_queryString.clear();
+	_bodyFileName.clear();
+	_cookies.clear();
 }
 
 Request::~Request()

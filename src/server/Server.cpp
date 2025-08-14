@@ -66,6 +66,17 @@ size_t Server::getMaxRequestSize() const {
 	return _maxAllowedClientRequestSize.getSize();
 }
 
+static void resuseSocketAddr(const int &fd)
+{
+	const int yes = 1;
+	
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) < 0) {
+		perror("setsockopt");
+		close(fd);
+		throw std::runtime_error("Can't reuse socket address");
+	}
+}
+
 void Server::setup()
 {
 	_address.sin_family = AF_INET;
@@ -75,14 +86,11 @@ void Server::setup()
 	const int fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (fd < 0)
 		throw std::runtime_error("Socket creation failed");
-
-	const int yes = 1;
-	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) < 0) {
-		perror("setsockopt");
-		close(fd);
-		throw std::runtime_error("Can't reuse socket address");
-	}
+		
 	setFd(fd);
+
+	resuseSocketAddr(fd);
+	
 	if (bind(fd, (sockaddr*)&_address, sizeof(_address)) < 0)
 		throw std::runtime_error("Socket bind failed");
 

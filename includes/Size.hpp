@@ -2,16 +2,17 @@
 # define SIZE_HPP
 
 #include <cstdlib>
+#include <iostream>
 
 class Size
 {
     private:
-        size_t  _size;
+        ssize_t  _size;
     public:
         Size();
-	    Size(size_t size);
+	    Size(ssize_t size);
         Size &operator=(const Size &other);
-        size_t getSize() const;
+        ssize_t getSize() const;
 };
 
 # endif

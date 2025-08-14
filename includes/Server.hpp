@@ -42,7 +42,7 @@ class Server
 		int getFd() const;
 		std::vector<Location>& getLocations();
 		std::map<int, std::string>& getErrorPages();
-		size_t getMaxRequestSize() const;
+		ssize_t getMaxRequestSize() const;
 		const sockaddr_in& getSocketAddress() const;
 };
 

@@ -12,6 +12,8 @@ bool validateServer(Server &server)
 		return (requiredValue("interface"));
 	if (server.getPort() == -1)
 		return (requiredValue("port"));
+	if (server.getMaxRequestSize() == -1)
+		return (requiredValue("client_max_body_size"));
 	return (true);
 }
 

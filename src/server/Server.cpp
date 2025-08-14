@@ -1,6 +1,6 @@
 #include "../../includes/Server.hpp"
 
-Server::Server(): _fd(-1), _port(-1), _maxAllowedClientRequestSize(1024 * 1024 * 1024)
+Server::Server(): _fd(-1), _port(-1), _maxAllowedClientRequestSize(-1)
 {
 }
 
@@ -62,7 +62,7 @@ std::map<int, std::string>& Server::getErrorPages() {
 	return _errorPages;
 }
 
-size_t Server::getMaxRequestSize() const {
+ssize_t Server::getMaxRequestSize() const {
 	return _maxAllowedClientRequestSize.getSize();
 }
 

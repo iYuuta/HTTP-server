@@ -10,7 +10,6 @@ bool validateArgBody(const std::vector<Token>::iterator& it);
 bool validateMultiArgs(const std::vector<Token>::iterator& it, int args);
 bool parseListen(Server& server, std::vector<Token>::iterator& it);
 bool parseClientMaxBodySize(Server& server, std::vector<Token>::iterator& it);
-bool parseServerName(Server& server, std::vector<Token>::iterator& it);
 bool parseErrorPage(Server& server, std::vector<Token>::iterator& it);
 bool parseLocation(Server& server, std::vector<Token>::iterator& it);
 bool parseLocationMethods(Location& location, std::vector<Token>::iterator& it);

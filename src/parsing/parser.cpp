@@ -29,9 +29,9 @@ static std::string readConfig(std::ifstream& in)
 
 static bool parseOption(std::vector<Token>::iterator& it, Server& server)
 {
-	const std::string keys[5] = {"listen", "client_max_body_size", "server_name", "error_page", "location"};
+	const std::string keys[5] = {"listen", "client_max_body_size", "error_page", "location"};
 	bool (*fn[5])(Server& server, std::vector<Token>::iterator& it) = {
-		::parseListen, ::parseClientMaxBodySize, ::parseServerName, ::parseErrorPage, ::parseLocation,
+		::parseListen, ::parseClientMaxBodySize, ::parseErrorPage, ::parseLocation,
 	};
 	for (size_t i = 0; i < 5; i++)
 	{

@@ -16,14 +16,6 @@ bool parseListen(Server& server, std::vector<Token>::iterator& it)
 	return (true);
 }
 
-bool parseServerName(Server& server, std::vector<Token>::iterator& it)
-{
-	if (!validateOneArg(it))
-		return (false);
-	server.setName(it->getKey());
-	return (true);
-}
-
 bool parseClientMaxBodySize(Server& server, std::vector<Token>::iterator& it)
 {
 	if (!validateOneArg(it))

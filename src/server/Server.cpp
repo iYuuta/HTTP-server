@@ -1,5 +1,7 @@
 #include "../../includes/Server.hpp"
 
+#include <netdb.h>
+
 Server::Server(): _fd(-1), _port(-1), _maxAllowedClientRequestSize(-1)
 {
 }
@@ -70,29 +72,49 @@ static void resuseSocketAddr(const int &fd)
 {
 	const int yes = 1;
 	
-	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) < 0) {
-		perror("setsockopt");
-		close(fd);
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) < 0)
 		throw std::runtime_error("Can't reuse socket address");
+}
+
+static void asignHost(sockaddr_in &address, const int &port, const std::string &host)
+{
+	struct addrinfo hints = {};
+	struct addrinfo *res;
+
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+
+	address.sin_family = AF_INET;
+	address.sin_port = htons(port);
+
+	int status = getaddrinfo(host.c_str(), NULL, &hints, &res);
+
+    if (status != 0)
+	{
+   		freeaddrinfo(res);
+        throw std::runtime_error(std::string("Error: ") + gai_strerror(status));
 	}
+
+	address.sin_addr = ((struct sockaddr_in*)res->ai_addr)->sin_addr;
+
+    freeaddrinfo(res);
 }
 
 void Server::setup()
 {
-	_address.sin_family = AF_INET;
-	_address.sin_port = htons(_port);
-	_address.sin_addr.s_addr = INADDR_ANY;
+	const int fd = socket(PF_INET, SOCK_STREAM, 0);
 
-	const int fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (fd < 0)
 		throw std::runtime_error("Socket creation failed");
-		
-	setFd(fd);
 
-	resuseSocketAddr(fd);
+	setFd(fd);
 	
+	resuseSocketAddr(fd);
+
+	asignHost(_address, _port, _host);
+
 	if (bind(fd, (sockaddr*)&_address, sizeof(_address)) < 0)
-		throw std::runtime_error("Socket bind failed");
+		throw std::runtime_error(std::string("Socket bind failed: ") + strerror(errno));
 
 	if (listen(fd, SOMAXCONN) < 0)
 		throw std::runtime_error("Socket listen failed");

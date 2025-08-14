@@ -1,5 +1,7 @@
 #include "../../../includes/Response.hpp"
 
+#include <signal.h>
+
 Response::~Response() {}
 
 Response::Response(Request& req, std::map<int, std::string>& error, std::vector<Location>::iterator& location):

@@ -148,7 +148,6 @@ void Response::executeCgi() {
 		_errorCode = 500;
 		throw (std::string) "failed to open a file";
 	}
-	std::cout << _request.getFileName() << std::endl;
 	if (_request.getContentLen() > 0) {
 		fd = open(_request.getFileName().c_str(), O_RDONLY);
 		if (fd < 0) {
@@ -193,15 +192,31 @@ void Response::executeCgi() {
 		exit(500);
 	}
 	else {
-		int status;
-		waitpid(pid, &status, 0);
+		int status = -1;
+		time_t start = time(NULL);
+		while (true) {
+			pid_t ret = waitpid(pid, &status, WNOHANG);
+    		if (ret > 0)
+				break ;
+			if (ret == -1) 
+				break ;
+			if (time(NULL) - start >= 5) {
+				kill(pid, SIGTERM);
+			}
+			usleep(100000);
+		}
 		unlink(_request.getFileName().c_str());
 		close(fd);
-		if (status == 500) {
-			_errorCode = 500;
+		if (status != 0) {
 			unlink(_cgiFile.c_str());
 			close(_cgiFd);
-			throw (std::string) "child process terminated with a failure";
+			if (WIFSIGNALED(status) && WTERMSIG(status) == SIGTERM) {
+				_errorCode = 504;
+				throw std::string("child process terminated due to timeout");
+			} else if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+				_errorCode = 500;
+				throw std::string("child process terminated with failure");
+			}
 		}
 		close(_cgiFd);
 		_cgiFd = open(_cgiFile.c_str(), O_RDONLY);
@@ -353,7 +368,6 @@ void Response::ERROR() {
 	std::string errorFile = _errorPages[_errorCode];
 	struct stat fileStat;
 
-	std::cerr << "Error code: " << _errorCode << std::endl;
 	if (_body.is_open())
 		_body.close();
 	if (errorFile.length() == 0)
@@ -388,6 +402,9 @@ void Response::ERROR() {
 			break;
 		case 409:
 			_errorResponse.append("HTTP/1.0 409 Conflict\r\n");
+			break;
+		case 504:
+			_errorResponse.append("HTTP/1.0 504 Gateway Timeout\r\n");
 			break;
 		default:
 			_errorResponse.append("HTTP/1.0 500 Internal Server Error\r\n");

@@ -3,11 +3,14 @@
 
 int main (int ac, char **av)
 {
-    if (ac != 2)
-        return (std::cout << "usage: ./webserv config_file_path" << std::endl, 1);
+    std::string path("configs/test.conf");
 
-    Config      conf(av[1]);
+    if (ac == 2)
+        path = av[1];
+    else if (ac != 1)
+        return (std::cerr << "usage: ./webserv config_file_path" << std::endl, 1);
 
+    Config conf(path);
     if (conf.fail())
         return (conf.getErrorCode());
 

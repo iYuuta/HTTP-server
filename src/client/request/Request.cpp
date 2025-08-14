@@ -73,7 +73,7 @@ void Request::parseData(const char* data, size_t len)
 		}
 		else if (_parseState == BODY)
 		{
-			if (_contentLen == 0 || _receivedBytes >= _contentLen) {
+			if (_contentLen == 0 || _receivedBytes >= _contentLen || _method != Post) {
 				_parseState = DONE;
 				break ;
 			}

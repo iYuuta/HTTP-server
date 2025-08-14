@@ -1,5 +1,6 @@
 # include "../../includes/Config.hpp"
 # include <fstream>
+# include <string.h>
 
 Config::Config(const std::string& input) : _errorCode(0)
 {
@@ -12,7 +13,7 @@ void Config::parseConfig(const std::string& input)
 
 	if (conf.fail())
 	{
-		std::cout << "Error: " << strerror(errno) << ": " << input << std::endl;
+		std::cerr << "Error: " << strerror(errno) << ": " << input << std::endl;
 		_errorCode = 2;
 		return;
 	}

@@ -82,39 +82,22 @@ void Response::handleRawUpload(const std::string& uploadPath) {
 }
 
 void Response::handleMultipartUpload(const std::string& uploadPath) {
-		
-	parseMultipartBody();
+	try {
+		parseMultipartBody(uploadPath);
 
-	for (size_t i = 0; i < _multiparts.size(); i++) {
-		const Multipart& part = _multiparts[i];
-		if (part.isFile && !part.contentDispositionFilename.empty()) {
-			std::string finalFilePath = uploadPath + "/" + part.contentDispositionFilename;
-			
-			std::ifstream src(part.tempFilePath.c_str(), std::ios::binary);
-			std::ofstream dst(finalFilePath.c_str(), std::ios::binary);
+		_statusLine_Headers.append("HTTP/1.0 201 Created\r\n");
 
-			if (!src.is_open() || !dst.is_open()) {
-				_errorCode = 500;
-				unlink(part.tempFilePath.c_str());
-				throw std::runtime_error("Failed to open streams for file copy.");
-			}
-			
-			dst << src.rdbuf();
-			src.close();
-			dst.close();
-			
-			unlink(part.tempFilePath.c_str());
-		} else if (part.isFile) {
-			unlink(part.tempFilePath.c_str());
-		}
+		for (size_t i = 0; i < _cookies.size(); i++)
+			_statusLine_Headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
+
+		_statusLine_Headers.append("Connection: close\r\n\r\n");
 	}
-
-	_statusLine_Headers.append("HTTP/1.0 201 Created\r\n");
-
-	for (size_t i = 0; i < _cookies.size(); i++)
-		 _statusLine_Headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
-
-	_statusLine_Headers.append("Connection: close\r\n\r\n");
+	catch (const std::exception& e) {
+		_isError = true;
+		_errorCode = 500;
+		ERROR();
+		std::cerr << "Multipart Upload Error: " << e.what() << std::endl;
+	}
 }
 
 void Response::initCgi() {

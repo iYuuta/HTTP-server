@@ -1,6 +1,7 @@
 #include "../../includes/Server.hpp"
 
 #include <netdb.h>
+#include <string.h>
 
 Server::Server(): _fd(-1), _port(-1), _maxAllowedClientRequestSize(-1)
 {

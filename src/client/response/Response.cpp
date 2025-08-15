@@ -361,7 +361,6 @@ void Response::ERROR() {
 		_body.open(errorFile.c_str(), std::ios::in | std::ios::binary);
 		if (!_body.is_open()) {
 			_errorPageExists = false;
-			_errorCode = 500;
 		}
 	}
 	switch (_errorCode) {
@@ -481,21 +480,24 @@ void Response::getBody() {
 	std::string fileName = _location->getRoute() + _request.getPath();
 
 	if (isDirectory(fileName)) {
-		if (_location->autoIndex()) {
-			if (!_location->getIndex().empty())
-				fileName += _location->getIndex();
-			else {
-				try {
-					buildIndex();
-					return ;
-				}
-				catch (std::string err) {
-					throw err;
-				}
+		if (!_location->getIndex().empty()) {
+			fileName += _location->getIndex();
+			if (isDirectory(fileName)) {
+				_errorCode = 403;
+				throw (std::string) "index is directory";
+			}
+		}
+		else if (_location->autoIndex()) {
+			try {
+				buildIndex();
+				return ;
+			}
+			catch (std::string err) {
+				throw err;
 			}
 		}
 		else {
-			_errorCode = 404;
+			_errorCode = 403;
 			throw (std::string) "AutoIndex off and no index file";
 		}
 	}

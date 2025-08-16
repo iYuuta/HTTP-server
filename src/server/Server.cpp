@@ -120,3 +120,13 @@ const sockaddr_in& Server::getSocketAddress() const
 {
 	return (_address);
 }
+
+bool Server::isLocationExists(const std::string &url)
+{
+	for (std::vector<Location>::iterator it = _locations.begin(); it != _locations.end(); ++it)
+	{
+		if (it->getUrl() == url)
+			return (true);
+	}
+	return (false);
+}

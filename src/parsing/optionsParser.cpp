@@ -104,6 +104,11 @@ bool parseLocation(Server& server, std::vector<Token>::iterator& it)
 	if (!validateArgBody(it))
 		return (false);
 	location.setUrl(it++->getKey());
+	if (server.isLocationExists(location.getUrl()))
+	{
+		std::cerr << "Duplicated location: " << location.getUrl() << std::endl;
+		return (false);
+	}
 	++it;
 	while (brackets)
 	{

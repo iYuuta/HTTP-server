@@ -38,6 +38,7 @@ class Server
 		bool isClientExists(const int& clientId);
 		void setup();
 		int getFd() const;
+		bool isLocationExists(const std::string &url);
 		std::vector<Location>& getLocations();
 		std::map<int, std::string>& getErrorPages();
 		ssize_t getMaxRequestSize() const;

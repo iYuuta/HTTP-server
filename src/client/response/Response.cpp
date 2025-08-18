@@ -492,7 +492,7 @@ void Response::monitorCgi() {
 		close(_cgiFd);
 		if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
 			_errorCode = 500;
-			throw std::string("child process terminated with failure");
+			return ;
 		}
 	}
 	close(_cgiFd);
@@ -578,6 +578,11 @@ void Response::buildCgiResponse() {
 void Response::CGI() {
 	if (_cgiRunning) {
 		monitorCgi();
+		if (_errorCode == 500) {
+			std::cout << "Error: child process terminated with a failure" << std::endl;
+			ERROR();
+			return ;
+		}
 		if (_cgiRunning && !checkTimeOut()) {
 			std::cout << "Error: child process terminated due to a time out" << std::endl;
 			ERROR();
@@ -849,6 +854,7 @@ void Response::simpleReqsponse() {
 	if (_request.getMeth() == Get) {
 		try {
 			getBody();
+			return ;
 		}
 		catch (std::string err) {
 			std::cerr << "Error: " << err << std::endl;

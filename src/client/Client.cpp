@@ -38,6 +38,7 @@ void Client::parseRequest()
 				response.setErrorCode(_errorCode);
 				return ;
 			}
+			request.checkForPathInfo(_location);
 		}
 		if (request.getParseState() == DONE)
 			_requestDone = true;

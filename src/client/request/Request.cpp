@@ -70,6 +70,8 @@ void Request::parseData(const char* data, size_t len)
 			}
 			else
 				addHeaders(header_line);
+			if (_errorCode == 400)
+				throw (std::string) "Bad request";
 		}
 		else if (_parseState == BODY)
 		{
@@ -84,6 +86,8 @@ void Request::parseData(const char* data, size_t len)
 				break ;
 
 			addBody(_buffer.substr(0, ReadLen), ReadLen);
+			if (_errorCode == 500)
+				throw (std::string) "Failed to open a file";
 			_buffer.erase(0, ReadLen);
 			_receivedBytes += ReadLen;
 			if (_receivedBytes >= _contentLen)
@@ -153,6 +157,7 @@ void Request::decodeUrl() {
 void Request::addRequestLine(const std::string &buff) {
 	std::istringstream parser(buff);
 	std::string method;
+	size_t pos;
 
 	if (!isValidRequestLine(buff)) {
 		_errorCode = 400;
@@ -169,7 +174,7 @@ void Request::addRequestLine(const std::string &buff) {
 		_method = Delete;
 	else
 		_method = Unsupported;
-	size_t pos = _path.find('?');
+	pos = _path.find('?');
 	if (pos != std::string::npos) {
 		_queryString = _path.substr(pos + 1);
 		_path = _path.substr(0, pos);
@@ -182,44 +187,32 @@ void Request::addHeaders(std::string buff)
 {
 	size_t pos = buff.find(":");
 	if (pos == std::string::npos) {
-		if (buff.empty() || (buff[0] != ' ' && buff[0] != '\t')) {
+		if (buff.empty() || (buff[0] != ' ' && buff[0] != '\t'))
 			_errorCode = 400;
-			throw std::string("Bad request");
-		}
-		if (_headers.empty()) {
+		if (_headers.empty())
 			_errorCode = 400;
-			throw std::string("Bad request");
-		}
 		_headers.rbegin()->second += " " + trim(buff);
 		return ;
 	}
 	std::string key = buff.substr(0, pos);
-	if (!isKeyValid(key)) {
+	if (!isKeyValid(key))
 		_errorCode = 400;
-		throw std::string("Bad request");
-	}
 	std::string value = trim(buff.substr(pos + 1));
 	_headers[key] = value;
 	if (key == "Content-Length")
 	{
-		if (value.empty()) {
+		if (value.empty()) 
 			_errorCode = 400;
-			throw (std::string) "Bad request";
-		}
 		char* endptr = NULL;
 		unsigned long long len = std::strtoull(value.c_str(), &endptr, 10);
-		if (endptr == value.c_str() || *endptr != '\0') {
+		if (endptr == value.c_str() || *endptr != '\0')
 			_errorCode = 400;
-			throw (std::string) "Bad request";
-		}
 		_contentLen = static_cast<size_t>(len);
 	}
 	else if (key == "Cookie")
 	{
-		if (value.empty()) {
+		if (value.empty())
 			_errorCode = 400;
-			throw (std::string) "Bad request";
-		}
 		parseCookie(value);
 	}
 }
@@ -229,13 +222,39 @@ void Request::addBody(const std::string& buff, size_t len)
 	if (!_bodyOut.is_open()) {
 		_bodyFileName = generateRandomName();
 		_bodyOut.open(_bodyFileName.c_str(), std::ios::binary | std::ios::app);
-		if (!_bodyOut) {
+		if (!_bodyOut)
 			_errorCode = 500;
-			throw (std::string) "failed to open a file";
-		}
 	}
 	_bodyOut.write(buff.data(), len);
 }
+
+void Request::checkForPathInfo(std::vector<Location>::iterator& location) {
+	size_t index = 1;
+	std::string ext;
+	std::vector<std::string> exts = location->getExt();
+	
+	while (true) {
+		size_t slash_pos = _path.find('/', index);
+
+		if (slash_pos == std::string::npos)
+			return;
+		size_t dot_pos = _path.find('.', index);
+
+		if (dot_pos != std::string::npos && dot_pos < slash_pos)
+			ext = _path.substr(dot_pos, slash_pos - dot_pos);
+		index = slash_pos + 1;
+		for (std::vector<std::string>::iterator it = exts.begin(); it != exts.end(); it++) {
+			if (*it == ext) {
+				_pathInfo = _path.substr(slash_pos + 1);
+				_path = _path.substr(0, slash_pos);
+				std::cout << "path: " << _path << std::endl;
+				std::cout << "pathInfo: " << _pathInfo << std::endl;
+				return;
+			}
+		}
+	}
+}
+
 
 void Request::setPath(const std::string& path) {
 	_path = path;

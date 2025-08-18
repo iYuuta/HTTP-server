@@ -18,6 +18,7 @@ class Request {
 		std::string							_version;
 		std::map<std::string, std::string>	_headers;
 		std::string							_queryString;
+		std::string							_pathInfo;
 		std::string							_bodyFileName;
 		std::ofstream						_bodyOut;
 
@@ -33,6 +34,8 @@ class Request {
 		void					addBody(const std::string& buff, size_t len);
 		void					setPath(const std::string& path);
 		void					decodeUrl();
+		void 					checkForPathInfo(std::vector<Location>::iterator& location);
+
 
 		bool					isValidRequestLine(const std::string& line);
 		const HttpRequestMethod	&getMeth() const ;

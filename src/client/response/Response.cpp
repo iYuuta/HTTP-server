@@ -370,6 +370,19 @@ void Response::POST() {
 				} else {
 					_headers.append("Location: " + pathPart + "\r\n");
 				}
+			} else if (!_postIsMultipart) {
+				std::string pathPart = _location->getUrl();
+				if (!pathPart.empty() && pathPart[pathPart.size() - 1] == '/' &&
+					!_request.getPath().empty() && _request.getPath()[0] == '/')
+					pathPart.resize(pathPart.size() - 1);
+				pathPart += _request.getPath();
+
+				std::string host = _request.getHeader("Host");
+				if (!host.empty()) {
+					_headers.append("Location: http://" + host + pathPart + "\r\n");
+				} else {
+					_headers.append("Location: " + pathPart + "\r\n");
+				}
 			}
 			_statusLine.append("HTTP/1.0 201 Created\r\n");
 		} else {

@@ -35,6 +35,13 @@ _bytesSent(0) {
 	_multiparts.clear();
 	_cookies.clear();
 	_cookiesBuilt = false;
+
+	_postState = POST_IDLE;
+	_postIsMultipart = false;
+	_multipartState = LOOKING_FOR_START_BOUNDARY;
+	_multipartBuffer.clear();
+	_multipartStartBoundary.clear();
+	_multipartHeaderSeparator = "\r\n\r\n";
 }
 
 void Response::validateUploadPath(const std::string& uploadPath) {
@@ -53,32 +60,285 @@ void Response::validateUploadPath(const std::string& uploadPath) {
 	}
 }
 
-void Response::handleRawUpload(const std::string& uploadPath) {
-	std::string requestPath = _request.getPath();
-	std::string filename = requestPath.substr(requestPath.find_last_of('/') + 1);
-	if (filename.empty() || filename == "/") {
+bool Response::stepRawUpload() {
+
+	if (!_uploadOutStream.is_open())
+	{
+		_uploadOutStream.open(_postUploadPath.c_str(), std::ios::out | std::ios::binary);
+		if (!_uploadOutStream) {
+            _errorCode = 500;
+            throw std::runtime_error("Failed to write uploaded data.");
+        }
+	}
+	char buffer[BUFFER_SIZE];
+	_postBodyStream.read(buffer, sizeof(buffer));
+	std::streamsize n = _postBodyStream.gcount();
+	if (n > 0)
+	{
+		_uploadOutStream.write(buffer, n);
+		if (!_uploadOutStream) {
+            _errorCode = 500;
+            throw std::runtime_error("Failed to write uploaded data.");
+        }
+	}
+	if (_postBodyStream.eof())
+	{
+		_uploadOutStream.close();
+		_postBodyStream.close();
+		return (true);
+	}
+	if (!_postBodyStream)
+	{
+		_errorCode = 500;
+		throw std::runtime_error("Failed to read request body");
+	}
+	return (false);
+}
+
+bool Response::extractBoundary(const std::string& contentTypeHeader, std::string& boundary) {
+	size_t boundaryPos = contentTypeHeader.find("boundary=");
+	if (boundaryPos == std::string::npos) {
 		_errorCode = 400;
-		throw std::runtime_error("Cannot upload body to a directory");
+		return (false);
 	}
-	std::string filePath = uploadPath + "/" + filename;
+	boundary = contentTypeHeader.substr(boundaryPos + 9);
+	if (boundary.length() > 1 && boundary[0] == '"' && boundary[boundary.length() - 1] == '"')
+		boundary = boundary.substr(1, boundary.length() - 2);
+	return (true);
+}
 
-	std::ofstream newFile(filePath.c_str(), std::ios::out | std::ios::binary);
-	if (!newFile.is_open()) {
-		_errorCode = 500;
-		throw std::runtime_error("Failed to create the file on the server.");
+void Response::parsePartHeaders(const std::string& headerStr, Multipart& part) {
+	std::istringstream headerStream(headerStr);
+	std::string line;
+
+	while (std::getline(headerStream, line)) {
+		if (!line.empty() && line[line.length() - 1] == '\r')
+			line.erase(line.length() - 1);
+
+		size_t colonPos = line.find(':');
+		if (colonPos != std::string::npos) {
+			std::string name = line.substr(0, colonPos);
+			if (!isKeyValid(name)) {
+				_errorCode = 400;
+				throw std::string("Bad request");
+			}
+			std::string value = trim(line.substr(colonPos + 1));
+
+			part.headers[name] = value;
+			if (name == "Content-Disposition") {
+				size_t namePos = value.find("name=\"");
+				if (namePos != std::string::npos) {
+					size_t nameEnd = value.find("\"", namePos + 6);
+					if (nameEnd != std::string::npos)
+						part.contentDispositionName = value.substr(namePos + 6, nameEnd - (namePos + 6));
+				}
+				size_t filenamePos = value.find("filename=\"");
+				if (filenamePos != std::string::npos) {
+					size_t filenameEnd = value.find("\"", filenamePos + 10);
+					if (filenameEnd != std::string::npos) {
+						part.contentDispositionFilename = value.substr(filenamePos + 10, filenameEnd - (filenamePos + 10));
+						part.isFile = true;
+					}
+				}
+			}
+			else if (name == "Content-Type")
+				part.contentType = value;
+		}
+		else {
+			if (line.empty() || (line[0] != ' ' && line[0] != '\t')) {
+				_errorCode = 400;
+				throw std::string("Bad request");
+			}
+			if (part.headers.empty()) {
+				_errorCode = 400;
+				throw std::string("Bad request");
+			}
+			if (!part.headers.empty())
+				part.headers.rbegin()->second = part.headers.rbegin()->second + " " + trim(line);
+
+		}
+	}
+}
+
+
+bool Response::stepMultipartUpload()
+{
+	if (_multipartBuffer.size() < BUFFER_SIZE * 2 && _postBodyStream)
+	{
+		std::string chunk(BUFFER_SIZE, '\0');
+		_postBodyStream.read(&chunk[0], chunk.size());
+		std::streamsize n = _postBodyStream.gcount();
+		if (n > 0)
+		{
+			chunk.resize(n);
+			_multipartBuffer += chunk;
+		}
 	}
 
-	std::ifstream bodyFile(_request.getFileName().c_str(), std::ios::in | std::ios::binary);
-	if (!bodyFile.is_open()) {
-		_errorCode = 500;
-		throw std::runtime_error("Failed to open request body file.");
+    if (_multipartState == LOOKING_FOR_START_BOUNDARY) {
+        size_t pos = _multipartBuffer.find(_multipartStartBoundary);
+        if (pos == std::string::npos)
+            return false;
+    
+        _multipartBuffer.erase(0, pos + _multipartStartBoundary.length());
+        if (_multipartBuffer.find("\r\n") == 0)
+            _multipartBuffer.erase(0, 2);
+        _multipartState = PARSING_HEADERS;
+    }
+
+    if (_multipartState == PARSING_HEADERS) {
+        size_t pos = _multipartBuffer.find(_multipartHeaderSeparator);
+        if (pos == std::string::npos) {
+            if (!_postBodyStream) {
+                _errorCode = 400;
+                throw std::runtime_error("Multipart error: Malformed headers.");
+            }
+            return false;
+        }
+        std::string headers_str = _multipartBuffer.substr(0, pos);
+        _multipartBuffer.erase(0, pos + _multipartHeaderSeparator.length());
+
+        _multipartCurrentPart = Multipart();
+        parsePartHeaders(headers_str, _multipartCurrentPart);
+
+        if (_multipartCurrentPart.isFile && !_multipartCurrentPart.contentDispositionFilename.empty()) {
+            std::string finalFilePath = _postUploadPath + "/" + _multipartCurrentPart.contentDispositionFilename;
+            _uploadOutStream.open(finalFilePath.c_str(), std::ios::binary);
+            if (!_uploadOutStream.is_open()) {
+                _errorCode = 500;
+                throw std::runtime_error("Failed to create file for upload.");
+            }
+        }
+        _multipartState = STREAMING_BODY;
+    }
+
+	   if (_multipartState == STREAMING_BODY) {
+        const std::string boundary_delimiter = std::string("\r\n") + _multipartStartBoundary;
+
+        size_t pos = _multipartBuffer.find(boundary_delimiter);
+        if (pos != std::string::npos) {
+            if (_uploadOutStream.is_open()) {
+                _uploadOutStream.write(_multipartBuffer.c_str(), pos);
+                _uploadOutStream.close();
+            }
+            _multipartBuffer.erase(0, pos + boundary_delimiter.length());
+
+            if (_multipartBuffer.find("--") == 0) {
+                _multipartState = FINISHED;
+            } else if (_multipartBuffer.find("\r\n") == 0) {
+                _multipartBuffer.erase(0, 2);
+                _multipartState = PARSING_HEADERS;
+            }
+        } else {
+            size_t tail_size = _multipartStartBoundary.length() + 4;
+            if (_multipartBuffer.length() > tail_size) {
+                size_t write_size = _multipartBuffer.length() - tail_size;
+                if (_uploadOutStream.is_open())
+                    _uploadOutStream.write(_multipartBuffer.c_str(), write_size);
+                _multipartBuffer.erase(0, write_size);
+            }
+            if (!_postBodyStream && _multipartBuffer.find(boundary_delimiter) == std::string::npos) {
+                _errorCode = 400;
+                throw std::runtime_error("Multipart error: Unterminated part.");
+            }
+           return false;
+        }
+    }
+
+    return (_multipartState == FINISHED);
+}
+
+void Response::postInit()
+{
+	std::string uploadPath = _location->getUploadStore();
+    if (uploadPath.empty()){
+        uploadPath = _location->getRoute();
 	}
+    
+	validateUploadPath(uploadPath);
+    _postUploadPath = uploadPath;
 
-	newFile << bodyFile.rdbuf();
+    std::string contentType = _request.getHeader("Content-Type");
+    _postIsMultipart = (contentType.find("multipart/form-data") != std::string::npos);
 
-	bodyFile.close();
-	newFile.close();
+	_postBodyStream.open(_request.getFileName().c_str(), std::ios::in | std::ios::binary);
+    if (!_postBodyStream.is_open()) {
+        _errorCode = 500;
+        throw std::runtime_error("Failed to open request body file.");
+    }
 
+    if (_postIsMultipart) {
+        if (!extractBoundary(contentType, _boundary)) {
+            _errorCode = 400;
+            throw std::runtime_error("Invalid or missing boundary.");
+        }
+        _multipartStartBoundary = "--" + _boundary;
+        _multipartState = LOOKING_FOR_START_BOUNDARY;
+        _multipartBuffer.clear();
+        _postState = POST_MULTIPART_STREAM;
+        } else {
+
+        	std::string requestPath = _request.getPath();
+            std::string filename = requestPath.substr(requestPath.find_last_of('/') + 1);
+            if (filename.empty() || filename == "/") {
+            	_errorCode = 400;
+                throw std::runtime_error("Cannot upload body to a directory");
+            }
+                _postUploadPath = _postUploadPath + "/" + filename;
+                _postState = POST_RAW_STREAM;
+            }
+}
+
+
+void Response::POST() {
+	if (_errorCode != 200 && _errorCode != -1)
+		return;
+	try {
+
+		if (_postState == POST_IDLE)
+			postInit();
+	
+		bool done = false;
+        if (_postState == POST_RAW_STREAM)
+            done = stepRawUpload();
+        else if (_postState == POST_MULTIPART_STREAM)
+            done = stepMultipartUpload();
+
+		if (!done)
+            return;
+
+        if (!_request.getFileName().empty())
+            std::remove(_request.getFileName().c_str());
+
+		if(_postIsMultipart)
+		    _statusLine.append("HTTP/1.0 201 Created\r\n");
+        else
+            _statusLine.append("HTTP/1.0 204 No Content\r\n");
+
+        for (size_t i = 0; i < _cookies.size(); i++)
+            _headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
+
+        _headers.append("Connection: Close\r\n\r\n");
+
+		_contentLen = 0;
+		_postState = POST_DONE;
+		_responseBuilt = true;
+	}
+	catch (const std::exception &e)
+	{
+	    if (_postBodyStream.is_open())
+        	_postBodyStream.close();
+
+    	if (_uploadOutStream.is_open())
+        	_uploadOutStream.close();
+
+    	if (!_request.getFileName().empty())
+        std::remove(_request.getFileName().c_str());
+
+		
+		ERROR();
+		std::cerr << "POST Error: " << e.what() << std::endl;
+	}
 }
 
 
@@ -536,46 +796,6 @@ void Response::GET() {
 	}
 }
 
-void Response::POST() {
-	if (_errorCode != 200 && _errorCode != -1)
-		return;
-	try {
-		std::string uploadPath = _location->getUploadStore();
-		if (uploadPath.empty())
-			uploadPath = _location->getRoute();
-		validateUploadPath(uploadPath);
-		
-		std::string contentType = _request.getHeader("Content-Type");
-		bool isMultipart = (contentType.find("multipart/form-data") != std::string::npos);
-
-		if (isMultipart)
-			parseMultipartBody(uploadPath);
-		else
-			handleRawUpload(uploadPath);
-
-		const std::string tmp = _request.getFileName();
-    	if (!tmp.empty()){
-        	std::remove(tmp.c_str());
-    	}
-
-   		if (isMultipart) {
-            _statusLine.append("HTTP/1.0 201 Created\r\n");
-        } else {
-            _statusLine.append("HTTP/1.0 204 No Content\r\n");
-        }
-
-        for (size_t i = 0; i < _cookies.size(); i++)
-            _headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
-
-        _headers.append("Connection: Close\r\n\r\n");
-		_contentLen = 0;
-        _responseBuilt = true;
-
-	} catch (const std::exception& e) {
-		ERROR();
-		std::cerr << "POST Error: " << e.what() << std::endl;
-	}
-}
 
 void Response::DELETE() {
 

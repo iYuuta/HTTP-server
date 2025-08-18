@@ -13,6 +13,15 @@ enum ParseState {
     FINISHED
 };
 
+enum PostState {
+	POST_IDLE,
+	POST_PREPARING,
+	POST_RAW_STREAM,
+	POST_MULTIPART_STREAM,
+	POST_DONE,
+	POST_FAIL,
+};
+
 struct Multipart {
     std::map<std::string, std::string> headers;
     std::string contentDispositionName;
@@ -62,6 +71,19 @@ class Response {
 		std::string							_boundary;
 		std::vector<Multipart>				_multiparts;
 
+		PostState							_postState;
+		bool								_postIsMultipart;
+		std::string        					_postUploadPath;
+		std::ifstream						_postBodyStream;
+		std::ofstream						_uploadOutStream;
+
+		ParseState          				_multipartState;
+        std::string        					_multipartBuffer;
+        std::string         				_multipartStartBoundary;
+        std::string         				_multipartHeaderSeparator;
+        Multipart           				_multipartCurrentPart;
+
+
 		std::vector<std::string>	_cookies;
 		bool _cookiesBuilt;
 
@@ -90,7 +112,10 @@ class Response {
 		void parseMultipartBody(const std::string& uploadPath);
 		
 		Response();
-
+		
+		bool stepRawUpload();
+		bool stepMultipartUpload();
+		void postInit();
 	public:
 		Response(Request& req, std::map<int, std::string>& error, std::vector<Location>::iterator& location);
 		~Response();
@@ -104,6 +129,7 @@ class Response {
 
 		void	addCookie(const std::string &cookie);
 		void	buildCookies();
+
 };
 
 #endif

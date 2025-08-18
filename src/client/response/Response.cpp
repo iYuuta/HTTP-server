@@ -42,6 +42,9 @@ _bytesSent(0) {
 	_multipartBuffer.clear();
 	_multipartStartBoundary.clear();
 	_multipartHeaderSeparator = "\r\n\r\n";
+
+	_serverGeneratedName = false;
+    _generatedUploadName.clear();
 }
 
 void Response::validateUploadPath(const std::string& uploadPath) {
@@ -250,6 +253,10 @@ bool Response::stepMultipartUpload()
 
 void Response::postInit()
 {
+
+	if (_postState != POST_IDLE)
+		return;
+
 	std::string uploadPath = _location->getUploadStore();
     if (uploadPath.empty()){
         uploadPath = _location->getRoute();
@@ -272,21 +279,42 @@ void Response::postInit()
             _errorCode = 400;
             throw std::runtime_error("Invalid or missing boundary.");
         }
-        _multipartStartBoundary = "--" + _boundary;
+        _multipartStartBoundary = std::string("--") + _boundary;
         _multipartState = LOOKING_FOR_START_BOUNDARY;
         _multipartBuffer.clear();
         _postState = POST_MULTIPART_STREAM;
-        } else {
+        return;
+    }
 
-        	std::string requestPath = _request.getPath();
-            std::string filename = requestPath.substr(requestPath.find_last_of('/') + 1);
-            if (filename.empty() || filename == "/") {
-            	_errorCode = 400;
-                throw std::runtime_error("Cannot upload body to a directory");
-            }
-                _postUploadPath = _postUploadPath + "/" + filename;
-                _postState = POST_RAW_STREAM;
-            }
+	std::string requestPath = _request.getPath();
+    std::string filename;
+    size_t slash = requestPath.find_last_of('/');
+    if (slash != std::string::npos){
+        filename = requestPath.substr(slash + 1);
+	}
+
+	_serverGeneratedName = false;
+    _generatedUploadName.clear();
+
+	    if (filename.empty()) {
+			std::string ext = ".bin";
+			if (contentType.find("text/plain") != std::string::npos)
+				ext = ".txt";
+			else if (contentType.find("application/json") != std::string::npos)
+				ext = ".json";
+			else if (contentType.find("image/jpeg") != std::string::npos)
+				ext = ".jpg";
+			else if (contentType.find("image/png") != std::string::npos)
+				ext = ".png";
+
+		_generatedUploadName = generateRandomName().substr(6) + ext;
+        filename = _generatedUploadName;
+        _serverGeneratedName = true;
+    }
+
+    _postUploadPath = _postUploadPath + "/" + filename;
+    _postState = POST_RAW_STREAM;
+
 }
 
 
@@ -310,8 +338,29 @@ void Response::POST() {
         if (!_request.getFileName().empty())
             std::remove(_request.getFileName().c_str());
 
-		if(_postIsMultipart)
-		    _statusLine.append("HTTP/1.0 201 Created\r\n");
+		if(_postIsMultipart || _serverGeneratedName)
+		{
+			if (_serverGeneratedName) {
+    
+				std::string pathPart = _location->getUrl();
+				if (!pathPart.empty() && pathPart[pathPart.size() - 1] == '/' &&
+					!_request.getPath().empty() && _request.getPath()[0] == '/')
+					pathPart.resize(pathPart.size() - 1);
+				pathPart += _request.getPath();
+				if (pathPart.empty() || pathPart[pathPart.size() - 1] != '/')
+					pathPart += "/";
+				pathPart += _generatedUploadName;
+
+				std::string host = _request.getHeader("Host");
+				if (!host.empty()) {
+					_headers.append("Location: http://" + host + pathPart + "\r\n");
+				} else {
+					_headers.append("Location: " + pathPart + "\r\n");
+				}
+			}
+			
+			_statusLine.append("HTTP/1.0 201 Created\r\n");
+		}
         else
             _statusLine.append("HTTP/1.0 204 No Content\r\n");
 

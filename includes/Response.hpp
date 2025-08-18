@@ -63,6 +63,7 @@ class Response {
 		std::vector<Multipart>				_multiparts;
 
 		std::vector<std::string>	_cookies;
+		bool _cookiesBuilt;
 
 		void ERROR();
 		void GET();
@@ -82,7 +83,6 @@ class Response {
 		void monitorCgi();
 		void validateUploadPath(const std::string& uploadPath);
 		void handleRawUpload(const std::string& uploadPath);
-		void handleMultipartUpload(const std::string& uploadPath);
 		bool checkTimeOut();
 
 		bool extractBoundary(const std::string& contentTypeHeader, std::string& boundary);

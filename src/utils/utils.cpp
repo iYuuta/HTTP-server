@@ -1,5 +1,91 @@
 # include "../../includes/utils.hpp"
 
+MIME::MIME() {
+	_mime[".aac"] = "audio/aac";
+	_mime[".abw"] = "application/x-abiword";
+	_mime[".arc"] = "application/x-freearc";
+	_mime[".avi"] = "video/x-msvideo";
+	_mime[".azw"] = "application/vnd.amazon.ebook";
+	_mime[".bin"] = "application/octet-stream";
+	_mime[".bmp"] = "image/bmp";
+	_mime[".bz"] = "application/x-bzip";
+	_mime[".bz2"] = "application/x-bzip2";
+	_mime[".csh"] = "application/x-csh";
+	_mime[".css"] = "text/css";
+	_mime[".csv"] = "text/csv";
+	_mime[".doc"] = "application/msword";
+	_mime[".docx"] = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+	_mime[".eot"] = "application/vnd.ms-fontobject";
+	_mime[".epub"] = "application/epub+zip";
+	_mime[".gz"] = "application/gzip";
+	_mime[".gif"] = "image/gif";
+	_mime[".htm"] = "text/html";
+	_mime[".html"] = "text/html";
+	_mime[".ico"] = "image/vnd.microsoft.icon";
+	_mime[".ics"] = "text/calendar";
+	_mime[".jar"] = "application/java-archive";
+	_mime[".jpeg"] = "image/jpeg";
+	_mime[".jpg"] = "image/jpeg";
+	_mime[".js"] = "text/javascript";
+	_mime[".json"] = "application/json";
+	_mime[".jsonld"] = "application/ld+json";
+	_mime[".mid"] = "audio/midi";
+	_mime[".midi"] = "audio/midi";
+	_mime[".mjs"] = "text/javascript";
+	_mime[".mp3"] = "audio/mpeg";
+	_mime[".mpeg"] = "video/mpeg";
+	_mime[".mpkg"] = "application/vnd.apple.installer+xml";
+	_mime[".odp"] = "application/vnd.oasis.opendocument.presentation";
+	_mime[".ods"] = "application/vnd.oasis.opendocument.spreadsheet";
+	_mime[".odt"] = "application/vnd.oasis.opendocument.text";
+	_mime[".oga"] = "audio/ogg";
+	_mime[".ogv"] = "video/ogg";
+	_mime[".ogx"] = "application/ogg";
+	_mime[".opus"] = "audio/ogg";
+	_mime[".otf"] = "font/otf";
+	_mime[".png"] = "image/png";
+	_mime[".pdf"] = "application/pdf";
+	_mime[".php"] = "application/x-httpd-php";
+	_mime[".ppt"] = "application/vnd.ms-powerpoint";
+	_mime[".pptx"] = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+	_mime[".rar"] = "application/vnd.rar";
+	_mime[".rtf"] = "application/rtf";
+	_mime[".sh"] = "application/x-sh";
+	_mime[".svg"] = "image/svg+xml";
+	_mime[".swf"] = "application/x-shockwave-flash";
+	_mime[".tar"] = "application/x-tar";
+	_mime[".tif"] = "image/tiff";
+	_mime[".tiff"] = "image/tiff";
+	_mime[".ts"] = "video/mp2t";
+	_mime[".ttf"] = "font/ttf";
+	_mime[".txt"] = "text/plain";
+	_mime[".vsd"] = "application/vnd.visio";
+	_mime[".wav"] = "audio/wav";
+	_mime[".weba"] = "audio/webm";
+	_mime[".webm"] = "video/webm";
+	_mime[".webp"] = "image/webp";
+	_mime[".woff"] = "font/woff";
+	_mime[".woff2"] = "font/woff2";
+	_mime[".xhtml"] = "application/xhtml+xml";
+	_mime[".xls"] = "application/vnd.ms-excel";
+	_mime[".xlsx"] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+	_mime[".xml"] = "text/xml";
+	_mime[".mp4"] = "video/mp4";
+	_mime[".zip"] = "application/zip";
+	_mime[".7z"] = "application/x-7z-compressed";
+}
+
+Exec::Exec() {
+	_exec[".sh"]	= "/usr/bin/bash";
+	_exec[".bash"]  = "/usr/bin/bash";
+	_exec[".zsh"]   = "/usr/bin/zsh";
+	_exec[".py"]	= "/usr/bin/python3";
+	_exec[".php"]   = "/usr/bin/php";
+	_exec[".pl"]	= "/usr/bin/perl";
+	_exec[".js"]	= "/usr/bin/node";
+	_exec[".awk"]   = "/usr/bin/awk";
+}
+
 std::vector<std::string> split(const std::string& s, const char delimiter)
 {
 	std::vector<std::string> tokens;
@@ -51,35 +137,14 @@ unsigned long atoiul(const std::string& s)
 
 std::string getContentType(const std::string& fileName) {
 	size_t pos = fileName.find_last_of('.');
+
 	if (pos == std::string::npos)
 		return "application/octet-stream";
 
+	MIME _mime;
 	std::string ext = fileName.substr(pos);
 
-	if (ext == ".html" || ext == ".htm")
-		return "text/html";
-	else if (ext == ".css")
-		return "text/css";
-	else if (ext == ".js")
-		return "application/javascript";
-	else if (ext == ".json")
-		return "application/json";
-	else if (ext == ".png")
-		return "image/png";
-	else if (ext == ".jpg")
-		return "image/jpg";
-	else if (ext == ".gif")
-		return "image/gif";
-	else if (ext == ".svg")
-		return "image/svg+xml";
-	else if (ext == ".ico")
-		return "image/x-icon";
-	else if (ext == ".txt")
-		return "text/plain";
-	else if (ext == ".pdf")
-		return "application/pdf";
-	else
-		return "application/octet-stream";
+	return (_mime.getMIME(ext));
 }
 
 std::string trim(const std::string& s) {
@@ -98,17 +163,21 @@ std::string trim(const std::string& s) {
 }
 
 std::string generateRandomName() {
-	const std::string characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-	static bool seeded = false;
+    const std::string characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    static bool seeded = false;
 
-	if (!seeded) {
-		std::srand(std::time(NULL));
-		seeded = true;
-	}
-	std::string result;
-	for (size_t i = 0; i < 12; ++i)
-		result += characters[std::rand() % characters.size()];
-	return "/tmp/" + result;
+    if (!seeded) {
+        std::srand(std::time(NULL));
+        seeded = true;
+    }
+    while (true) {
+        std::string result = "/tmp/";
+        for (size_t i = 0; i < 16; ++i)
+            result += characters[std::rand() % characters.size()];
+
+        if (access(result.c_str(), F_OK) != 0)
+            return result;
+    }
 }
 
 bool isDirectory(const std::string& path) {
@@ -116,23 +185,18 @@ bool isDirectory(const std::string& path) {
 	return (stat(path.c_str(), &st) == 0 && S_ISDIR(st.st_mode));
 }
 
-bool isRegularFile(const std::string& path) {
-	struct stat st;
-	return (stat(path.c_str(), &st) == 0 && S_ISREG(st.st_mode));
-}
-
 std::string getExtension(const std::string& path) {
 	size_t dotPos = path.find_last_of('.');
 	std::string ext;
 
 	ext = path.substr(dotPos);
-	if (ext == ".py")
-		return "/usr/bin/python3";
-	else if (ext == ".php")
-		return "/usr/bin/php";
-	else if (ext == ".sh")
-		return "/bin/bash";
-	return "";
+	Exec _exec;
+	std::string executable = _exec.getExec(ext);
+	if (access(executable.c_str(), F_OK) != 0)
+		return ""; 
+	else if (access(executable.c_str(), X_OK) != 0)
+		return "";
+	return (executable);
 }
 
 bool isExtension(const std::string& path, std::vector<std::string> _ext) {
@@ -174,18 +238,30 @@ bool isKeyValid(const std::string& line) {
 }
 
 int hexCharToInt(char c) {
-    c = std::toupper(c);
-    if (c >= '0' && c <= '9')
-        return c - '0';
-    else if (c >= 'A' && c <= 'F')
-        return c - 'A' + 10;
-    return -1;
+	c = std::toupper(c);
+	if (c >= '0' && c <= '9')
+		return c - '0';
+	else if (c >= 'A' && c <= 'F')
+		return c - 'A' + 10;
+	return -1;
 }
 
 char hexToAscii(char a, char b) {
-    int hi = hexCharToInt(toupper(a));
-    int lo = hexCharToInt(toupper(b));
-    if (hi == -1 || lo == -1)
-        return 0;
-    return static_cast<char>((hi << 4) | lo);
+	int hi = hexCharToInt(toupper(a));
+	int lo = hexCharToInt(toupper(b));
+	if (hi == -1 || lo == -1)
+		return 0;
+	return static_cast<char>((hi << 4) | lo);
+}
+
+std::string MIME::getMIME(std::string extension) {
+	if (_mime.find(extension) != _mime.end())
+		return _mime[extension];
+	return "application/octet-stream";
+}
+
+std::string Exec::getExec(std::string extension) {
+	if (_exec.find(extension) != _exec.end())
+		return _exec[extension];
+	return "";
 }

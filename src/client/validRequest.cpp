@@ -40,7 +40,7 @@ bool Client::isMethodValid() {
 bool Client::isBodySizeValid() {
 	if (_location->isRedirect())
 		return true;
-	if (request.getReceivedBytes() > _server.getMaxRequestSize()) {
+	if (request.getReceivedBytes() > (size_t)_server.getMaxRequestSize()) {
 		_errorCode = 413;
 		return false;
 	}

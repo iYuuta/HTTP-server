@@ -21,6 +21,7 @@ class Client {
 		int								_fd;
 		std::string						_buffer;
 		int								_errorCode;
+		bool							_validRequest;
 
 		bool							_responseDone;
 		bool							_requestDone;
@@ -38,12 +39,17 @@ class Client {
 
 		void parseRequest();
 		void createResponse();
+		std::string test() {
+			return "test\n";
+		};
 
 		bool isRequestDone();
 		bool isResponseDone();
+		bool isResponseBuilt();
 
 		void writeData();
-		bool isFinished();
+		enums getResponseState();
+		enums getRequestState();
 
 };
 

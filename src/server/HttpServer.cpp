@@ -22,7 +22,10 @@ void HttpServer::clean()
 Client& HttpServer::getClient(const int& clientId)
 {
 	std::map<int, Client*>::iterator it = _clients.find(clientId);
-
+	if (it == _clients.end()) {
+		
+		throw std::runtime_error(std::string("ay 9alwa") + intToString(clientId));
+	}
 	return *it->second;
 }
 
@@ -156,25 +159,27 @@ void HttpServer::handleClientRequest(pollfd& pollFd)
 {
 	Client& client = getClient(pollFd.fd);
 
-	if (!client.isRequestDone())
+	if (client.getRequestState() != DONE) {
 		client.parseRequest();
-	if (client.isRequestDone())
-	{
-		client.createResponse();
-		pollFd.events = POLLOUT;
-	}
-	else
-	{
 		pollFd.events = POLLIN;
 	}
+	if (client.getRequestState() == DONE)
+		pollFd.events = POLLOUT;
+	else
+		pollFd.events = POLLIN;
 }
 
 void HttpServer::handleClientResponse(pollfd& pollFd)
 {
 	Client& client = getClient(pollFd.fd);
 
-	if (!client.isFinished())
+	if (!client.isResponseBuilt()) {
+		client.createResponse();
+	}
+	else if (client.getResponseState() != DONE) {
 		client.writeData();
+		pollFd.events = POLLOUT;
+	}
 	else
 		removePollFd(pollFd);
 }

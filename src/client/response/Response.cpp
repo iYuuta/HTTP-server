@@ -8,8 +8,12 @@ Response::Response(Request& req, std::map<int, std::string>& error, std::vector<
 _request(req),
 _location(location),
 _errorPages(error),
-_contentLen(0),
+_contentLen(-1),
 _errorCode(200),
+_cgiPid(0),
+_cgiRunning(false),
+_cgiExecuted(false),
+_responseBuilt(false),
 _isError(false),
 _isCgi(false),
 _isRedirect(false),
@@ -21,10 +25,12 @@ _bytesSent(0) {
 	_env.clear();
 	_cgiExt.clear();
 	_cgiFile.clear();
+	_bodyLeftover.clear();
 	_envPtr.clear();
 	_errorResponse.clear();
 	_return.clear();
-	_statusLine_Headers.clear();
+	_headers.clear();
+	_statusLine.clear();
 	_boundary.clear();
 	_multiparts.clear();
 	_cookies.clear();
@@ -73,27 +79,26 @@ void Response::handleRawUpload(const std::string& uploadPath) {
 	bodyFile.close();
 	newFile.close();
 
-	_statusLine_Headers.append("HTTP/1.0 204 No Content\r\n");
+	_statusLine.append("HTTP/1.0 204 No Content\r\n");
 
 	for (size_t i = 0; i < _cookies.size(); i++)
-		 _statusLine_Headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
+		_headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
 
-	_statusLine_Headers.append("Connection: close\r\n\r\n");
+	_headers.append("Connection: close\r\n\r\n");
 }
 
 void Response::handleMultipartUpload(const std::string& uploadPath) {
 	try {
 		parseMultipartBody(uploadPath);
 
-		_statusLine_Headers.append("HTTP/1.0 201 Created\r\n");
+		_statusLine.append("HTTP/1.0 201 Created\r\n");
 
 		for (size_t i = 0; i < _cookies.size(); i++)
-			_statusLine_Headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
+			_headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
 
-		_statusLine_Headers.append("Connection: close\r\n\r\n");
+		_headers.append("Connection: close\r\n\r\n");
 	}
 	catch (const std::exception& e) {
-		_isError = true;
 		_errorCode = 500;
 		ERROR();
 		std::cerr << "Multipart Upload Error: " << e.what() << std::endl;
@@ -124,104 +129,15 @@ void Response::initCgi() {
 	_envPtr.push_back(NULL);
 }
 
-void Response::executeCgi() {
-	int fd = 0;
-
-	_cgiFile = generateRandomName();
-	_cgiFd = open(_cgiFile.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
-	if (_cgiFd < 0) {
-		_errorCode = 500;
-		throw (std::string) "failed to open a file";
-	}
-	if (_request.getContentLen() > 0) {
-		fd = open(_request.getFileName().c_str(), O_RDONLY);
-		if (fd < 0) {
-			unlink(_cgiFile.c_str());
-			close(_cgiFd);
-			_errorCode = 500;
-			throw (std::string) "failed to open a file";
-		}
-	}
-	int pid = fork();
-	if (pid < 0) {
-		if (fd != 0) {
-			unlink(_request.getFileName().c_str());
-			close(fd);
-		}
-		_errorCode = 500;
-		unlink(_cgiFile.c_str());
-		close(_cgiFd);
-		throw (std::string) "fork failed";
-	}
-	if (pid == 0) {
-		if (chdir(_location->getRoute().c_str()) < 0) {
-			if (fd != 0) {
-				unlink(_request.getFileName().c_str());
-				close(fd);
-			}
-			_errorCode = 500;
-			unlink(_cgiFile.c_str());
-			close(_cgiFd);
-			exit(500);
-		}
-		if (fd != 0) {
-			dup2(fd, STDIN_FILENO);
-			close(fd);
-		}
-		dup2(_cgiFd, STDOUT_FILENO);
-		close(_cgiFd);
-		std::string file = _request.getPath();
-		file = file.erase(0, 1);
-		char *argv[] = {const_cast<char*>(_cgiExt.c_str()), const_cast<char*>(file.c_str()), NULL};
-		execve(_cgiExt.c_str(), argv, _envPtr.data());
-		exit(500);
-	}
-	else {
-		int status = -1;
-		time_t start = time(NULL);
-		while (true) {
-			pid_t ret = waitpid(pid, &status, WNOHANG);
-    		if (ret > 0)
-				break ;
-			if (ret == -1) 
-				break ;
-			if (time(NULL) - start >= 5) {
-				kill(pid, SIGTERM);
-			}
-			usleep(100000);
-		}
-		unlink(_request.getFileName().c_str());
-		close(fd);
-		if (status != 0) {
-			unlink(_cgiFile.c_str());
-			close(_cgiFd);
-			if (WIFSIGNALED(status) && WTERMSIG(status) == SIGTERM) {
-				_errorCode = 504;
-				throw std::string("child process terminated due to timeout");
-			} else if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-				_errorCode = 500;
-				throw std::string("child process terminated with failure");
-			}
-		}
-		close(_cgiFd);
-		_cgiFd = open(_cgiFile.c_str(), O_RDONLY);
-		if (_cgiFd < 0) {
-   			_errorCode = 500;
-			throw (std::string) "failed to open a file";
-		}
-		unlink(_cgiFile.c_str());
-	}
-}
-
 bool Response::addCgiHeaders(const std::string& line) {
 	size_t pos = line.find(":");
 
 	if (pos == std::string::npos) {
 		if (line.empty() || (line[0] != ' ' && line[0] != '\t'))
-			return false;		
-		if (_statusLine_Headers.empty())
-			return false;		
-		_statusLine_Headers += " " + trim(line) + "\r\n";
+			return false;
+		if (_headers.empty())
+			return false;
+		_headers += " " + trim(line) + "\r\n";
 		return true;
 	}
 	std::string key = line.substr(0, pos);
@@ -229,8 +145,9 @@ bool Response::addCgiHeaders(const std::string& line) {
 	if (!isKeyValid(key))
 		return false;	
 	std::string value = trim(line.substr(pos + 1));
-
-	_statusLine_Headers += key + ": " + value + "\r\n";
+	if (key == "Status" && _statusLine.empty())
+		_statusLine.append("HTTP/1.0 " + value + "\r\n");
+	_headers += key + ": " + value + "\r\n";
 	if (key == "Content-Length") {
 		if (value.empty())
 			return false;
@@ -243,116 +160,220 @@ bool Response::addCgiHeaders(const std::string& line) {
 	return true;
 }
 
+void Response::executeCgi() {
+	int fd = 0;
+
+	_cgiFile = generateRandomName() + "_cgiFileName";
+	_cgiFd = open(_cgiFile.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+	if (_cgiFd < 0) {
+		_errorCode = 500;
+		throw (std::string) "failed to open a file";
+	}
+	if (_request.getContentLen() > 0) {
+		fd = open(_request.getFileName().c_str(), O_RDONLY);
+		std::remove(_request.getFileName().c_str());
+		if (fd < 0) {
+			std::remove(_cgiFile.c_str());
+			close(_cgiFd);
+			_errorCode = 500;
+			throw (std::string) "failed to open a file";
+		}
+	}
+	if (!_cgiRunning) {
+		_cgiPid = fork();
+		if (_cgiPid < 0) {
+			if (fd != 0) {
+				std::remove(_request.getFileName().c_str());
+				close(fd);
+			}
+			_errorCode = 500;
+			std::remove(_cgiFile.c_str());
+			close(_cgiFd);
+			throw (std::string) "fork failed";
+		}
+		_cgiRunning = true;
+		if (_cgiPid == 0) {
+			if (chdir(_location->getRoute().c_str()) < 0) {
+				if (fd != 0) {
+					std::remove(_request.getFileName().c_str());
+					close(fd);
+				}
+				std::cerr << "Error: failed to change cwd in the child process\n";
+				std::remove(_cgiFile.c_str());
+				close(_cgiFd);
+				std::exit(500);
+			}
+			if (fd != 0) {
+				dup2(fd, STDIN_FILENO);
+				close(fd);
+			}
+			dup2(_cgiFd, STDOUT_FILENO);
+			close(_cgiFd);
+			std::string file = _request.getPath();
+			file = file.erase(0, 1);
+			char *argv[] = {const_cast<char*>(_cgiExt.c_str()), const_cast<char*>(file.c_str()), NULL};
+			execve(_cgiExt.c_str(), argv, _envPtr.data());
+			std::exit (1);
+		}
+	}
+	else {
+		if (fd) {
+			close(fd);
+			fd = -1;
+		}
+	}
+}
+
+bool Response::checkTimeOut() {
+	struct stat st;
+
+	if (stat(_cgiFile.c_str(), &st) == 0) {
+		time_t mtime = st.st_mtime;
+		time_t now = time(NULL);
+		if (now - mtime > 5) {
+			kill(_cgiPid, SIGTERM);
+			_errorCode = 504;
+			return false;
+		}
+		return true;
+	}
+	_errorCode = 500;
+	return false;
+}
+
+void Response::monitorCgi() {
+	int status = -1;
+	pid_t ret = waitpid(_cgiPid, &status, WNOHANG);
+	if (ret == 0)
+		return ;
+	_cgiRunning = false;
+	_cgiExecuted = true;
+	std::remove(_request.getFileName().c_str());
+	if (status != 0) {
+		std::remove(_cgiFile.c_str());
+		close(_cgiFd);
+		if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+			_errorCode = 500;
+			throw std::string("child process terminated with failure");
+		}
+	}
+	close(_cgiFd);
+}
+
+void Response::buildCgiResponse() {
+	_body.open(_cgiFile.c_str(), std::ios::binary);
+	size_t readBytes = 0;
+	size_t bytesRead = 0;
+	size_t pos = 0;
+	size_t index = 0;
+	struct stat st;
+
+	stat(_cgiFile.c_str(), &st);
+	std::remove(_cgiFile.c_str());
+	size_t fileSize = st.st_size;
+	if (!_body.is_open()) {
+		std::remove(_cgiFile.c_str());
+		close(_cgiFd);
+		_errorCode = 500;
+		std::cerr << "Error: Failed to open a file" << std::endl;
+		ERROR();
+		return ;
+	}
+	
+	std::string buffer;
+	while (!_body.eof()) {
+		std::string chunk(512, '\0');
+		_body.read(&chunk[0], chunk.size());
+		bytesRead = _body.gcount();
+		readBytes += bytesRead;
+		if (bytesRead <= 0)
+			break;
+
+		chunk.resize(bytesRead);
+		buffer.append(chunk);
+
+		size_t pos = buffer.find("\r\n\r\n");
+		if (pos != std::string::npos) {
+			_bodyLeftover = buffer.substr(pos + 4);
+			buffer.resize(pos + 4);
+			break;
+		}
+	}
+	while (true) {
+		pos = buffer.find("\r\n");
+		if (pos == std::string::npos) {
+			_errorCode = 502;
+			std::cerr << "invalid response from the child process" << std::endl;
+			ERROR();
+			std::remove(_cgiFile.c_str());
+			close(_cgiFd);
+			return ;
+		}
+
+		std::string line = buffer.substr(index, pos - index);
+		index = pos + 2;
+
+		if (line == "\r\n") {
+			_headers.append("\r\n");
+			break ;
+		}
+
+		if (!_statusLine.empty() && line.find("HTTP/1.") != std::string::npos) {
+			_statusLine.append(line + "\r\n");
+			continue ;
+		}
+		else if (!addCgiHeaders(line)) {
+			_errorCode = 502;
+			std::cerr << "invalid response from the child process" << std::endl;
+			ERROR();
+			std::remove(_cgiFile.c_str());
+			close(_cgiFd);
+			return ;
+		}
+	}
+
+	if (_statusLine.empty())
+		_statusLine.append("HTTP/1.0 200 OK\r\n");
+	if (_bodyLeftover.empty())
+		_bodyLeftover = buffer.substr(index);
+	if (_contentLen == -1)
+		_contentLen = fileSize - readBytes + _bodyLeftover.size();
+	_bytesSent += _bodyLeftover.size();
+	_responseBuilt = true;
+	return ;
+}
+
 void Response::CGI() {
+	if (_cgiRunning) {
+		monitorCgi();
+		if (_cgiRunning && !checkTimeOut()) {
+			std::cout << "Error: child process terminated due to a time out" << std::endl;
+			ERROR();
+			return ;
+		}
+		return ;
+	}
+	if (_cgiExecuted) {
+		buildCgiResponse();
+		return ;
+	}
 	try {
 		initCgi();
 		executeCgi();
 	}
 	catch (std::string err) {
 		std::cerr << "Error: " << err << std::endl;
-		_isError = true;
 		ERROR();
 		return ;
 	}
-	char		buffer[BUFFER_SIZE];
-	ssize_t		bytes;
-	std::string strbuff;
-	std::string line;
-	std::string fileName;
-	
-	bool body = false;
-	bool status_line = false;
-	fileName = generateRandomName();
-	_outBody.open(fileName.c_str());
-	if (!_outBody.is_open()) {
-		std::cerr << "Error: failed to open a file" << std::endl;
-		_isError = true;
-		_errorCode = 500;
-		ERROR();
-		close(_cgiFd);
-		return ;
-	}
-	while ((bytes = read(_cgiFd, buffer, BUFFER_SIZE)) > 0) {
-		strbuff.append(buffer, bytes);
-		while (!strbuff.empty()) {
-			if (!body) {
-				size_t pos = strbuff.find("\r\n");
-				if (pos == std::string::npos)
-					break ;
-				line = strbuff.substr(0, pos);
-				strbuff.erase(0, pos + 2);
-				if (!status_line) {
-					status_line = true;
-					if (line.find("HTTP/1.") != std::string::npos) {
-						_statusLine_Headers.append(line + "\r\n");
-						continue;
-					}
-					else
-						_statusLine_Headers.append("HTTP/1.0 200 OK\r\n");
-				}
-				if (line.empty()) {
-					_statusLine_Headers.append("\r\n");
-					body = true;
-					continue;
-				}
-				else if (!addCgiHeaders(line)) {
-					std::cerr << "Error: Bad Gateway" << std::endl;
-					unlink(fileName.c_str());
-					_outBody.close();
-					_isError = true;
-					_errorCode = 502;
-					ERROR();
-					close(_cgiFd);
-					return ;
-				}
-			}
-			else {
-				_outBody.write(strbuff.c_str(), strbuff.size());
-				strbuff.clear();
-			}
-		}
-	}
-	if (!status_line)
-		_statusLine_Headers.append("HTTP/1.0 200 OK\r\n");
-	_outBody.flush();
-	if (bytes < 0 || (bytes == 0 && !body)) {
-		std::cerr << "Error: Internal Server Error" << std::endl;
-		unlink(fileName.c_str());
-		_outBody.close(); 
-		_errorCode = 500;
-		_isError = true;
-		ERROR();
-		close(_cgiFd);
-		return ;
-	}
-	else {
-		if (_contentLen == 0) {
-			struct stat fileStat;
-			stat(fileName.c_str(), &fileStat);
-			_contentLen = fileStat.st_size;
-		}
-		_outBody.close();
-		_body.open(fileName.c_str());
-		if (!_body.is_open()) {
-			std::cerr << "Error: failed to open a file" << std::endl;
-			unlink(fileName.c_str());
-			_outBody.close();
-			_isError = true;
-			_errorCode = 500;
-			ERROR();
-			close(_cgiFd);
-			return ;
-		}
-	}
-	unlink(fileName.c_str());
-	close(_cgiFd);
-	return ;
 }
 
 void Response::ERROR() {
 	std::string errorFile = _errorPages[_errorCode];
 	struct stat fileStat;
 
+	_isError = true;
+	_responseBuilt = true;
 	if (_body.is_open())
 		_body.close();
 	if (errorFile.length() == 0)
@@ -387,10 +408,13 @@ void Response::ERROR() {
 		case 409:
 			_errorResponse.append("HTTP/1.0 409 Conflict\r\n");
 			break;
+		case 502:
+			_errorResponse.append("HTTP/1.0 502 Bad Gateway\r\n");
+			break;
 		case 504:
 			_errorResponse.append("HTTP/1.0 504 Gateway Timeout\r\n");
 			break;
-		default:
+		default :
 			_errorResponse.append("HTTP/1.0 500 Internal Server Error\r\n");
 			break;
 	}
@@ -403,7 +427,7 @@ void Response::ERROR() {
 	_errorResponse.append("Content-Length: " + intToString(_contentLen) + "\r\n");
 
 	for (size_t i = 0; i < _cookies.size(); i++)
-		 _statusLine_Headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
+		_errorResponse.append("Set-Cookie: " + _cookies[i] + "\r\n");
 
 	_errorResponse.append("Connection: Close\r\n\r\n");
 	std::ostringstream ss;
@@ -473,7 +497,7 @@ void Response::buildIndex() {
 	stat(fileName.c_str(), &fileStat);
 	_contentLen = fileStat.st_size;
 	_contentType = "text/html";
-	unlink(fileName.c_str());
+	std::remove(fileName.c_str());
 }
 
 void Response::getBody() {
@@ -524,28 +548,25 @@ void Response::GET() {
 	}
 	try {
 		getBody();
-		_statusLine_Headers.append("HTTP/1.0 " + intToString(_errorCode) + " OK\r\n");
-		_statusLine_Headers.append("Content-Type: " + _contentType + "\r\n");
-		_statusLine_Headers.append("Content-Length: " + intToString(_contentLen) + "\r\n");
+		_statusLine.append("HTTP/1.0 " + intToString(_errorCode) + " OK\r\n");
+		_headers.append("Content-Type: " + _contentType + "\r\n");
+		_headers.append("Content-Length: " + intToString(_contentLen) + "\r\n");
 
 		for (size_t i = 0; i < _cookies.size(); i++)
-			_statusLine_Headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
+			_headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
 
-		_statusLine_Headers.append("Connection: Close\r\n\r\n");
+		_headers.append("Connection: Close\r\n\r\n");
+		_responseBuilt = true;
 	}
 	catch (std::string error) {
-		_isError = true;
 		std::cerr << "Error: " << error << std::endl;
 		ERROR();
 	}
 }
 
 void Response::POST() {
-	if (_errorCode != 200 && _errorCode != -1) {
-		_isError = true;
-		ERROR();
+	if (_errorCode != 200 && _errorCode != -1)
 		return;
-	}
 	try {
 		std::string uploadPath = _location->getUploadStore();
 		if (uploadPath.empty())
@@ -558,8 +579,8 @@ void Response::POST() {
 		else
 			handleRawUpload(uploadPath);
 		_contentLen = 0;
+		_responseBuilt = true;
 	} catch (const std::exception& e) {
-		_isError = true;
 		ERROR();
 		std::cerr << "POST Error: " << e.what() << std::endl;
 	}
@@ -568,7 +589,6 @@ void Response::POST() {
 void Response::DELETE() {
 
 	if (_errorCode != 200 && _errorCode != -1) {
-		_isError = true;
 		ERROR();
 		return ;
 	}
@@ -586,30 +606,32 @@ void Response::DELETE() {
 			throw (std::string) "not a regular file";
 		}
 
-		if (unlink(fileName.c_str()) != 0) {
+		if (std::remove(fileName.c_str()) != 0) {
 			_errorCode = 403;
 			throw (std::string) "failed to delete file";
 		}
 
-		_statusLine_Headers.clear();
-		_statusLine_Headers.append("HTTP/1.0 204 No Content\r\n");
+		_statusLine.append("HTTP/1.0 204 No Content\r\n");
 
 		for (size_t i = 0; i < _cookies.size(); i++)
-		 _statusLine_Headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
+		 _headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
 
-		_statusLine_Headers.append("Connection: Close\r\n\r\n");
+		_headers.append("Connection: Close\r\n\r\n");
 		_contentLen = 0;
-
+		_responseBuilt = true;
 	}
 	catch (std::string error) {
-		_isError = true;
 		ERROR();
 		std::cerr << "Error: " << error << std::endl;
 	}
 }
 
 void Response::REDIRECT() {
-	_return.append("HTTP/1.0 " + intToString(_location->getReturn().first) + " Moved Permanently\r\n" + "Location: " + _location->getReturn().second + "\r\n");
+	int status = _location->getReturn().first;
+
+	_return.append("HTTP/1.1 " + intToString(status) +
+	" Moved Permanently\r\n" + "Location: " +
+	_location->getReturn().second + "\r\n" + "Content-Length: 0\r\n\r\n");
 }
 
 void Response::simpleReqsponse() {
@@ -619,13 +641,11 @@ void Response::simpleReqsponse() {
 		}
 		catch (std::string err) {
 			std::cerr << "Error: " << err << std::endl;
-			_isError = true;
 			ERROR();
 		}
 	}
 	else {
 		_errorCode = 501;
-		_isError = true;
 		ERROR();
 	}
 }
@@ -646,17 +666,16 @@ void Response::buildCookies()
 }
 
 void Response::buildResponse() {
-	
+	if (_responseBuilt)
+		return ;
 	if (_errorCode != 200) {
-		_isError = true;
 		ERROR();
 		return ;
 	}
-	buildCookies();
+	// buildCookies();
 
 	if (isExtension(_request.getPath(), _location->getExt())) {
 		if (_request.isSimpleRequest()) {
-			_isError = true;
 			_errorCode = 400;
 			ERROR();
 			return ;
@@ -666,10 +685,12 @@ void Response::buildResponse() {
 	}
 	else if (_isRedirect) {
 		REDIRECT();
+		_responseBuilt = true;
 		return ;
 	}
 	else if (_request.isSimpleRequest()) {
 		simpleReqsponse();
+		_responseBuilt = true;
 		return ;
 	}
 	switch (_request.getMeth()) {
@@ -683,7 +704,6 @@ void Response::buildResponse() {
 			DELETE();
 			break;
 		default:
-			_isError = true;
 			ERROR();
 			break;
 	}
@@ -703,7 +723,7 @@ std::string Response::getResponse() {
 		}
 		if (_bytesSent < _contentLen) {
 			char buffer[BUFFER_SIZE];
-			size_t toRead = std::min(static_cast<size_t>(BUFFER_SIZE), _contentLen - _bytesSent);
+			size_t toRead = std::min(static_cast<ssize_t>(BUFFER_SIZE), _contentLen - _bytesSent);
 
 			_body.read(buffer, toRead);
 			size_t actuallyRead = _body.gcount();
@@ -725,7 +745,7 @@ std::string Response::getResponse() {
 	switch (_responseState) {
 		case STATUSLINE_HEADERS: {
 			_responseState = BODY;
-			return _statusLine_Headers;
+			return (_statusLine + _headers + _bodyLeftover);
 		}
 		case BODY: {
 			if (_contentLen == 0) {
@@ -734,7 +754,7 @@ std::string Response::getResponse() {
 			}
 			if (_bytesSent < _contentLen) {
 				char buffer[BUFFER_SIZE];
-				size_t toRead = std::min(static_cast<size_t>(BUFFER_SIZE), _contentLen - _bytesSent);
+				size_t toRead = std::min(static_cast<ssize_t>(BUFFER_SIZE), _contentLen - _bytesSent);
 
 				_body.read(buffer, toRead);
 				size_t actuallyRead = _body.gcount();
@@ -746,6 +766,7 @@ std::string Response::getResponse() {
 				}
 				return std::string(buffer, actuallyRead);
 			}
+			std::cout << "response done\n";
 			_responseState = DONE;
 			return "";
 		}
@@ -770,4 +791,8 @@ enums Response::getResponseState() const {
 void Response::addCookie(const std::string &cookie)
 {
 	_cookies.push_back(cookie);
+}
+
+bool Response::isResponseBuilt() {
+	return _responseBuilt;
 }

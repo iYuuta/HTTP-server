@@ -13,7 +13,7 @@ int main (int ac, char **av)
     Config conf(path);
     if (conf.fail())
         return (conf.getErrorCode());
-
+    signal(SIGPIPE, SIG_IGN);
     HttpServer  server(conf);
     return (server.startAll());
 }

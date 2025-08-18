@@ -30,7 +30,7 @@ bool parseClientMaxBodySize(Server& server, std::vector<Token>::iterator& it)
 	char* endptr;
 	errno = 0;
 
-	unsigned long long baseValue = strtoull(str, &endptr, 10);
+	unsigned long long baseValue = std::strtoull(str, &endptr, 10);
 
 	if (errno == ERANGE || endptr == str) {
 		std::cerr << "Invalid numeric value: " << s.at(0) << std::endl;
@@ -41,8 +41,9 @@ bool parseClientMaxBodySize(Server& server, std::vector<Token>::iterator& it)
 		return false;
 	}
 	unsigned long long multiplier = 1;
-
-	if (s.at(1) == "KB")
+	if (s.at(1) == "B")
+		multiplier = 1;
+	else if (s.at(1) == "KB")
 		multiplier = 1000;
 	else if (s.at(1) == "MB")
 		multiplier = 1000000;

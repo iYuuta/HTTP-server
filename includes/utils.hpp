@@ -21,7 +21,7 @@
 # include "HttpRequestMethod.hpp"
 # include "Location.hpp"
 
-#define BUFFER_SIZE 4096
+#define BUFFER_SIZE 40000
 
 enum  enums {
 	NOTHING,
@@ -31,9 +31,29 @@ enum  enums {
 	BODY,
 	READ,
 	WRITE,
+	BUILT,
 	DONE,
 	CLOSED
 };
+
+struct MIME {
+	private:
+		std::map<std::string, std::string> _mime;
+
+	public:
+		MIME();
+		std::string getMIME(std::string extension);
+};
+
+struct Exec {
+	private:
+		std::map<std::string, std::string> _exec;
+
+	public:
+		Exec();
+		std::string getExec(std::string extension);
+};
+
 
 std::vector<std::string> split(const std::string& s, char delimiter);
 std::vector<std::string> splitNumber(const std::string& s);
@@ -42,7 +62,6 @@ std::string intToString(int n);
 std::string getContentType(const std::string& fileName);
 std::string trim(const std::string& s);
 std::string generateRandomName();
-bool isRegularFile(const std::string& path);
 bool isDirectory(const std::string& path);
 bool isExtension(const std::string& path, std::vector<std::string> _ext);
 std::string getExtension(const std::string& path);

@@ -1,23 +1,22 @@
 #include "../../includes/Client.hpp"
 
 Client::Client(const int& fd, Server& server, std::map<int, std::string>& errorp):
-												_server(server),
-												_location(server.getLocations().begin()),
-												_errorPages(errorp),
-												_fd(fd),
-												_errorCode(-1),
-												_responseDone(false),
-												_requestDone(false),
-												request(),
-												response(request, _server.getErrorPages(), _location)
+_server(server),
+_location(server.getLocations().begin()),
+_errorPages(errorp),
+_fd(fd),
+_errorCode(-1),
+_validRequest(false),
+_responseDone(false),
+_requestDone(false),
+request(),
+response(request, _server.getErrorPages(), _location)
 {
 }
 
 Client::~Client()
 {
 }
-
-std::ostream& operator<<(std::ostream& os, Request& req);
 
 void Client::parseRequest()
 {
@@ -30,17 +29,18 @@ void Client::parseRequest()
 		response.setErrorCode(500);
 		return;
 	}
-	buffer[len] = '\0';
 	try {
 		request.parseData(buffer, len);
-		if (request.getParseState() == DONE)
+		if ((request.getParseState() == DONE || request.getParseState() == BODY) && !_validRequest)
 		{
-			_requestDone = true;
+			_validRequest = true;
 			if (!isRequestValid()) {
 				response.setErrorCode(_errorCode);
 				return ;
 			}
 		}
+		if (request.getParseState() == DONE)
+			_requestDone = true;
 	}
 	catch (std::string error) {
 		response.setErrorCode(request.getErrorCode());
@@ -66,8 +66,14 @@ bool Client::isResponseDone() {
 	return _responseDone;
 }
 
-bool Client::isFinished() {
-	if (response.getResponseState() == DONE)
-		return true;
-	return false;
+bool Client::isResponseBuilt() {
+	return response.isResponseBuilt();
+}
+
+enums Client::getRequestState() {
+	return (request.getParseState());
+}
+
+enums Client::getResponseState() {
+	return (response.getResponseState());
 }

@@ -33,17 +33,23 @@ class Response {
 
 		std::string 						_contentType;
 		std::string 						_status;
-		size_t								_contentLen;
-		int									_errorCode;
-		std::vector<std::string>			_env;
 		std::string							_cgiExt;
 		std::string							_cgiFile;
 		std::vector<char*>					_envPtr;
+		std::vector<std::string>			_env;
+		ssize_t								_contentLen;
+		int									_errorCode;
 		int									_cgiFd;
+		int									_cgiPid;
+		bool								_cgiRunning;
+		bool								_cgiExecuted;
+		bool								_responseBuilt;
 
 		std::string 						_errorResponse;
 		std::string 						_return;
-		std::string							_statusLine_Headers;
+		std::string							_headers;
+		std::string							_statusLine;
+		std::string							_bodyLeftover;
 		std::ifstream						_body;
 		std::ofstream						_outBody;
 		
@@ -52,7 +58,7 @@ class Response {
 		bool								_isRedirect;
 		bool								_errorPageExists;
 		enums								_responseState;
-		size_t								_bytesSent;
+		ssize_t								_bytesSent;
 
 		std::string							_boundary;
 		std::vector<Multipart>				_multiparts;
@@ -68,14 +74,17 @@ class Response {
 		void simpleReqsponse();
 
 		void getBody();
+		void buildCgiResponse();
 		void buildIndex();
 		void initCgi();
 		void executeCgi();
 		bool addCgiHeaders(const std::string& line);
 
+		void monitorCgi();
 		void validateUploadPath(const std::string& uploadPath);
 		void handleRawUpload(const std::string& uploadPath);
 		void handleMultipartUpload(const std::string& uploadPath);
+		bool checkTimeOut();
 
 		bool extractBoundary(const std::string& contentTypeHeader, std::string& boundary);
 		void parsePartHeaders(const std::string& headerStr, Multipart& part);
@@ -91,6 +100,7 @@ class Response {
 		void setErrorCode(int error);
 		void isRedirect();
 		enums getResponseState() const ;
+		bool isResponseBuilt();
 		std::string getResponse();
 
 		void	addCookie(const std::string &cookie);

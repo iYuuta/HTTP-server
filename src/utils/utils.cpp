@@ -86,6 +86,19 @@ Exec::Exec() {
 	_exec[".awk"]   = "/usr/bin/awk";
 }
 
+ERRORS::ERRORS() {
+	_errors[400] = "HTTP/1.0 400 Bad Request\r\n";
+	_errors[404] = "HTTP/1.0 404 Not Found\r\n";
+	_errors[403] = "HTTP/1.0 403 Forbidden\r\n";
+	_errors[405] = "HTTP/1.0 405 Method Not Allowed\r\n";
+	_errors[413] = "HTTP/1.0 413 Payload Too Large\r\n";
+	_errors[501] = "HTTP/1.0 501 Not Implemented\r\n";
+	_errors[409] = "HTTP/1.0 409 Conflict\r\n";
+	_errors[502] = "HTTP/1.0 502 Bad Gateway\r\n";
+	_errors[504] = "HTTP/1.0 504 Gateway Timeout\r\n";
+	_errors[500] = "HTTP/1.0 500 Internal Server Error\r\n";
+}
+
 std::vector<std::string> split(const std::string& s, const char delimiter)
 {
 	std::vector<std::string> tokens;
@@ -264,4 +277,10 @@ std::string Exec::getExec(std::string extension) {
 	if (_exec.find(extension) != _exec.end())
 		return _exec[extension];
 	return "";
+}
+
+std::string ERRORS::getErrorMsg(int errorCode) {
+	if (_errors.find(errorCode) != _errors.end())
+		return _errors[errorCode];
+	return "HTTP/1.0 500 Internal Server Error\r\n";
 }

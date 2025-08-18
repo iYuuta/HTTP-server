@@ -36,6 +36,7 @@ void Client::parseRequest()
 			_validRequest = true;
 			if (!isRequestValid()) {
 				response.setErrorCode(_errorCode);
+				_requestDone = true;
 				return ;
 			}
 			request.checkForPathInfo(_location);

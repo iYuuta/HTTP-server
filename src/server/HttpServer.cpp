@@ -159,11 +159,9 @@ void HttpServer::handleClientRequest(pollfd& pollFd)
 {
 	Client& client = getClient(pollFd.fd);
 
-	if (client.getRequestState() != DONE) {
+	if (!client.isRequestDone())
 		client.parseRequest();
-		pollFd.events = POLLIN;
-	}
-	if (client.getRequestState() == DONE)
+	if (client.isRequestDone())
 		pollFd.events = POLLOUT;
 	else
 		pollFd.events = POLLIN;

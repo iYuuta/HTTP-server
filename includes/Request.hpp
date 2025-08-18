@@ -41,6 +41,7 @@ class Request {
 		const HttpRequestMethod	&getMeth() const ;
 		enums					getParseState() const ;
 		const std::string&		getPath() const ;
+		const std::string&		getPathInfo() const ;
 		const std::string&		getVersion() const ;
 		size_t					getContentLen()	const ;
 		size_t					getReceivedBytes()	const ;

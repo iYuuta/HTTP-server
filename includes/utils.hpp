@@ -1,7 +1,6 @@
 #ifndef UTILS_HPP
 #define UTILS_HPP
 
-
 # include <iostream>
 # include <string>
 # include <fstream>
@@ -23,6 +22,25 @@
 
 #define BUFFER_SIZE 40000
 
+#define ERROR_PAGE_START "<!DOCTYPE html>\n" \
+"<html lang=\"en\">\n" \
+"<head>\n" \
+"  <meta charset=\"UTF-8\">\n" \
+"  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n" \
+"  <title>Error</title>\n" \
+"  <style>\n" \
+"    body { font-family: Arial, sans-serif; background-color: #121212; color: #f5f5f5; text-align: center; padding: 50px; }\n" \
+"    .container { max-width: 600px; margin: auto; background: #1e1e1e; border-radius: 10px; padding: 30px; box-shadow: 0 0 15px rgba(0,0,0,0.5); }\n" \
+"    h1 { font-size: 2.5em; color: #ff4c4c; margin-bottom: 20px; }\n" \
+"    p { font-size: 1.2em; margin-bottom: 10px; color: #ddd; }\n" \
+"    .footer { margin-top: 30px; font-size: 0.9em; color: #999; }\n" \
+"  </style>\n" \
+"</head>\n" \
+"<body>\n" \
+"  <div class=\"container\">\n"
+
+#define ERROR_PAGE_END "<div class=\"footer\">&copy; 1337 yuuta</div>\n  </div>\n</body>\n</html>\n"
+
 enum  enums {
 	NOTHING,
 	REQUESLINE,
@@ -43,6 +61,15 @@ struct MIME {
 	public:
 		MIME();
 		std::string getMIME(std::string extension);
+};
+
+struct ERRORS {
+	private:
+		std::map<int, std::string> _errors;
+
+	public:
+		ERRORS();
+		std::string getErrorMsg(int errorCode);
 };
 
 struct Exec {

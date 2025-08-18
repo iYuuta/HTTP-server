@@ -43,7 +43,7 @@ void Request::parseData(const char* data, size_t len)
 			if (_errorCode == 400)
 				throw (std::string) "Bad request";
 			if (_method == Unsupported) {
-				_errorCode = 405;
+				_errorCode = 501;
 				throw (std::string) "Unsupported method";
 			}
 			_buffer.erase(0, pos + 2);
@@ -278,6 +278,11 @@ int Request::getErrorCode() const
 const std::string& Request::getPath() const
 {
 	return _path;
+}
+
+const std::string& Request::getPathInfo() const
+{
+	return _pathInfo;
 }
 
 const std::string& Request::getVersion() const

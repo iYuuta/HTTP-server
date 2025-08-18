@@ -4,8 +4,6 @@
 #include "Request.hpp"
 #include "utils.hpp"
 
-#define DEF_ERROR "<!DOCTYPE html>\n<html>\n<head><title>Error</title></head>\n<body>\n  <h1>An error occurred</h1>\n  <p>Sorry, something went wrong.</p>\n</body>\n</html>\n"
-
 enum ParseState {
     LOOKING_FOR_START_BOUNDARY,
     PARSING_HEADERS,
@@ -67,6 +65,7 @@ class Response {
 		bool								_errorPageExists;
 		enums								_responseState;
 		ssize_t								_bytesSent;
+		ERRORS								_errors;
 
 		std::string							_boundary;
 		std::vector<Multipart>				_multiparts;
@@ -126,6 +125,7 @@ class Response {
 
 		void buildResponse();
 		void setErrorCode(int error);
+		void setErrorMsg(std::string error);
 		void isRedirect();
 		enums getResponseState() const ;
 		bool isResponseBuilt();

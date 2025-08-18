@@ -43,6 +43,7 @@ _bytesSent(0) {
 	_multipartStartBoundary.clear();
 	_multipartHeaderSeparator = "\r\n\r\n";
 
+	
 	_serverGeneratedName = false;
     _generatedUploadName.clear();
 
@@ -440,6 +441,7 @@ void Response::initCgi() {
 	_env.push_back("GATEWAY_INTERFACE=CGI/1.1");
 	_env.push_back("SERVER_SOFTWARE=Webserv/1.0");
 	_env.push_back("HTTP_HOST=" + _request.getHeader("Host"));
+	_env.push_back("PATH_INFO=" + _request.getPathInfo());
 
 	if (!_request.getQueryStrings().empty())
 		_env.push_back("QUERY_STRING=" + _request.getQueryStrings());
@@ -705,41 +707,15 @@ void Response::ERROR() {
 			_errorPageExists = false;
 		}
 	}
-	switch (_errorCode) {
-		case 400 :
-			_errorResponse.append("HTTP/1.0 400 Bad Request\r\n");
-			break;
-		case 404 :
-			_errorResponse.append("HTTP/1.0 404 Not Found\r\n");
-			break;
-		case 403 :
-			_errorResponse.append("HTTP/1.0 403 Forbidden\r\n");
-			break;
-		case 405 :
-			_errorResponse.append("HTTP/1.0 405 Method Not Allowed\r\n");
-			break;
-		case 413 :
-			_errorResponse.append("HTTP/1.0 413 Payload Too Large\r\n");
-			break;
-		case 501 :
-			_errorResponse.append("HTTP/1.0 501 Not Implemented\r\n");
-			break;
-		case 409:
-			_errorResponse.append("HTTP/1.0 409 Conflict\r\n");
-			break;
-		case 502:
-			_errorResponse.append("HTTP/1.0 502 Bad Gateway\r\n");
-			break;
-		case 504:
-			_errorResponse.append("HTTP/1.0 504 Gateway Timeout\r\n");
-			break;
-		default :
-			_errorResponse.append("HTTP/1.0 500 Internal Server Error\r\n");
-			break;
-	}
+	_errorResponse.append(_errors.getErrorMsg(_errorCode));
 	if (!_errorPageExists) {
-		_errorResponse.append("Content-Type: text/html\r\nContent-Length: 147\r\nConnection: Close\r\n\r\n");
-		_errorResponse.append(DEF_ERROR);
+		std::string message = _errors.getErrorMsg(_errorCode).substr(9);
+		message.resize(message.size() - 2);
+		std::string body = std::string(ERROR_PAGE_START) + "<h1>" + message + "</h1>\n" + ERROR_PAGE_END;
+		_errorResponse.append("Content-Type: text/html\r\n");
+		_errorResponse.append("Content-Length: " + intToString(body.size()) + "\r\n");
+		_errorResponse.append("Connection: Close\r\n\r\n");
+		_errorResponse.append(body);
 		return;
 	}
 	_errorResponse.append("Content-Type: text/html\r\n");

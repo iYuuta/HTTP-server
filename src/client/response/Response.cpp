@@ -67,7 +67,7 @@ void Response::handleRawUpload(const std::string& uploadPath) {
 		throw std::runtime_error("Failed to create the file on the server.");
 	}
 
-	std::ifstream& bodyFile = const_cast<std::ifstream&>(_request.getBodyFile());
+	std::ifstream bodyFile(_request.getFileName().c_str());
 	if (!bodyFile.is_open()) {
 		_errorCode = 500;
 		throw std::runtime_error("Failed to open request body file.");

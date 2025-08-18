@@ -285,16 +285,6 @@ const std::string Request::getHeader(const std::string& key)
 	return _headers[key];
 }
 
-const std::ifstream& Request::getBodyFile()
-{
-	_bodyIn.open(_bodyFileName.c_str(), std::ios::binary);
-	if (!_bodyIn.is_open()) {
-		_errorCode = 404;
-		throw (std::string) "failed to open a file";
-	}
-	return _bodyIn;
-}
-
 std::map<std::string, std::string>& Request::getHeaders()
 {
 	return _headers;

@@ -20,7 +20,6 @@ class Request {
 		std::string							_queryString;
 		std::string							_bodyFileName;
 		std::ofstream						_bodyOut;
-		std::ifstream						_bodyIn;
 
 		std::map<std::string, std::string>	_cookies;
 
@@ -45,7 +44,6 @@ class Request {
 		int						getErrorCode()	const ;
 		const std::string		getHeader(const std::string& key) ;
 		const std::string&		getFileName();
-		const std::ifstream&	getBodyFile();
 		std::string&			getQueryStrings();
 		bool					isSimpleRequest();
 		

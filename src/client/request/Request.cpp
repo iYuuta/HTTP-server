@@ -227,7 +227,7 @@ void Request::addHeaders(std::string buff)
 void Request::addBody(const std::string& buff, size_t len)
 {
 	if (!_bodyOut.is_open()) {
-		_bodyFileName = generateRandomName()  + "_bodyFileName";
+		_bodyFileName = generateRandomName();
 		_bodyOut.open(_bodyFileName.c_str(), std::ios::binary | std::ios::app);
 		if (!_bodyOut) {
 			_errorCode = 500;

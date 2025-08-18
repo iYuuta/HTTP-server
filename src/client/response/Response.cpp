@@ -161,7 +161,7 @@ bool Response::addCgiHeaders(const std::string& line) {
 void Response::executeCgi() {
 	int fd = 0;
 
-	_cgiFile = generateRandomName() + "_cgiFileName";
+	_cgiFile = generateRandomName();
 	_cgiFd = open(_cgiFile.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
 	if (_cgiFd < 0) {
 		_errorCode = 500;
@@ -180,10 +180,8 @@ void Response::executeCgi() {
 	if (!_cgiRunning) {
 		_cgiPid = fork();
 		if (_cgiPid < 0) {
-			if (fd != 0) {
-				std::remove(_request.getFileName().c_str());
+			if (fd != 0)
 				close(fd);
-			}
 			_errorCode = 500;
 			std::remove(_cgiFile.c_str());
 			close(_cgiFd);
@@ -192,10 +190,8 @@ void Response::executeCgi() {
 		_cgiRunning = true;
 		if (_cgiPid == 0) {
 			if (chdir(_location->getRoute().c_str()) < 0) {
-				if (fd != 0) {
-					std::remove(_request.getFileName().c_str());
+				if (fd != 0)
 					close(fd);
-				}
 				std::cerr << "Error: failed to change cwd in the child process\n";
 				std::remove(_cgiFile.c_str());
 				close(_cgiFd);
@@ -213,11 +209,11 @@ void Response::executeCgi() {
 			execve(_cgiExt.c_str(), argv, _envPtr.data());
 			std::exit (1);
 		}
-	}
-	else {
-		if (fd) {
-			close(fd);
-			fd = -1;
+		else {
+			if (fd != 0) {
+				close(fd);
+				fd = -1;
+			}
 		}
 	}
 }
@@ -230,23 +226,28 @@ bool Response::checkTimeOut() {
 		time_t now = time(NULL);
 		if (now - mtime > 5) {
 			kill(_cgiPid, SIGTERM);
+			close(_cgiFd);
+			std::remove(_cgiFile.c_str());
 			_errorCode = 504;
 			return false;
 		}
 		return true;
 	}
+	close(_cgiFd);
+	std::remove(_cgiFile.c_str());
 	_errorCode = 500;
 	return false;
 }
 
 void Response::monitorCgi() {
 	int status = -1;
+
 	pid_t ret = waitpid(_cgiPid, &status, WNOHANG);
 	if (ret == 0)
 		return ;
+
 	_cgiRunning = false;
 	_cgiExecuted = true;
-	std::remove(_request.getFileName().c_str());
 	if (status != 0) {
 		std::remove(_cgiFile.c_str());
 		close(_cgiFd);
@@ -270,8 +271,6 @@ void Response::buildCgiResponse() {
 	std::remove(_cgiFile.c_str());
 	size_t fileSize = st.st_size;
 	if (!_body.is_open()) {
-		std::remove(_cgiFile.c_str());
-		close(_cgiFd);
 		_errorCode = 500;
 		std::cerr << "Error: Failed to open a file" << std::endl;
 		ERROR();
@@ -303,8 +302,6 @@ void Response::buildCgiResponse() {
 			_errorCode = 502;
 			std::cerr << "invalid response from the child process" << std::endl;
 			ERROR();
-			std::remove(_cgiFile.c_str());
-			close(_cgiFd);
 			return ;
 		}
 
@@ -324,8 +321,6 @@ void Response::buildCgiResponse() {
 			_errorCode = 502;
 			std::cerr << "invalid response from the child process" << std::endl;
 			ERROR();
-			std::remove(_cgiFile.c_str());
-			close(_cgiFd);
 			return ;
 		}
 	}
@@ -733,6 +728,8 @@ std::string Response::getResponse() {
 			}
 			return std::string(buffer, actuallyRead);
 		}
+		if (_body.is_open())
+			_body.close();
 		_responseState = DONE;
 		return "";
 	}

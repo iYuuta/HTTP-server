@@ -51,7 +51,6 @@ class Response {
 		std::string							_statusLine;
 		std::string							_bodyLeftover;
 		std::ifstream						_body;
-		std::ofstream						_outBody;
 		
 		bool								_isError;
 		bool								_isCgi;

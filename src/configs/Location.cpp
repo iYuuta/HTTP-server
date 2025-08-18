@@ -60,7 +60,7 @@ bool Location::isMethodValid(const HttpRequestMethod& method)
 	return false;
 }
 
-const std::string& Location::getUrl()
+const std::string& Location::getUrl() const
 {
 	return _url;
 }

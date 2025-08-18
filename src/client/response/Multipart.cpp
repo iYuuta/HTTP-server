@@ -58,9 +58,9 @@ void Response::parsePartHeaders(const std::string& headerStr, Multipart& part) {
 				_errorCode = 400;
 				throw std::string("Bad request");
 			}
-			if (!part.headers.empty()) {
+			if (!part.headers.empty())
 				part.headers.rbegin()->second = part.headers.rbegin()->second + " " + trim(line);
-			}
+
 		}
 	}
 }
@@ -68,7 +68,7 @@ void Response::parsePartHeaders(const std::string& headerStr, Multipart& part) {
 void Response::parseMultipartBody(const std::string& uploadPath) {
 	if (!extractBoundary(_request.getHeader("Content-Type"), _boundary)) {
 		_errorCode = 400;
-		throw std::runtime_error("Multipart error: Invalid or missing boundary.");
+		throw std::runtime_error("Invalid or missing boundary.");
 	}
 
 	std::string start_boundary = "--" + _boundary;
@@ -90,17 +90,17 @@ void Response::parseMultipartBody(const std::string& uploadPath) {
 	while (state == LOOKING_FOR_START_BOUNDARY) {
 		body_stream.read(chunk, sizeof(chunk));
 		size_t bytes_read = body_stream.gcount();
-		if (bytes_read == 0) {
-			throw std::runtime_error("Multipart error: Start boundary not found.");
-		}
+		if (bytes_read == 0)
+			throw std::runtime_error("Start boundary not found.");
+
 		buffer.append(chunk, bytes_read);
 
 		size_t pos = buffer.find(start_boundary);
 		if (pos != std::string::npos) {
 			buffer.erase(0, pos + start_boundary.length());
-			if (buffer.find("\r\n") == 0) {
+			if (buffer.find("\r\n") == 0)
 				buffer.erase(0, 2);
-			}
+
 			state = PARSING_HEADERS;
 		}
 	}
@@ -146,9 +146,9 @@ void Response::parseMultipartBody(const std::string& uploadPath) {
 			
 				buffer.erase(0, pos + boundary_delimiter.length());
 
-				if (buffer.find("--") == 0) {
+				if (buffer.find("--") == 0)
 					state = FINISHED;
-				} else if (buffer.find("\r\n") == 0) {
+				else if (buffer.find("\r\n") == 0) {
 					buffer.erase(0, 2);
 					state = PARSING_HEADERS;
 				}
@@ -158,11 +158,12 @@ void Response::parseMultipartBody(const std::string& uploadPath) {
 				size_t tail_size = start_boundary.length() + 4;
 				if (buffer.length() > tail_size) {
 					size_t write_size = buffer.length() - tail_size;
-					if (file_stream.is_open()) {
+					if (file_stream.is_open())
 						file_stream.write(buffer.c_str(), write_size);
-					}
+
 					buffer.erase(0, write_size);
-				} else if (!body_stream) {					if (file_stream.is_open()) {
+				} else if (!body_stream) {
+					if (file_stream.is_open()) {
 						file_stream.write(buffer.c_str(), buffer.length());
 						file_stream.close();
 					}

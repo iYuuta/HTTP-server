@@ -30,7 +30,7 @@ class Location
 		void				setReturn(const int &code, const std::string &page);
 		bool				isMethodValid(const HttpRequestMethod &method);
 		bool				isRedirect();
-		const std::string&	getUrl();
+		const std::string&	getUrl() const;
 		const std::pair<int, std::string>&	getReturn();
 		const std::string&	getRoute();
 		const std::string&	getIndex();

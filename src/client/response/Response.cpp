@@ -34,6 +34,7 @@ _bytesSent(0) {
 	_boundary.clear();
 	_multiparts.clear();
 	_cookies.clear();
+	_cookiesBuilt = false;
 }
 
 void Response::validateUploadPath(const std::string& uploadPath) {
@@ -67,41 +68,19 @@ void Response::handleRawUpload(const std::string& uploadPath) {
 		throw std::runtime_error("Failed to create the file on the server.");
 	}
 
-	std::ifstream bodyFile(_request.getFileName().c_str());
+	std::ifstream bodyFile(_request.getFileName().c_str(), std::ios::in | std::ios::binary);
 	if (!bodyFile.is_open()) {
 		_errorCode = 500;
 		throw std::runtime_error("Failed to open request body file.");
 	}
 
 	newFile << bodyFile.rdbuf();
+
 	bodyFile.close();
 	newFile.close();
 
-	_statusLine.append("HTTP/1.0 204 No Content\r\n");
-
-	for (size_t i = 0; i < _cookies.size(); i++)
-		_headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
-
-	_headers.append("Connection: close\r\n\r\n");
 }
 
-void Response::handleMultipartUpload(const std::string& uploadPath) {
-	try {
-		parseMultipartBody(uploadPath);
-
-		_statusLine.append("HTTP/1.0 201 Created\r\n");
-
-		for (size_t i = 0; i < _cookies.size(); i++)
-			_headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
-
-		_headers.append("Connection: close\r\n\r\n");
-	}
-	catch (const std::exception& e) {
-		_errorCode = 500;
-		ERROR();
-		std::cerr << "Multipart Upload Error: " << e.what() << std::endl;
-	}
-}
 
 void Response::initCgi() {
 	_cgiExt = getExtension(_request.getPath());
@@ -456,7 +435,7 @@ void Response::buildIndex() {
 		<< "<title>Index of " << path << "</title>\n"
 		<< "<script src=\"https://cdn.tailwindcss.com\"></script>\n"
 		<< "</head>\n"
-		<< "<body class=\"min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 text-slate-800 antialiased dark:from-slate-900 dark:to-slate-950 dark:text-slate-200\">\n"
+		<< "<body class=\"min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 text-slate-800 antialiased dark:from-slate-900 dark:to-slate-950 dark:text-slate-200\">\nld"
 		<< "<main class=\"mx-auto max-w-6xl p-6\">\n"
 		<< "<div class=\"rounded-2xl border border-slate-200/60 bg-white/70 p-6 shadow-lg ring-1 ring-black/5 backdrop-blur dark:border-slate-800 dark:bg-slate-900/70\">\n"
 		<< "<div class=\"mb-4 flex items-center gap-3\">\n"
@@ -567,12 +546,31 @@ void Response::POST() {
 		validateUploadPath(uploadPath);
 		
 		std::string contentType = _request.getHeader("Content-Type");
-		if (contentType.find("multipart/form-data") != std::string::npos)
-			handleMultipartUpload(uploadPath);
+		bool isMultipart = (contentType.find("multipart/form-data") != std::string::npos);
+
+		if (isMultipart)
+			parseMultipartBody(uploadPath);
 		else
 			handleRawUpload(uploadPath);
+
+		const std::string tmp = _request.getFileName();
+    	if (!tmp.empty()){
+        	std::remove(tmp.c_str());
+    	}
+
+   		if (isMultipart) {
+            _statusLine.append("HTTP/1.0 201 Created\r\n");
+        } else {
+            _statusLine.append("HTTP/1.0 204 No Content\r\n");
+        }
+
+        for (size_t i = 0; i < _cookies.size(); i++)
+            _headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
+
+        _headers.append("Connection: Close\r\n\r\n");
 		_contentLen = 0;
-		_responseBuilt = true;
+        _responseBuilt = true;
+
 	} catch (const std::exception& e) {
 		ERROR();
 		std::cerr << "POST Error: " << e.what() << std::endl;
@@ -645,6 +643,8 @@ void Response::simpleReqsponse() {
 
 void Response::buildCookies() 
 {
+	if (_cookiesBuilt)
+		return;
 	std::string sessionId = _request.getCookie("session-id");
 	if (sessionId.empty())
 	{
@@ -656,16 +656,20 @@ void Response::buildCookies()
 
 		addCookie(cookie);
 	}
+	_cookiesBuilt = true;
 }
 
 void Response::buildResponse() {
-	if (_responseBuilt)
-		return ;
+	if (_responseBuilt) {
+		return;
+	}
+
+	buildCookies();
+	
 	if (_errorCode != 200) {
 		ERROR();
-		return ;
+		return;
 	}
-	// buildCookies();
 
 	if (isExtension(_request.getPath(), _location->getExt())) {
 		if (_request.isSimpleRequest()) {

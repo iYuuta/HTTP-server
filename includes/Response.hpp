@@ -83,7 +83,11 @@ class Response {
         std::string         				_multipartHeaderSeparator;
         Multipart           				_multipartCurrentPart;
 
-
+    	bool        						_serverGeneratedName;
+    	std::string 						_generatedUploadName;
+		bool         						_postCreatedNew;
+		bool        						_multipartAnyCreated;
+	
 		std::vector<std::string>	_cookies;
 		bool _cookiesBuilt;
 

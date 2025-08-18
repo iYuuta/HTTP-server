@@ -45,6 +45,9 @@ _bytesSent(0) {
 
 	_serverGeneratedName = false;
     _generatedUploadName.clear();
+
+	_postCreatedNew = false;
+    _multipartAnyCreated = false;
 }
 
 void Response::validateUploadPath(const std::string& uploadPath) {
@@ -206,6 +209,11 @@ bool Response::stepMultipartUpload()
 
         if (_multipartCurrentPart.isFile && !_multipartCurrentPart.contentDispositionFilename.empty()) {
             std::string finalFilePath = _postUploadPath + "/" + _multipartCurrentPart.contentDispositionFilename;
+
+			struct stat st;
+			if (stat(finalFilePath.c_str(), &st) != 0) {
+				_multipartAnyCreated = true;
+			}
             _uploadOutStream.open(finalFilePath.c_str(), std::ios::binary);
             if (!_uploadOutStream.is_open()) {
                 _errorCode = 500;
@@ -265,6 +273,7 @@ void Response::postInit()
 	validateUploadPath(uploadPath);
     _postUploadPath = uploadPath;
 
+
     std::string contentType = _request.getHeader("Content-Type");
     _postIsMultipart = (contentType.find("multipart/form-data") != std::string::npos);
 
@@ -312,7 +321,10 @@ void Response::postInit()
         _serverGeneratedName = true;
     }
 
-    _postUploadPath = _postUploadPath + "/" + filename;
+	_postUploadPath = _postUploadPath + "/" + filename;
+
+	struct stat st;
+	_postCreatedNew = (stat(_postUploadPath.c_str(), &st) != 0);
     _postState = POST_RAW_STREAM;
 
 }
@@ -323,25 +335,26 @@ void Response::POST() {
 		return;
 	try {
 
-		if (_postState == POST_IDLE)
+		if (_postState == POST_IDLE) {
 			postInit();
+		}
 	
 		bool done = false;
-        if (_postState == POST_RAW_STREAM)
+		if (_postState == POST_RAW_STREAM)
             done = stepRawUpload();
-        else if (_postState == POST_MULTIPART_STREAM)
+		else if (_postState == POST_MULTIPART_STREAM)
             done = stepMultipartUpload();
 
-		if (!done)
-            return;
+		if (!done) {
+			return;
+		}
 
-        if (!_request.getFileName().empty())
-            std::remove(_request.getFileName().c_str());
-
-		if(_postIsMultipart || _serverGeneratedName)
-		{
+		if (!_request.getFileName().empty()) {
+			std::remove(_request.getFileName().c_str());
+		}
+		bool created = _postIsMultipart ? _multipartAnyCreated : (_serverGeneratedName || _postCreatedNew);
+		if (created) {
 			if (_serverGeneratedName) {
-    
 				std::string pathPart = _location->getUrl();
 				if (!pathPart.empty() && pathPart[pathPart.size() - 1] == '/' &&
 					!_request.getPath().empty() && _request.getPath()[0] == '/')
@@ -358,11 +371,13 @@ void Response::POST() {
 					_headers.append("Location: " + pathPart + "\r\n");
 				}
 			}
-			
 			_statusLine.append("HTTP/1.0 201 Created\r\n");
+		} else {
+			_statusLine.append("HTTP/1.0 204 No Content\r\n");
 		}
-        else
-            _statusLine.append("HTTP/1.0 204 No Content\r\n");
+
+
+		_headers.append("Content-Length: 0\r\n");
 
         for (size_t i = 0; i < _cookies.size(); i++)
             _headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
@@ -376,13 +391,18 @@ void Response::POST() {
 	catch (const std::exception &e)
 	{
 	    if (_postBodyStream.is_open())
+		{
         	_postBodyStream.close();
+		}
 
     	if (_uploadOutStream.is_open())
-        	_uploadOutStream.close();
+		{
+			_uploadOutStream.close();
+		}
 
-    	if (!_request.getFileName().empty())
-        std::remove(_request.getFileName().c_str());
+		if (!_request.getFileName().empty()) {
+			std::remove(_request.getFileName().c_str());
+		}
 
 		
 		ERROR();

@@ -77,11 +77,28 @@ bool Response::stepRawUpload() {
             throw std::runtime_error("Failed to write uploaded data.");
         }
 	}
+
+	if (_uploadOutStream.is_open()) {
+		if (access(_postUploadPath.c_str(), F_OK) != 0) {
+			_uploadOutStream.close();
+			if (_postBodyStream.is_open())
+				_postBodyStream.close();
+			_errorCode = 500;
+			throw std::runtime_error("Error Upload file was deleted during upload.");
+		}
+	}
 	char buffer[BUFFER_SIZE];
 	_postBodyStream.read(buffer, sizeof(buffer));
 	std::streamsize n = _postBodyStream.gcount();
 	if (n > 0)
 	{
+		if (_uploadOutStream.is_open() && access(_postUploadPath.c_str(), F_OK) != 0) {
+			_uploadOutStream.close();
+			if (_postBodyStream.is_open())
+				_postBodyStream.close();
+			_errorCode = 500;
+			throw std::runtime_error("Error Upload file was deleted during upload.");
+		}
 		_uploadOutStream.write(buffer, n);
 		if (!_uploadOutStream) {
             _errorCode = 500;
@@ -215,6 +232,7 @@ bool Response::stepMultipartUpload()
 			if (stat(finalFilePath.c_str(), &st) != 0) {
 				_multipartAnyCreated = true;
 			}
+			_multipartCurrentPart.tempFilePath = finalFilePath;
             _uploadOutStream.open(finalFilePath.c_str(), std::ios::binary);
             if (!_uploadOutStream.is_open()) {
                 _errorCode = 500;
@@ -227,9 +245,26 @@ bool Response::stepMultipartUpload()
 	   if (_multipartState == STREAMING_BODY) {
         const std::string boundary_delimiter = std::string("\r\n") + _multipartStartBoundary;
 
+		if (_uploadOutStream.is_open() && !_multipartCurrentPart.tempFilePath.empty()) {
+			if (access(_multipartCurrentPart.tempFilePath.c_str(), F_OK) != 0) {
+				_uploadOutStream.close();
+				if (_postBodyStream.is_open())
+					_postBodyStream.close();
+				_errorCode = 500;
+				throw std::runtime_error("Error Upload file was deleted during upload.");
+			}
+		}
+
         size_t pos = _multipartBuffer.find(boundary_delimiter);
         if (pos != std::string::npos) {
-            if (_uploadOutStream.is_open()) {
+			if (_uploadOutStream.is_open()) {
+				if (!_multipartCurrentPart.tempFilePath.empty() && access(_multipartCurrentPart.tempFilePath.c_str(), F_OK) != 0) {
+					_uploadOutStream.close();
+					if (_postBodyStream.is_open())
+						_postBodyStream.close();
+					_errorCode = 500;
+					throw std::runtime_error("Error Upload file was deleted during upload.");
+				}
                 _uploadOutStream.write(_multipartBuffer.c_str(), pos);
                 _uploadOutStream.close();
             }
@@ -245,8 +280,16 @@ bool Response::stepMultipartUpload()
             size_t tail_size = _multipartStartBoundary.length() + 4;
             if (_multipartBuffer.length() > tail_size) {
                 size_t write_size = _multipartBuffer.length() - tail_size;
-                if (_uploadOutStream.is_open())
+				if (_uploadOutStream.is_open()) {
+					if (!_multipartCurrentPart.tempFilePath.empty() && access(_multipartCurrentPart.tempFilePath.c_str(), F_OK) != 0) {
+						_uploadOutStream.close();
+						if (_postBodyStream.is_open())
+							_postBodyStream.close();
+						_errorCode = 500;
+						throw std::runtime_error("Error Upload file was deleted during upload.");
+					}
                     _uploadOutStream.write(_multipartBuffer.c_str(), write_size);
+				}
                 _multipartBuffer.erase(0, write_size);
             }
             if (!_postBodyStream && _multipartBuffer.find(boundary_delimiter) == std::string::npos) {

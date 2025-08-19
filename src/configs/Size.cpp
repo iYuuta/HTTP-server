@@ -2,7 +2,7 @@
 
 Size::Size()
 {
-	_size = 0;
+	_size = -1;
 }
 
 Size::Size(ssize_t size)

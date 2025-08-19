@@ -307,7 +307,8 @@ void Response::postInit()
     _generatedUploadName.clear();
 
 	    if (filename.empty()) {
-			std::string ext = MIME::getContentExt(contentType);
+			MIME _mime;
+			std::string ext = _mime.getContentExt(contentType);
 			_generatedUploadName = generateRandomName().substr(6) + ext;
 			filename = _generatedUploadName;
 			_serverGeneratedName = true;

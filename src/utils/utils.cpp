@@ -267,7 +267,7 @@ char hexToAscii(char a, char b) {
 	return static_cast<char>((hi << 4) | lo);
 }
 
-std::string MIME::getMIME(std::string extension) {
+std::string MIME::getMIME(const std::string& extension) {
 	if (_mime.find(extension) != _mime.end())
 		return _mime[extension];
 	return "application/octet-stream";
@@ -287,7 +287,6 @@ std::string ERRORS::getErrorMsg(int errorCode) {
 
 std::string MIME::getContentExt(const std::string &ContentType)
 {
-
 	for (std::map<std::string, std::string>::iterator it = _mime.begin(); it != _mime.end(); it++)
 	{
 		if(it->second == ContentType)

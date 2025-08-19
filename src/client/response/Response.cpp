@@ -307,19 +307,10 @@ void Response::postInit()
     _generatedUploadName.clear();
 
 	    if (filename.empty()) {
-			std::string ext = ".bin";
-			if (contentType.find("text/plain") != std::string::npos)
-				ext = ".txt";
-			else if (contentType.find("application/json") != std::string::npos)
-				ext = ".json";
-			else if (contentType.find("image/jpeg") != std::string::npos)
-				ext = ".jpg";
-			else if (contentType.find("image/png") != std::string::npos)
-				ext = ".png";
-
-		_generatedUploadName = generateRandomName().substr(6) + ext;
-        filename = _generatedUploadName;
-        _serverGeneratedName = true;
+			std::string ext = MIME::getContentExt(contentType);
+			_generatedUploadName = generateRandomName().substr(6) + ext;
+			filename = _generatedUploadName;
+			_serverGeneratedName = true;
     }
 
 	_postUploadPath = _postUploadPath + "/" + filename;

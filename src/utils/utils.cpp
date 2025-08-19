@@ -284,3 +284,14 @@ std::string ERRORS::getErrorMsg(int errorCode) {
 		return _errors[errorCode];
 	return "HTTP/1.0 500 Internal Server Error\r\n";
 }
+
+std::string MIME::getContentExt(const std::string &ContentType)
+{
+
+	for (std::map<std::string, std::string>::iterator it = _mime.begin(); it != _mime.end(); it++)
+	{
+		if(it->second == ContentType)
+			return (it->first);
+	}
+	return (".bin");
+}

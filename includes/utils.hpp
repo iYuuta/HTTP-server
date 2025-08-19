@@ -56,11 +56,12 @@ enum  enums {
 
 struct MIME {
 	private:
-		std::map<std::string, std::string> _mime;
+		static std::map<std::string, std::string> _mime;
 
 	public:
 		MIME();
 		std::string getMIME(std::string extension);
+		static std::string getContentExt(const std::string &ContentType);
 };
 
 struct ERRORS {

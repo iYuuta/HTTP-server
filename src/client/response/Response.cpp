@@ -54,16 +54,29 @@ _bytesSent(0) {
 void Response::validateUploadPath(const std::string& uploadPath) {
 	if (uploadPath.empty()) {
 		_errorCode = 403;
-		throw std::runtime_error("File uploads are not configured for this location.");
+		throw std::runtime_error("Error: Uploads not configured for this location.");
 	}
 
 	struct stat dirStat;
 	if (stat(uploadPath.c_str(), &dirStat) != 0)
-			throw std::runtime_error("upload directory does not exist.");
+			throw std::runtime_error("Error: Upload directory does not exist.");
 
 	else if (!S_ISDIR(dirStat.st_mode)) {
 		_errorCode = 500;
-		throw std::runtime_error("Upload path exists but is not a directory.");
+		throw std::runtime_error("Error: Upload path exists but is not a directory.");
+	}
+}
+
+void Response::checkUploadFile(const std::string& path) {
+	if (path.empty()) 
+		return;
+	if (access(path.c_str(), F_OK) != 0) {
+		if (_uploadOutStream.is_open())
+			_uploadOutStream.close();
+		if (_postBodyStream.is_open())
+			_postBodyStream.close();
+		_errorCode = 409;
+		throw std::runtime_error("Error: Upload file was deleted during upload.");
 	}
 }
 
@@ -74,35 +87,23 @@ bool Response::stepRawUpload() {
 		_uploadOutStream.open(_postUploadPath.c_str(), std::ios::out | std::ios::binary);
 		if (!_uploadOutStream) {
             _errorCode = 500;
-            throw std::runtime_error("Failed to write uploaded data.");
+            throw std::runtime_error("Error: Failed to write uploaded data.");
         }
 	}
 
-	if (_uploadOutStream.is_open()) {
-		if (access(_postUploadPath.c_str(), F_OK) != 0) {
-			_uploadOutStream.close();
-			if (_postBodyStream.is_open())
-				_postBodyStream.close();
-			_errorCode = 500;
-			throw std::runtime_error("Error Upload file was deleted during upload.");
-		}
-	}
+	if (_uploadOutStream.is_open())
+		checkUploadFile(_postUploadPath);
 	char buffer[BUFFER_SIZE];
 	_postBodyStream.read(buffer, sizeof(buffer));
 	std::streamsize n = _postBodyStream.gcount();
 	if (n > 0)
 	{
-		if (_uploadOutStream.is_open() && access(_postUploadPath.c_str(), F_OK) != 0) {
-			_uploadOutStream.close();
-			if (_postBodyStream.is_open())
-				_postBodyStream.close();
-			_errorCode = 500;
-			throw std::runtime_error("Error Upload file was deleted during upload.");
-		}
+		if (_uploadOutStream.is_open())
+			checkUploadFile(_postUploadPath);
 		_uploadOutStream.write(buffer, n);
 		if (!_uploadOutStream) {
             _errorCode = 500;
-            throw std::runtime_error("Failed to write uploaded data.");
+            throw std::runtime_error("Error: Failed to write uploaded data.");
         }
 	}
 	if (_postBodyStream.eof())
@@ -114,7 +115,7 @@ bool Response::stepRawUpload() {
 	if (!_postBodyStream)
 	{
 		_errorCode = 500;
-		throw std::runtime_error("Failed to read request body");
+		throw std::runtime_error("Error: Failed to read request body");
 	}
 	return (false);
 }
@@ -144,7 +145,7 @@ void Response::parsePartHeaders(const std::string& headerStr, Multipart& part) {
 			std::string name = line.substr(0, colonPos);
 			if (!isKeyValid(name)) {
 				_errorCode = 400;
-				throw std::string("Bad request");
+				throw std::string("Error: Bad request");
 			}
 			std::string value = trim(line.substr(colonPos + 1));
 
@@ -171,11 +172,11 @@ void Response::parsePartHeaders(const std::string& headerStr, Multipart& part) {
 		else {
 			if (line.empty() || (line[0] != ' ' && line[0] != '\t')) {
 				_errorCode = 400;
-				throw std::string("Bad request");
+				throw std::string("Error: Bad request");
 			}
 			if (part.headers.empty()) {
 				_errorCode = 400;
-				throw std::string("Bad request");
+				throw std::string("Error: Bad request");
 			}
 			if (!part.headers.empty())
 				part.headers.rbegin()->second = part.headers.rbegin()->second + " " + trim(line);
@@ -215,7 +216,7 @@ bool Response::stepMultipartUpload()
         if (pos == std::string::npos) {
             if (!_postBodyStream) {
                 _errorCode = 400;
-                throw std::runtime_error("Multipart error: Malformed headers.");
+                throw std::runtime_error("Error: Malformed headers.");
             }
             return false;
         }
@@ -236,7 +237,7 @@ bool Response::stepMultipartUpload()
             _uploadOutStream.open(finalFilePath.c_str(), std::ios::binary);
             if (!_uploadOutStream.is_open()) {
                 _errorCode = 500;
-                throw std::runtime_error("Failed to create file for upload.");
+                throw std::runtime_error("Error: Failed to create file for upload.");
             }
         }
         _multipartState = STREAMING_BODY;
@@ -245,26 +246,14 @@ bool Response::stepMultipartUpload()
 	   if (_multipartState == STREAMING_BODY) {
         const std::string boundary_delimiter = std::string("\r\n") + _multipartStartBoundary;
 
-		if (_uploadOutStream.is_open() && !_multipartCurrentPart.tempFilePath.empty()) {
-			if (access(_multipartCurrentPart.tempFilePath.c_str(), F_OK) != 0) {
-				_uploadOutStream.close();
-				if (_postBodyStream.is_open())
-					_postBodyStream.close();
-				_errorCode = 500;
-				throw std::runtime_error("Error Upload file was deleted during upload.");
-			}
-		}
+		if (_uploadOutStream.is_open() && !_multipartCurrentPart.tempFilePath.empty())
+			checkUploadFile(_multipartCurrentPart.tempFilePath);
 
         size_t pos = _multipartBuffer.find(boundary_delimiter);
         if (pos != std::string::npos) {
 			if (_uploadOutStream.is_open()) {
-				if (!_multipartCurrentPart.tempFilePath.empty() && access(_multipartCurrentPart.tempFilePath.c_str(), F_OK) != 0) {
-					_uploadOutStream.close();
-					if (_postBodyStream.is_open())
-						_postBodyStream.close();
-					_errorCode = 500;
-					throw std::runtime_error("Error Upload file was deleted during upload.");
-				}
+				if (!_multipartCurrentPart.tempFilePath.empty())
+					checkUploadFile(_multipartCurrentPart.tempFilePath);
                 _uploadOutStream.write(_multipartBuffer.c_str(), pos);
                 _uploadOutStream.close();
             }
@@ -281,20 +270,15 @@ bool Response::stepMultipartUpload()
             if (_multipartBuffer.length() > tail_size) {
                 size_t write_size = _multipartBuffer.length() - tail_size;
 				if (_uploadOutStream.is_open()) {
-					if (!_multipartCurrentPart.tempFilePath.empty() && access(_multipartCurrentPart.tempFilePath.c_str(), F_OK) != 0) {
-						_uploadOutStream.close();
-						if (_postBodyStream.is_open())
-							_postBodyStream.close();
-						_errorCode = 500;
-						throw std::runtime_error("Error Upload file was deleted during upload.");
-					}
+					if (!_multipartCurrentPart.tempFilePath.empty())
+						checkUploadFile(_multipartCurrentPart.tempFilePath);
                     _uploadOutStream.write(_multipartBuffer.c_str(), write_size);
 				}
                 _multipartBuffer.erase(0, write_size);
             }
             if (!_postBodyStream && _multipartBuffer.find(boundary_delimiter) == std::string::npos) {
                 _errorCode = 400;
-                throw std::runtime_error("Multipart error: Unterminated part.");
+                throw std::runtime_error("Error: Unterminated part.");
             }
            return false;
         }
@@ -324,13 +308,13 @@ void Response::postInit()
 	_postBodyStream.open(_request.getFileName().c_str(), std::ios::in | std::ios::binary);
     if (!_postBodyStream.is_open()) {
         _errorCode = 500;
-        throw std::runtime_error("Failed to open request body file.");
+        throw std::runtime_error("Error: Failed to open request body file.");
     }
 
     if (_postIsMultipart) {
         if (!extractBoundary(contentType, _boundary)) {
             _errorCode = 400;
-            throw std::runtime_error("Invalid or missing boundary.");
+            throw std::runtime_error("Error: Invalid or missing boundary.");
         }
         _multipartStartBoundary = std::string("--") + _boundary;
         _multipartState = LOOKING_FOR_START_BOUNDARY;

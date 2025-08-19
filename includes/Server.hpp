@@ -25,6 +25,7 @@ class Server
 
 	public:
 		Server();
+		~Server();
 		void setHost(const std::string& host);
 		void setFd(const int& fd);
 		void addErrorPage(const int& code, const std::string& page);

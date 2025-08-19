@@ -22,10 +22,6 @@ void HttpServer::clean()
 Client& HttpServer::getClient(const int& clientId)
 {
 	std::map<int, Client*>::iterator it = _clients.find(clientId);
-	if (it == _clients.end()) {
-		
-		throw std::runtime_error(std::string("ay 9alwa") + intToString(clientId));
-	}
 	return *it->second;
 }
 
@@ -33,7 +29,6 @@ void HttpServer::closeFd(std::vector<pollfd>::iterator it)
 {
 	delete _clients[it->fd];
 	_clients.erase(it->fd);
-	close(it->fd);
 }
 
 void HttpServer::insertNewClient(const int& clientId, Server& server)
@@ -42,7 +37,8 @@ void HttpServer::insertNewClient(const int& clientId, Server& server)
 		return;
 	Client *client = new Client(clientId, server, server.getErrorPages());
 	if (!(_clients.insert(std::make_pair(clientId, client)).second))
-		delete client;}
+		delete client;
+}
 
 bool HttpServer::isClientExists(const int& clientId)
 {

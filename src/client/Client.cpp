@@ -16,6 +16,7 @@ response(request, _server.getErrorPages(), _location)
 
 Client::~Client()
 {
+	close(_fd);
 }
 
 void Client::parseRequest()

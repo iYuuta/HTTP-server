@@ -7,6 +7,11 @@ Server::Server(): _fd(-1), _port(-1), _maxAllowedClientRequestSize(-1)
 {
 }
 
+Server::~Server()
+{
+	close(_fd);
+}
+
 void Server::setHost(const std::string& host)
 {
 	_host = host;

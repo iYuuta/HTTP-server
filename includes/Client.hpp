@@ -39,9 +39,6 @@ class Client {
 
 		void parseRequest();
 		void createResponse();
-		std::string test() {
-			return "test\n";
-		};
 
 		bool isRequestDone();
 		bool isResponseDone();

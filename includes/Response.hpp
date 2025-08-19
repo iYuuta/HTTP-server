@@ -107,12 +107,10 @@ class Response {
 
 		void monitorCgi();
 		void validateUploadPath(const std::string& uploadPath);
-		void handleRawUpload(const std::string& uploadPath);
 		bool checkTimeOut();
 
 		bool extractBoundary(const std::string& contentTypeHeader, std::string& boundary);
 		void parsePartHeaders(const std::string& headerStr, Multipart& part);
-		void parseMultipartBody(const std::string& uploadPath);
 		
 		Response();
 		
@@ -125,7 +123,6 @@ class Response {
 
 		void buildResponse();
 		void setErrorCode(int error);
-		void setErrorMsg(std::string error);
 		void isRedirect();
 		enums getResponseState() const ;
 		bool isResponseBuilt();

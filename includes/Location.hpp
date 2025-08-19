@@ -37,7 +37,6 @@ class Location
 		const std::string&	getUploadStore();
 		const std::vector<std::string>	getExt();
 		bool				autoIndex();
-		void				printMethods();
 };
 
 #endif

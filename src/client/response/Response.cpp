@@ -54,16 +54,29 @@ _bytesSent(0) {
 void Response::validateUploadPath(const std::string& uploadPath) {
 	if (uploadPath.empty()) {
 		_errorCode = 403;
-		throw std::runtime_error("File uploads are not configured for this location.");
+		throw std::runtime_error("Uploads not configured for this location.");
 	}
 
 	struct stat dirStat;
 	if (stat(uploadPath.c_str(), &dirStat) != 0)
-			throw std::runtime_error("upload directory does not exist.");
+			throw std::runtime_error("Upload directory does not exist.");
 
 	else if (!S_ISDIR(dirStat.st_mode)) {
 		_errorCode = 500;
 		throw std::runtime_error("Upload path exists but is not a directory.");
+	}
+}
+
+void Response::checkUploadFile(const std::string& path) {
+	if (path.empty()) 
+		return;
+	if (access(path.c_str(), F_OK) != 0) {
+		if (_uploadOutStream.is_open())
+			_uploadOutStream.close();
+		if (_postBodyStream.is_open())
+			_postBodyStream.close();
+		_errorCode = 409;
+		throw std::runtime_error("Upload file was deleted during upload.");
 	}
 }
 
@@ -77,11 +90,16 @@ bool Response::stepRawUpload() {
             throw std::runtime_error("Failed to write uploaded data.");
         }
 	}
+
+	if (_uploadOutStream.is_open())
+		checkUploadFile(_postUploadPath);
 	char buffer[BUFFER_SIZE];
 	_postBodyStream.read(buffer, sizeof(buffer));
 	std::streamsize n = _postBodyStream.gcount();
 	if (n > 0)
 	{
+		if (_uploadOutStream.is_open())
+			checkUploadFile(_postUploadPath);
 		_uploadOutStream.write(buffer, n);
 		if (!_uploadOutStream) {
             _errorCode = 500;
@@ -198,7 +216,7 @@ bool Response::stepMultipartUpload()
         if (pos == std::string::npos) {
             if (!_postBodyStream) {
                 _errorCode = 400;
-                throw std::runtime_error("Multipart error: Malformed headers.");
+                throw std::runtime_error("Malformed headers.");
             }
             return false;
         }
@@ -215,6 +233,7 @@ bool Response::stepMultipartUpload()
 			if (stat(finalFilePath.c_str(), &st) != 0) {
 				_multipartAnyCreated = true;
 			}
+			_multipartCurrentPart.tempFilePath = finalFilePath;
             _uploadOutStream.open(finalFilePath.c_str(), std::ios::binary);
             if (!_uploadOutStream.is_open()) {
                 _errorCode = 500;
@@ -227,9 +246,14 @@ bool Response::stepMultipartUpload()
 	   if (_multipartState == STREAMING_BODY) {
         const std::string boundary_delimiter = std::string("\r\n") + _multipartStartBoundary;
 
+		if (_uploadOutStream.is_open() && !_multipartCurrentPart.tempFilePath.empty())
+			checkUploadFile(_multipartCurrentPart.tempFilePath);
+
         size_t pos = _multipartBuffer.find(boundary_delimiter);
         if (pos != std::string::npos) {
-            if (_uploadOutStream.is_open()) {
+			if (_uploadOutStream.is_open()) {
+				if (!_multipartCurrentPart.tempFilePath.empty())
+					checkUploadFile(_multipartCurrentPart.tempFilePath);
                 _uploadOutStream.write(_multipartBuffer.c_str(), pos);
                 _uploadOutStream.close();
             }
@@ -245,13 +269,16 @@ bool Response::stepMultipartUpload()
             size_t tail_size = _multipartStartBoundary.length() + 4;
             if (_multipartBuffer.length() > tail_size) {
                 size_t write_size = _multipartBuffer.length() - tail_size;
-                if (_uploadOutStream.is_open())
+				if (_uploadOutStream.is_open()) {
+					if (!_multipartCurrentPart.tempFilePath.empty())
+						checkUploadFile(_multipartCurrentPart.tempFilePath);
                     _uploadOutStream.write(_multipartBuffer.c_str(), write_size);
+				}
                 _multipartBuffer.erase(0, write_size);
             }
             if (!_postBodyStream && _multipartBuffer.find(boundary_delimiter) == std::string::npos) {
                 _errorCode = 400;
-                throw std::runtime_error("Multipart error: Unterminated part.");
+                throw std::runtime_error("Unterminated part.");
             }
            return false;
         }
@@ -412,7 +439,7 @@ void Response::POST() {
 
 		
 		ERROR();
-		std::cerr << "POST Error: " << e.what() << std::endl;
+		std::cerr << "Error: " << e.what() << std::endl;
 	}
 }
 
@@ -508,7 +535,7 @@ void Response::executeCgi() {
 			if (chdir(_location->getRoute().c_str()) < 0) {
 				if (fd != 0)
 					close(fd);
-				std::cerr << "Error: failed to change cwd in the child process\n";
+				std::cerr << "failed to change cwd in the child process\n";
 				std::remove(_cgiFile.c_str());
 				close(_cgiFd);
 				std::exit(500);
@@ -656,12 +683,12 @@ void Response::CGI() {
 	if (_cgiRunning) {
 		monitorCgi();
 		if (_errorCode == 500) {
-			std::cout << "Error: child process terminated with a failure" << std::endl;
+			std::cout << "child process terminated with a failure" << std::endl;
 			ERROR();
 			return ;
 		}
 		if (_cgiRunning && !checkTimeOut()) {
-			std::cout << "Error: child process terminated due to a time out" << std::endl;
+			std::cout << "child process terminated due to a time out" << std::endl;
 			ERROR();
 			return ;
 		}

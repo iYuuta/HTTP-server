@@ -112,6 +112,10 @@ class Response {
 		bool extractBoundary(const std::string& contentTypeHeader, std::string& boundary);
 		void parsePartHeaders(const std::string& headerStr, Multipart& part);
 		
+		void parseMultipartBody(const std::string& uploadPath);
+
+		void checkUploadFile(const std::string &path);
+		
 		Response();
 		
 		bool stepRawUpload();

@@ -20,7 +20,7 @@
 # include "HttpRequestMethod.hpp"
 # include "Location.hpp"
 
-#define BUFFER_SIZE 40000
+#define BUFFER_SIZE 100000
 
 #define ERROR_PAGE_START "<!DOCTYPE html>\n" \
 "<html lang=\"en\">\n" \

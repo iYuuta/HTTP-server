@@ -34,7 +34,6 @@ class Server
 		const int& getPort() const;
 		void setMaxAllowedClientRequestSize(size_t size);
 		void addLocation(const Location& location);
-		void insertNewClient(const int& clientId);
 		bool isClientExists(const int& clientId);
 		void setup();
 		int getFd() const;
@@ -44,8 +43,5 @@ class Server
 		ssize_t getMaxRequestSize() const;
 		const sockaddr_in& getSocketAddress() const;
 };
-
-bool parseHostAndPort(Server& server, std::vector<std::string>& content, size_t& i);
-bool parseMaxRequestSize(Server& server, std::vector<std::string>& content, size_t& i);
 
 #endif

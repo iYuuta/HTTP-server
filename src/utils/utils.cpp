@@ -176,21 +176,21 @@ std::string trim(const std::string& s) {
 }
 
 std::string generateRandomName() {
-    const std::string characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    static bool seeded = false;
+	const std::string characters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+	static bool seeded = false;
 
-    if (!seeded) {
-        std::srand(std::time(NULL));
-        seeded = true;
-    }
-    while (true) {
-        std::string result = "/tmp/";
-        for (size_t i = 0; i < 16; ++i)
-            result += characters[std::rand() % characters.size()];
+	if (!seeded) {
+		std::srand(std::time(NULL));
+		seeded = true;
+	}
+	while (true) {
+		std::string result = "/tmp/";
+		for (size_t i = 0; i < 16; ++i)
+			result += characters[std::rand() % characters.size()];
 
-        if (access(result.c_str(), F_OK) != 0)
-            return result;
-    }
+		if (access(result.c_str(), F_OK) != 0)
+			return result;
+	}
 }
 
 bool isDirectory(const std::string& path) {
@@ -287,8 +287,7 @@ std::string ERRORS::getErrorMsg(int errorCode) {
 
 std::string MIME::getContentExt(const std::string &ContentType)
 {
-	for (std::map<std::string, std::string>::iterator it = _mime.begin(); it != _mime.end(); it++)
-	{
+	for (std::map<std::string, std::string>::iterator it = _mime.begin(); it != _mime.end(); it++) {
 		if(it->second == ContentType)
 			return (it->first);
 	}

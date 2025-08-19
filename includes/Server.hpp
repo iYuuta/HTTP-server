@@ -16,7 +16,6 @@
 class Server
 {
 	private:
-		sockaddr_in _address;
 		std::string _host;
 		int _fd;
 		int _port;
@@ -41,7 +40,6 @@ class Server
 		std::vector<Location>& getLocations();
 		std::map<int, std::string>& getErrorPages();
 		ssize_t getMaxRequestSize() const;
-		const sockaddr_in& getSocketAddress() const;
 };
 
 #endif

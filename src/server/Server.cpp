@@ -98,7 +98,9 @@ static void asignHost(sockaddr_in &address, const int &port, const std::string &
 
 void Server::setup()
 {
-	const int fd = socket(PF_INET, SOCK_STREAM, 0);
+	sockaddr_in _address;
+
+	const int fd = socket(AF_INET, SOCK_STREAM, 0);
 
 	if (fd < 0)
 		throw std::runtime_error("Socket creation failed");
@@ -116,10 +118,6 @@ void Server::setup()
 		throw std::runtime_error("Socket listen failed");
 }
 
-const sockaddr_in& Server::getSocketAddress() const
-{
-	return (_address);
-}
 
 bool Server::isLocationExists(const std::string &url)
 {

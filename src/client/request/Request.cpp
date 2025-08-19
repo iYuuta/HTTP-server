@@ -237,7 +237,7 @@ void Request::checkForPathInfo(std::vector<Location>::iterator& location) {
 		size_t slash_pos = _path.find('/', index);
 
 		if (slash_pos == std::string::npos)
-			return;
+			return ;
 		size_t dot_pos = _path.find('.', index);
 
 		if (dot_pos != std::string::npos && dot_pos < slash_pos)
@@ -247,9 +247,7 @@ void Request::checkForPathInfo(std::vector<Location>::iterator& location) {
 			if (*it == ext) {
 				_pathInfo = _path.substr(slash_pos + 1);
 				_path = _path.substr(0, slash_pos);
-				std::cout << "path: " << _path << std::endl;
-				std::cout << "pathInfo: " << _pathInfo << std::endl;
-				return;
+				return ;
 			}
 		}
 	}

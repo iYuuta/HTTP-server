@@ -434,6 +434,7 @@ void Response::initCgi() {
 	_env.push_back("SERVER_SOFTWARE=Webserv/1.0");
 	_env.push_back("HTTP_HOST=" + _request.getHeader("Host"));
 	_env.push_back("PATH_INFO=" + _request.getPathInfo());
+	_env.push_back("HTTP_COOKIE=" + _request.getHeader("Cookie"));
 
 	if (!_request.getQueryStrings().empty())
 		_env.push_back("QUERY_STRING=" + _request.getQueryStrings());

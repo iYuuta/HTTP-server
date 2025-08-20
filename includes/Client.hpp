@@ -20,8 +20,10 @@ class Client {
 
 		int								_fd;
 		std::string						_buffer;
+		std::string						_backUpBuffer;
 		int								_errorCode;
 		bool							_validRequest;
+		bool							_bufferedResponse;
 
 		bool							_responseDone;
 		bool							_requestDone;

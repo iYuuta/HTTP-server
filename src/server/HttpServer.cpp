@@ -143,6 +143,8 @@ void HttpServer::handleNewConnection(pollfd& pollFd)
 
 	if (clientFd < 0)
 		throw std::runtime_error("accept failed");
+		
+	fcntl(clientFd, F_SETFL, O_NONBLOCK);
 
 	insertNewClient(clientFd, server);
 

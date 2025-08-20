@@ -7,6 +7,7 @@ _errorPages(errorp),
 _fd(fd),
 _errorCode(-1),
 _validRequest(false),
+_bufferedResponse(false),
 _responseDone(false),
 _requestDone(false),
 request(),
@@ -57,8 +58,16 @@ void Client::createResponse() {
 }
 
 void Client::writeData() {
+	if (_bufferedResponse) {
+		if (write(_fd, _backUpBuffer.c_str(), _backUpBuffer.size()) == -1)
+			return ;
+		_bufferedResponse = false;
+	}
 	const std::string& buff = response.getResponse();
-	write(_fd, buff.c_str(), buff.size());
+	if (write(_fd, buff.c_str(), buff.size()) == -1) {
+		_bufferedResponse = true;
+		_backUpBuffer = buff;
+	}
 }
 
 bool Client::isRequestDone() {

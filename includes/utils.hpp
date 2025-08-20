@@ -96,5 +96,6 @@ std::string getExtension(const std::string& path);
 std::string methodToStr(HttpRequestMethod meth);
 bool isKeyValid(const std::string& line);
 char hexToAscii(char a, char b);
+std::string joinUrlPaths(const std::string &firstPath, const std::string &secondPath);
 
 #endif

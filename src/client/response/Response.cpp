@@ -373,13 +373,7 @@ void Response::POST() {
 		std::string locationUrl;
 		if (created) {
 			if (_serverGeneratedName) {
-				std::string pathPart = _location->getUrl();
-				if (!pathPart.empty() && pathPart[pathPart.size() - 1] == '/' &&
-					!_request.getPath().empty() && _request.getPath()[0] == '/')
-					pathPart.resize(pathPart.size() - 1);
-				pathPart += _request.getPath();
-				if (pathPart.empty() || pathPart[pathPart.size() - 1] != '/')
-					pathPart += "/";
+				std::string pathPart = joinUrlPaths(_location->getUrl(), _request.getPath());
 				pathPart += _generatedUploadName;
 
 				std::string host = _request.getHeader("Host");
@@ -391,12 +385,7 @@ void Response::POST() {
 					_headers.append("Location: " + pathPart + "\r\n");
 				}
 			} else if (!_postIsMultipart) {
-				std::string pathPart = _location->getUrl();
-				if (!pathPart.empty() && pathPart[pathPart.size() - 1] == '/' &&
-					!_request.getPath().empty() && _request.getPath()[0] == '/')
-					pathPart.resize(pathPart.size() - 1);
-				pathPart += _request.getPath();
-
+				std::string pathPart = joinUrlPaths(_location->getUrl(), _request.getPath());
 				std::string host = _request.getHeader("Host");
 				if (!host.empty()) {
 					locationUrl = "http://" + host + pathPart;
@@ -443,20 +432,12 @@ void Response::POST() {
 	catch (const std::exception &e)
 	{
 	    if (_postBodyStream.is_open())
-		{
         	_postBodyStream.close();
-		}
-
     	if (_uploadOutStream.is_open())
-		{
 			_uploadOutStream.close();
-		}
-
-		if (!_request.getFileName().empty()) {
+		if (!_request.getFileName().empty())
 			std::remove(_request.getFileName().c_str());
-		}
 
-		
 		ERROR();
 		std::cerr << "Error: " << e.what() << std::endl;
 	}

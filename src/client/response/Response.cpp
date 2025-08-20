@@ -957,11 +957,14 @@ void Response::buildCookies()
 		std::stringstream ss;
 		ss << "user-" << rand();
 		std::string newSessionId = ss.str();
-		
-		std::string cookie = "session-id=" + newSessionId + "; Path=/";
 
+		std::string cookie = "session-id=" + newSessionId + "; Path=/";
+		
 		addCookie(cookie);
+		std::cout << "New session created: " << newSessionId << std::endl;
 	}
+	else
+		std::cout << "Welcome back " << sessionId << std::endl;
 	_cookiesBuilt = true;
 }
 

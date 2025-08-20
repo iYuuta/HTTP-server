@@ -140,6 +140,7 @@ void HttpServer::handleNewConnection(pollfd& pollFd)
 	Server& server = getServerByFd(pollFd.fd);
 	const int clientFd = accept(pollFd.fd, NULL, NULL);
 
+
 	if (clientFd < 0)
 		throw std::runtime_error("accept failed");
 
@@ -158,8 +159,10 @@ void HttpServer::handleClientRequest(pollfd& pollFd)
 		pollFd.events = POLLOUT;
 		return ;
 	}
+
 	if (!client.isRequestDone())
 		client.parseRequest();
+
 	if (client.isRequestDone())
 		pollFd.events = POLLOUT;
 	else
@@ -179,6 +182,7 @@ void HttpServer::handleClientResponse(pollfd& pollFd)
 		client.writeData();
 		pollFd.events = POLLOUT;
 	}
-	else
+
+	if (client.getResponseState() == DONE) 
 		removePollFd(pollFd);
 }

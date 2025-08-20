@@ -90,7 +90,6 @@ void HttpServer::setupAll()
 	}
 }
 
-
 bool HttpServer::startAll()
 {
 	try
@@ -141,8 +140,11 @@ void HttpServer::handleNewConnection(pollfd& pollFd)
 	Server& server = getServerByFd(pollFd.fd);
 	const int clientFd = accept(pollFd.fd, NULL, NULL);
 
+
 	if (clientFd < 0)
 		throw std::runtime_error("accept failed");
+
+	fcntl(clientFd, F_SETFL, O_NONBLOCK);
 
 	insertNewClient(clientFd, server);
 
@@ -153,8 +155,14 @@ void HttpServer::handleClientRequest(pollfd& pollFd)
 {
 	Client& client = getClient(pollFd.fd);
 
+	if (client.clientFailed()) {
+		pollFd.events = POLLOUT;
+		return ;
+	}
+
 	if (!client.isRequestDone())
 		client.parseRequest();
+
 	if (client.isRequestDone())
 		pollFd.events = POLLOUT;
 	else
@@ -165,13 +173,16 @@ void HttpServer::handleClientResponse(pollfd& pollFd)
 {
 	Client& client = getClient(pollFd.fd);
 
-	if (!client.isResponseBuilt()) {
+	if (client.clientFailed())
+		removePollFd(pollFd);
+	else if (!client.isResponseBuilt()) {
 		client.createResponse();
 	}
 	else if (client.getResponseState() != DONE) {
 		client.writeData();
 		pollFd.events = POLLOUT;
 	}
-	else
+
+	if (client.getResponseState() == DONE) 
 		removePollFd(pollFd);
 }

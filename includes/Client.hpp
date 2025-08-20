@@ -22,6 +22,7 @@ class Client {
 		std::string						_buffer;
 		int								_errorCode;
 		bool							_validRequest;
+		bool							_clientFailed;
 
 		bool							_responseDone;
 		bool							_requestDone;
@@ -45,6 +46,7 @@ class Client {
 		bool isResponseBuilt();
 
 		void writeData();
+		bool clientFailed();
 		enums getResponseState();
 		enums getRequestState();
 

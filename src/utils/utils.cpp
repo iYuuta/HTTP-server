@@ -293,3 +293,18 @@ std::string MIME::getContentExt(const std::string &ContentType)
 	}
 	return (".bin");
 }
+
+std::string joinUrlPaths(const std::string &firstPath, const std::string &secondPath)
+{
+    std::string result = firstPath;
+
+    if (!result.empty() && result[result.length() - 1] == '/' &&
+        !secondPath.empty() && secondPath[0] == '/')
+        result.erase(result.length() - 1, 1);
+
+    result += secondPath;
+    if (result.empty() || result[result.length() - 1] != '/')
+        result += '/';
+
+    return (result);
+}

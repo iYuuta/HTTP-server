@@ -7,6 +7,7 @@ _errorPages(errorp),
 _fd(fd),
 _errorCode(-1),
 _validRequest(false),
+_clientFailed(false),
 _responseDone(false),
 _requestDone(false),
 request(),
@@ -26,9 +27,8 @@ void Client::parseRequest()
 
 	len = read(_fd, buffer, BUFFER_SIZE);
 	if (len < 0) {
-		_requestDone = true;
-		response.setErrorCode(500);
-		return;
+		_clientFailed = true;
+		return ;
 	}
 	try {
 		request.parseData(buffer, len);
@@ -58,7 +58,8 @@ void Client::createResponse() {
 
 void Client::writeData() {
 	const std::string& buff = response.getResponse();
-	write(_fd, buff.c_str(), buff.size());
+	if (write(_fd, buff.c_str(), buff.size()) == -1)
+		_clientFailed = true;
 }
 
 bool Client::isRequestDone() {
@@ -71,6 +72,10 @@ bool Client::isResponseDone() {
 
 bool Client::isResponseBuilt() {
 	return response.isResponseBuilt();
+}
+
+bool Client::clientFailed() {
+	return _clientFailed;
 }
 
 enums Client::getRequestState() {

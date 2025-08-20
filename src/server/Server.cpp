@@ -77,26 +77,24 @@ static void resuseSocketAddr(const int &fd)
 		throw std::runtime_error("Can't reuse socket address");
 }
 
-static void asignHost(sockaddr_in &address, const int &port, const std::string &host)
+static void asignAddressInfo(sockaddr_in &address, const int &port, const std::string &host)
 {
 	struct addrinfo hints = {};
 	struct addrinfo *res;
 
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_family = SOCKET_DOMAIN;
+    hints.ai_socktype = SOCKET_TYPE;
 
-	address.sin_family = AF_INET;
-	address.sin_port = htons(port);
+	int status = getaddrinfo(host.c_str(), intToString(port).c_str(), &hints, &res);
 
-	int status = getaddrinfo(host.c_str(), NULL, &hints, &res);
-
-    if (status != 0)
-	{
-   		freeaddrinfo(res);
+    if (status)
         throw std::runtime_error(std::string("Error: ") + gai_strerror(status));
-	}
 
-	address.sin_addr = ((struct sockaddr_in*)res->ai_addr)->sin_addr;
+	const sockaddr_in* resolvedAddr = reinterpret_cast<sockaddr_in *>(res->ai_addr);
+
+	address.sin_addr = resolvedAddr->sin_addr;
+	address.sin_port = resolvedAddr->sin_port;
+	address.sin_family = resolvedAddr->sin_family;
 
     freeaddrinfo(res);
 }
@@ -105,7 +103,7 @@ void Server::setup()
 {
 	sockaddr_in _address;
 
-	const int fd = socket(AF_INET, SOCK_STREAM, 0);
+	const int fd = socket(SOCKET_DOMAIN, SOCKET_TYPE, 0);
 
 	if (fd < 0)
 		throw std::runtime_error("Socket creation failed");
@@ -114,9 +112,9 @@ void Server::setup()
 	
 	resuseSocketAddr(fd);
 
-	asignHost(_address, _port, _host);
+	asignAddressInfo(_address, _port, _host);
 
-	if (bind(fd, (sockaddr*)&_address, sizeof(_address)) < 0)
+	if (bind(fd, reinterpret_cast<sockaddr *>(&_address), sizeof(_address)) < 0)
 		throw std::runtime_error(std::string("Socket bind failed: ") + strerror(errno));
 
 	if (listen(fd, SOMAXCONN) < 0)

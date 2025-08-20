@@ -12,6 +12,8 @@
 
 #define PORT_MAX_VALUE 65535
 
+# define SOCKET_DOMAIN AF_INET
+# define SOCKET_TYPE SOCK_STREAM
 
 class Server
 {

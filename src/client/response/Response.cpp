@@ -373,6 +373,7 @@ void Response::POST() {
 			std::remove(_request.getFileName().c_str());
 		}
 		bool created = _postIsMultipart ? _multipartAnyCreated : (_serverGeneratedName || _postCreatedNew);
+		std::string locationUrl;
 		if (created) {
 			if (_serverGeneratedName) {
 				std::string pathPart = _location->getUrl();
@@ -386,8 +387,10 @@ void Response::POST() {
 
 				std::string host = _request.getHeader("Host");
 				if (!host.empty()) {
-					_headers.append("Location: http://" + host + pathPart + "\r\n");
+					locationUrl = "http://" + host + pathPart;
+					_headers.append("Location: " + locationUrl + "\r\n");
 				} else {
+					locationUrl = pathPart;
 					_headers.append("Location: " + pathPart + "\r\n");
 				}
 			} else if (!_postIsMultipart) {
@@ -399,8 +402,10 @@ void Response::POST() {
 
 				std::string host = _request.getHeader("Host");
 				if (!host.empty()) {
-					_headers.append("Location: http://" + host + pathPart + "\r\n");
+					locationUrl = "http://" + host + pathPart;
+					_headers.append("Location: " + locationUrl + "\r\n");
 				} else {
+					locationUrl = pathPart;
 					_headers.append("Location: " + pathPart + "\r\n");
 				}
 			}
@@ -409,15 +414,32 @@ void Response::POST() {
 			_statusLine.append("HTTP/1.0 204 No Content\r\n");
 		}
 
+		if (created) {
+			std::string body =
+				"<!DOCTYPE html>"
+				"<html><head><title>Upload Successful</title></head>"
+				"<body>"
+				"<h1>Uploaded successfully</h1>";
+			if (!locationUrl.empty()) {
+				body += "<p>Location: <a href=\"" + locationUrl + "\">" + locationUrl + "</a></p>";
+			}
+			body += "</body></html>";
 
-		_headers.append("Content-Length: 0\r\n");
+			_headers.append("Content-Type: text/html\r\n");
+			_headers.append("Content-Length: " + intToString(body.size()) + "\r\n");
+			_bodyLeftover = body;
+			_contentLen = body.size();
+			_bytesSent += _bodyLeftover.size();
+		} else {
+			_headers.append("Content-Length: 0\r\n");
+			_contentLen = 0;
+		}
 
         for (size_t i = 0; i < _cookies.size(); i++)
             _headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
 
         _headers.append("Connection: Close\r\n\r\n");
 
-		_contentLen = 0;
 		_postState = POST_DONE;
 		_responseBuilt = true;
 	}

@@ -188,17 +188,14 @@ void Response::parsePartHeaders(const std::string& headerStr, Multipart& part) {
 
 bool Response::stepMultipartUpload()
 {
-	if (_multipartBuffer.size() < BUFFER_SIZE * 2 && _postBodyStream)
-	{
-		std::string chunk(BUFFER_SIZE, '\0');
-		_postBodyStream.read(&chunk[0], chunk.size());
-		std::streamsize n = _postBodyStream.gcount();
-		if (n > 0)
-		{
-			chunk.resize(n);
-			_multipartBuffer += chunk;
-		}
-	}
+    if (_multipartBuffer.size() < BUFFER_SIZE * 2 && _postBodyStream)
+    {
+        char chunk[BUFFER_SIZE];
+        _postBodyStream.read(chunk, BUFFER_SIZE);
+        std::streamsize n = _postBodyStream.gcount();
+        if (n > 0)
+            _multipartBuffer.append(chunk, n);
+    }
 
     if (_multipartState == LOOKING_FOR_START_BOUNDARY) {
         size_t pos = _multipartBuffer.find(_multipartStartBoundary);

@@ -155,13 +155,13 @@ void HttpServer::handleClientRequest(pollfd& pollFd)
 {
 	Client& client = getClient(pollFd.fd);
 
-	if (client.clientFailed()) {
-		pollFd.events = POLLOUT;
-		return ;
-	}
-
 	if (!client.isRequestDone())
 		client.parseRequest();
+
+	if (client.clientFailed()) {
+		removePollFd(pollFd);
+		return ;
+	}
 
 	if (client.isRequestDone())
 		pollFd.events = POLLOUT;
@@ -173,16 +173,12 @@ void HttpServer::handleClientResponse(pollfd& pollFd)
 {
 	Client& client = getClient(pollFd.fd);
 
-	if (client.clientFailed())
-		removePollFd(pollFd);
-	else if (!client.isResponseBuilt()) {
+	if (!client.isResponseBuilt())
 		client.createResponse();
-	}
 	else if (client.getResponseState() != DONE) {
 		client.writeData();
 		pollFd.events = POLLOUT;
 	}
-
-	if (client.getResponseState() == DONE) 
+	if (client.clientFailed() || client.getResponseState() == DONE) 
 		removePollFd(pollFd);
 }

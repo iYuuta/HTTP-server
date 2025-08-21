@@ -5,7 +5,7 @@ webserv
 testdir
 
 .vscode
-
+assets/uploads/*
 # Object files
 *.o
 *.ko

@@ -63,11 +63,11 @@ void Request::parseData(const char* data, size_t len)
 			_buffer.erase(0, pos + 2);
 			if (header_line.empty())
 			{
-				if (_headers["Content-Length"].empty()) {
-					_errorCode = 400;
-					throw (std::string) "Bad request";
-				}
 				if (_method == Post) {
+					if (_headers["Content-Length"].empty()) {
+						_errorCode = 400;
+						throw (std::string) "Bad request";
+					}
 					_bodyFileName = generateRandomName();
 					_bodyOut.open(_bodyFileName.c_str(), std::ios::binary | std::ios::app);
 					if (!_bodyOut.is_open()) {

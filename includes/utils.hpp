@@ -94,7 +94,7 @@ struct Exec {
 
 std::vector<std::string> split(const std::string& s, char delimiter);
 std::vector<std::string> splitNumber(const std::string& s);
-unsigned long atoiul(const std::string& s);
+long long atoill(const std::string& s);
 std::string intToString(int n);
 std::string getContentType(const std::string& fileName);
 std::string trim(const std::string& s);

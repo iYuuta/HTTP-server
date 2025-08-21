@@ -30,6 +30,11 @@ void Client::parseRequest()
 		_clientFailed = true;
 		return ;
 	}
+	if (len == 0 && request.getParseState() != DONE) {
+		response.setErrorCode(400);
+		_requestDone = true;
+		return ;
+	}
 	try {
 		request.parseData(buffer, len);
 		if ((request.getParseState() == DONE || request.getParseState() == BODY) && !_validRequest)

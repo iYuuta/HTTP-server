@@ -73,6 +73,15 @@ struct ERRORS {
 		std::string getErrorMsg(int errorCode);
 };
 
+struct REDIRECTS {
+	private:
+		std::map<int, std::string> _redirect;
+
+	public:
+		REDIRECTS();
+		std::string getRedirectMsg(int code);
+};
+
 struct Exec {
 	private:
 		std::map<std::string, std::string> _exec;

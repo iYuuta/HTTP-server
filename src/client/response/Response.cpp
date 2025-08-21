@@ -185,7 +185,6 @@ void Response::parsePartHeaders(const std::string& headerStr, Multipart& part) {
 	}
 }
 
-
 bool Response::stepMultipartUpload()
 {
     if (_multipartBuffer.size() < BUFFER_SIZE * 2 && _postBodyStream)
@@ -924,9 +923,10 @@ void Response::DELETE() {
 
 void Response::REDIRECT() {
 	int status = _location->getReturn().first;
+	REDIRECTS _redirect;
 
 	_return.append("HTTP/1.1 " + intToString(status) +
-	" Moved Permanently\r\n" + "Location: " +
+	" " + _redirect.getRedirectMsg(status) + "Location: " +
 	_location->getReturn().second + "\r\n" + "Content-Length: 0\r\n\r\n");
 }
 

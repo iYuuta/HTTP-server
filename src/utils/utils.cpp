@@ -99,6 +99,16 @@ ERRORS::ERRORS() {
 	_errors[500] = "HTTP/1.0 500 Internal Server Error\r\n";
 }
 
+REDIRECTS::REDIRECTS() {
+	_redirect[300] = "Multiple Choices\r\n";
+	_redirect[301] = "Moved Permanently\r\n";
+	_redirect[302] = "Found\r\n";
+	_redirect[303] = "See Other\r\n";
+	_redirect[305] = "Use Proxy\r\n";
+	_redirect[307] = "Temporary Redirect\r\n";
+	_redirect[308] = "Permanent Redirect\r\n";
+}
+
 std::vector<std::string> split(const std::string& s, const char delimiter)
 {
 	std::vector<std::string> tokens;
@@ -276,6 +286,13 @@ std::string MIME::getMIME(const std::string& extension) {
 std::string Exec::getExec(std::string extension) {
 	if (_exec.find(extension) != _exec.end())
 		return _exec[extension];
+	return "";
+}
+
+
+std::string REDIRECTS::getRedirectMsg(int code) {
+	if (_redirect.find(code) != _redirect.end())
+		return _redirect[code];
 	return "";
 }
 

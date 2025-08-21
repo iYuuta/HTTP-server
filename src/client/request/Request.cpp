@@ -63,11 +63,17 @@ void Request::parseData(const char* data, size_t len)
 			_buffer.erase(0, pos + 2);
 			if (header_line.empty())
 			{
+				if (_headers["Content-Length"].empty()) {
+					_errorCode = 400;
+					throw (std::string) "Bad request";
+				}
 				if (_method == Post) {
 					_bodyFileName = generateRandomName();
 					_bodyOut.open(_bodyFileName.c_str(), std::ios::binary | std::ios::app);
-					if (!_bodyOut.is_open())
+					if (!_bodyOut.is_open()) {
 						_errorCode = 500;
+						throw (std::string) "Open failed";
+					}
 				}
 				if (_contentLen > 0)
 					_parseState = BODY;
@@ -193,32 +199,48 @@ void Request::addHeaders(std::string buff)
 {
 	size_t pos = buff.find(":");
 	if (pos == std::string::npos) {
-		if (buff.empty() || (buff[0] != ' ' && buff[0] != '\t'))
+		if (buff.empty() || (buff[0] != ' ' && buff[0] != '\t')) {
 			_errorCode = 400;
-		if (_headers.empty())
+			return ;
+		}
+		if (_headers.empty()) {
 			_errorCode = 400;
+			return ;
+		}
 		_headers.rbegin()->second += " " + trim(buff);
 		return ;
 	}
 	std::string key = buff.substr(0, pos);
-	if (!isKeyValid(key))
+	if (!isKeyValid(key)) {
 		_errorCode = 400;
+		return ;
+	}
 	std::string value = trim(buff.substr(pos + 1));
 	_headers[key] = value;
 	if (key == "Content-Length")
 	{
-		if (value.empty()) 
+		if (value.empty()) {
 			_errorCode = 400;
+			return ;
+		}
 		char* endptr = NULL;
-		unsigned long long len = std::strtoull(value.c_str(), &endptr, 10);
-		if (endptr == value.c_str() || *endptr != '\0')
+		if (!validcontentLength(value)) {
 			_errorCode = 400;
+			return ;
+		}
+		unsigned long long len = std::strtoull(value.c_str(), &endptr, 10);
+		if (endptr == value.c_str() || *endptr != '\0') {
+			_errorCode = 400;
+			return ;
+		}
 		_contentLen = static_cast<size_t>(len);
 	}
 	else if (key == "Cookie")
 	{
-		if (value.empty())
+		if (value.empty()) {
 			_errorCode = 400;
+			return ;
+		}
 		parseCookie(value);
 	}
 }

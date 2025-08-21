@@ -681,12 +681,12 @@ void Response::CGI() {
 	if (_cgiRunning) {
 		monitorCgi();
 		if (_errorCode == 500) {
-			std::cout << "child process terminated with a failure" << std::endl;
+			std::cerr << "child process terminated with a failure" << std::endl;
 			ERROR();
 			return ;
 		}
 		if (_cgiRunning && !checkTimeOut()) {
-			std::cout << "child process terminated due to a time out" << std::endl;
+			std::cerr << "child process terminated due to a time out" << std::endl;
 			ERROR();
 			return ;
 		}
@@ -1079,7 +1079,6 @@ std::string Response::getResponse() {
 				}
 				return std::string(buffer, actuallyRead);
 			}
-			std::cout << "response done\n";
 			_responseState = DONE;
 			return "";
 		}

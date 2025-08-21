@@ -328,3 +328,11 @@ std::string joinUrlPaths(const std::string &firstPath, const std::string &second
 
     return (result);
 }
+
+bool validcontentLength(std::string& contentlen) {
+	for (size_t i = 0; i < contentlen.length(); i++) {
+		if (!std::isdigit(contentlen[i]))
+			return false;
+	}
+	return true;
+}

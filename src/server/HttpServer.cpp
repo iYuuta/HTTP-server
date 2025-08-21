@@ -176,7 +176,7 @@ void HttpServer::handleClientResponse(pollfd& pollFd)
 	if (!client.isResponseBuilt())
 		client.createResponse();
 	else if (client.getResponseState() != DONE) {
-		client.writeData();
+		client.sendResponse();
 		pollFd.events = POLLOUT;
 	}
 	if (client.clientFailed() || client.getResponseState() == DONE) 

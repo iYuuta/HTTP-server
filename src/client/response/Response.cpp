@@ -828,6 +828,15 @@ void Response::getBody() {
 				_errorCode = 403;
 				throw (std::string) "index is directory";
 			}
+			if (access(fileName.c_str(), F_OK) != 0 && _location->autoIndex()) {
+				try {
+					buildIndex();
+					return ;
+				}
+				catch (std::string err) {
+					throw err;
+				}
+			}
 		}
 		else if (_location->autoIndex()) {
 			try {

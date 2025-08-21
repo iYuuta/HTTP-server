@@ -63,6 +63,12 @@ void Request::parseData(const char* data, size_t len)
 			_buffer.erase(0, pos + 2);
 			if (header_line.empty())
 			{
+				if (_method == Post) {
+					_bodyFileName = generateRandomName();
+					_bodyOut.open(_bodyFileName.c_str(), std::ios::binary | std::ios::app);
+					if (!_bodyOut.is_open())
+						_errorCode = 500;
+				}
 				if (_contentLen > 0)
 					_parseState = BODY;
 				else
@@ -217,14 +223,7 @@ void Request::addHeaders(std::string buff)
 	}
 }
 
-void Request::addBody(const std::string& buff, size_t len)
-{
-	if (!_bodyOut.is_open()) {
-		_bodyFileName = generateRandomName();
-		_bodyOut.open(_bodyFileName.c_str(), std::ios::binary | std::ios::app);
-		if (!_bodyOut)
-			_errorCode = 500;
-	}
+void Request::addBody(const std::string& buff, size_t len) {
 	_bodyOut.write(buff.data(), len);
 }
 

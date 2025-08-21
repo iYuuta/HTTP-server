@@ -138,15 +138,16 @@ std::string intToString(int n) {
 	return oss.str();
 }
 
-unsigned long atoiul(const std::string& s)
+long long atoill(const std::string& s)
 {
 	errno = 0;
 	char* ptr;
-	const unsigned long value = std::strtoul(s.c_str(), &ptr, 10);
+	const long long value = std::strtoll(s.c_str(), &ptr, 10);
 	if (errno != 0 || *ptr != '\0')
 		throw std::invalid_argument(s);
 	return (value);
 }
+
 
 std::string getContentType(const std::string& fileName) {
 	size_t pos = fileName.find_last_of('.');

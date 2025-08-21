@@ -71,14 +71,14 @@ bool parseLocationReturn(Location& location, std::vector<Token>::iterator& it)
 		return (false);
 	try
 	{
-		const unsigned long value = atoiul(it->getKey());
+		const long long value = atoill(it->getKey());
 		if (value >= 600 || value < 100)
 			return (std::cerr << "Invalid http code " << value << std::endl, false);
 		location.setReturn(static_cast<int>(value), (++it++)->getKey());
 	}
 	catch (std::exception& _)
 	{
-		return (std::cerr << "Invalid http code " << it->getKey() << std::endl, false);
+		return (std::cerr << "Invalid http code" << std::endl, false);
 	}
 	return (true);
 }

@@ -289,14 +289,6 @@ void Response::postInit()
 	if (_postState != POST_IDLE)
 		return;
 
-
-	std::string transferEncoding = _request.getHeader("Transfer-Encoding");
-	if (transferEncoding.find("chunked")  != std::string::npos)
-	{
-		_errorCode = 400;
-		throw std::runtime_error("Bad request");
-	}
-
 	std::string uploadPath = _location->getUploadStore();
     if (uploadPath.empty()){
         uploadPath = _location->getRoute();

@@ -538,7 +538,7 @@ void Response::executeCgi() {
 				std::cerr << "failed to change cwd in the child process\n";
 				std::remove(_cgiFile.c_str());
 				close(_cgiFd);
-				std::exit(500);
+				std::exit(1);
 			}
 			if (fd != 0) {
 				dup2(fd, STDIN_FILENO);

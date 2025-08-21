@@ -188,17 +188,14 @@ void Response::parsePartHeaders(const std::string& headerStr, Multipart& part) {
 
 bool Response::stepMultipartUpload()
 {
-	if (_multipartBuffer.size() < BUFFER_SIZE * 2 && _postBodyStream)
-	{
-		std::string chunk(BUFFER_SIZE, '\0');
-		_postBodyStream.read(&chunk[0], chunk.size());
-		std::streamsize n = _postBodyStream.gcount();
-		if (n > 0)
-		{
-			chunk.resize(n);
-			_multipartBuffer += chunk;
-		}
-	}
+    if (_multipartBuffer.size() < BUFFER_SIZE * 2 && _postBodyStream)
+    {
+        char chunk[BUFFER_SIZE];
+        _postBodyStream.read(chunk, BUFFER_SIZE);
+        std::streamsize n = _postBodyStream.gcount();
+        if (n > 0)
+            _multipartBuffer.append(chunk, n);
+    }
 
     if (_multipartState == LOOKING_FOR_START_BOUNDARY) {
         size_t pos = _multipartBuffer.find(_multipartStartBoundary);
@@ -373,34 +370,28 @@ void Response::POST() {
 			std::remove(_request.getFileName().c_str());
 		}
 		bool created = _postIsMultipart ? _multipartAnyCreated : (_serverGeneratedName || _postCreatedNew);
+		std::string locationUrl;
 		if (created) {
 			if (_serverGeneratedName) {
-				std::string pathPart = _location->getUrl();
-				if (!pathPart.empty() && pathPart[pathPart.size() - 1] == '/' &&
-					!_request.getPath().empty() && _request.getPath()[0] == '/')
-					pathPart.resize(pathPart.size() - 1);
-				pathPart += _request.getPath();
-				if (pathPart.empty() || pathPart[pathPart.size() - 1] != '/')
-					pathPart += "/";
+				std::string pathPart = joinUrlPaths(_location->getUrl(), _request.getPath());
 				pathPart += _generatedUploadName;
 
 				std::string host = _request.getHeader("Host");
 				if (!host.empty()) {
-					_headers.append("Location: http://" + host + pathPart + "\r\n");
+					locationUrl = "http://" + host + pathPart;
+					_headers.append("Location: " + locationUrl + "\r\n");
 				} else {
+					locationUrl = pathPart;
 					_headers.append("Location: " + pathPart + "\r\n");
 				}
 			} else if (!_postIsMultipart) {
-				std::string pathPart = _location->getUrl();
-				if (!pathPart.empty() && pathPart[pathPart.size() - 1] == '/' &&
-					!_request.getPath().empty() && _request.getPath()[0] == '/')
-					pathPart.resize(pathPart.size() - 1);
-				pathPart += _request.getPath();
-
+				std::string pathPart = joinUrlPaths(_location->getUrl(), _request.getPath());
 				std::string host = _request.getHeader("Host");
 				if (!host.empty()) {
-					_headers.append("Location: http://" + host + pathPart + "\r\n");
+					locationUrl = "http://" + host + pathPart;
+					_headers.append("Location: " + locationUrl + "\r\n");
 				} else {
+					locationUrl = pathPart;
 					_headers.append("Location: " + pathPart + "\r\n");
 				}
 			}
@@ -409,35 +400,44 @@ void Response::POST() {
 			_statusLine.append("HTTP/1.0 204 No Content\r\n");
 		}
 
+		if (created) {
+			std::string body =
+				"<!DOCTYPE html>"
+				"<html><head><title>Upload Successful</title></head>"
+				"<body>"
+				"<h1>Uploaded successfully</h1>";
+			if (!locationUrl.empty()) {
+				body += "<p>Location: <a href=\"" + locationUrl + "\">" + locationUrl + "</a></p>";
+			}
+			body += "</body></html>";
 
-		_headers.append("Content-Length: 0\r\n");
+			_headers.append("Content-Type: text/html\r\n");
+			_headers.append("Content-Length: " + intToString(body.size()) + "\r\n");
+			_bodyLeftover = body;
+			_contentLen = body.size();
+			_bytesSent += _bodyLeftover.size();
+		} else {
+			_headers.append("Content-Length: 0\r\n");
+			_contentLen = 0;
+		}
 
         for (size_t i = 0; i < _cookies.size(); i++)
             _headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
 
         _headers.append("Connection: Close\r\n\r\n");
 
-		_contentLen = 0;
 		_postState = POST_DONE;
 		_responseBuilt = true;
 	}
 	catch (const std::exception &e)
 	{
 	    if (_postBodyStream.is_open())
-		{
         	_postBodyStream.close();
-		}
-
     	if (_uploadOutStream.is_open())
-		{
 			_uploadOutStream.close();
-		}
-
-		if (!_request.getFileName().empty()) {
+		if (!_request.getFileName().empty())
 			std::remove(_request.getFileName().c_str());
-		}
 
-		
 		ERROR();
 		std::cerr << "Error: " << e.what() << std::endl;
 	}

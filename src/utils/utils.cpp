@@ -104,7 +104,9 @@ REDIRECTS::REDIRECTS() {
 	_redirect[301] = "Moved Permanently\r\n";
 	_redirect[302] = "Found\r\n";
 	_redirect[303] = "See Other\r\n";
+	_redirect[304] = "Not Modified\r\n";
 	_redirect[305] = "Use Proxy\r\n";
+	_redirect[306] = "Switch Proxy\r\n";
 	_redirect[307] = "Temporary Redirect\r\n";
 	_redirect[308] = "Permanent Redirect\r\n";
 }

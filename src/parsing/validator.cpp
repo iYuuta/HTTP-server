@@ -19,7 +19,7 @@ bool validateServer(Server &server)
 
 static bool isValidRedirect(int status)
 {
-	return (status >= 301 && status <= 308);
+	return (status >= 300 && status <= 308);
 }
 
 bool validateLocation(Location &location)

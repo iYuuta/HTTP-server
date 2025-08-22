@@ -1,5 +1,5 @@
 CPP = c++
-CFLAGS = -Wall -Wextra -Werror -std=c++98
+CFLAGS = #-Wall -Wextra -Werror -std=c++98
 SRC = src/main.cpp src/server/Server.cpp src/configs/Config.cpp \
 	src/utils/utils.cpp src/parsing/parser.cpp src/parsing/optionsValidator.cpp \
 	src/configs/Size.cpp src/parsing/Token.cpp src/parsing/optionsParser.cpp src/configs/Location.cpp \

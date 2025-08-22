@@ -632,6 +632,7 @@ void Response::buildCgiResponse() {
 	size_t pos = 0;
 	size_t index = 0;
 	struct stat st;
+	int delimiter = 4;
 
 	stat(_cgiFile.c_str(), &st);
 	std::remove(_cgiFile.c_str());
@@ -657,15 +658,16 @@ void Response::buildCgiResponse() {
 		size_t pos = buffer.find("\r\n\r\n");
 		if (pos == std::string::npos) {
 			pos = buffer.find("\n\n");
+			delimiter = 2;
 		}
 		if (pos != std::string::npos) {
-			_bodyLeftover = buffer.substr(pos + 4);
-			buffer.resize(pos + 4);
+			_bodyLeftover = buffer.substr(pos + delimiter);
+			buffer.resize(pos + delimiter);
 			break;
 		}
 	}
 	while (true) {
-		int delimiter = 2;
+		delimiter = 2;
 		pos = buffer.find("\r\n");
 		if (pos == std::string::npos) {
 			pos = buffer.find("\n");
@@ -681,7 +683,6 @@ void Response::buildCgiResponse() {
 		std::string line = buffer.substr(index, pos - index);
 		index = pos + delimiter;
 
-		std::cout << line << std::endl;
 		if (line == "\r\n" || line == "\n") {
 			_headers.append("\r\n");
 			break ;

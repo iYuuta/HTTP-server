@@ -77,6 +77,7 @@ void HttpServer::newPollFd(const int& fd, const short& events)
 	pollfd pollFd;
 	pollFd.fd = fd;
 	pollFd.events = events;
+	pollFd.revents = 0; 
 	_pollFds.push_back(pollFd);
 }
 

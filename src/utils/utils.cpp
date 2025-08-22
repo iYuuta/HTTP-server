@@ -353,3 +353,10 @@ std::string removeLast(const std::string &str, const char &c)
 		return std::string("") + c;
     return str.substr(0, end) + c;
 }
+
+std::string strToLower(const std::string& header) {
+	std::string newHeader;
+	for (size_t i = 0; i < header.length(); i++)
+		newHeader += std::tolower(header[i]);
+	return newHeader;
+}

@@ -4,6 +4,6 @@
     $out=shell_exec($cmd);
 
 
-    echo  $out ;
+    while (1)
     
 ?>

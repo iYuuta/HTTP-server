@@ -216,8 +216,7 @@ void Request::addHeaders(std::string buff)
 		return ;
 	}
 	std::string value = trim(buff.substr(pos + 1));
-	_headers[key] = value;
-	if (key == "Content-Length")
+	if (strToLower(key) == "content-length")
 	{
 		if (value.empty()) {
 			_errorCode = 400;
@@ -234,15 +233,19 @@ void Request::addHeaders(std::string buff)
 			return ;
 		}
 		_contentLen = static_cast<size_t>(len);
+		_headers["Content-Length"] = value;
+		return ;
 	}
-	else if (key == "Cookie")
-	{
+	else if (strToLower(key) == "cookie") {
 		if (value.empty()) {
 			_errorCode = 400;
 			return ;
 		}
+		_headers["Cookie"] = value;
 		parseCookie(value);
+		return ;
 	}
+	_headers[key] = value;
 }
 
 void Request::addBody(const std::string& buff, size_t len) {

@@ -108,5 +108,6 @@ char hexToAscii(char a, char b);
 bool validcontentLength(std::string& contentlen);
 std::string getFullPath(std::string root, std::string file);
 std::string removeLast(const std::string &str, const char &c);
+std::string strToLower(const std::string& header);
 
 #endif

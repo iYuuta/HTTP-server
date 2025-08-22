@@ -498,20 +498,22 @@ bool Response::addCgiHeaders(const std::string& line) {
 	std::string key = line.substr(0, pos);
 
 	if (!isKeyValid(key))
-		return false;	
+		return false;
 	std::string value = trim(line.substr(pos + 1));
-	if (key == "Status" && _statusLine.empty())
+	if (strToLower(key) == "status" && _statusLine.empty()) {
 		_statusLine.append("HTTP/1.0 " + value + "\r\n");
-	_headers += key + ": " + value + "\r\n";
-	if (key == "Content-Length") {
+		return true;
+	}
+	if (strToLower(key) == "content-length") {
 		if (value.empty())
-			return false;
+			return true;
 		char* endptr = NULL;
 		unsigned long long len = std::strtoull(value.c_str(), &endptr, 10);
 		if (endptr == value.c_str() || *endptr != '\0')
-			return false;		
+			return false;	
 		_contentLen = static_cast<size_t>(len);
 	}
+	_headers += key + ": " + value + "\r\n";
 	return true;
 }
 
@@ -643,17 +645,19 @@ void Response::buildCgiResponse() {
 	
 	std::string buffer;
 	while (!_body.eof()) {
-		std::string chunk(512, '\0');
-		_body.read(&chunk[0], chunk.size());
+		char chunk[512];
+		_body.read(&chunk[0], 512);
 		bytesRead = _body.gcount();
 		readBytes += bytesRead;
 		if (bytesRead <= 0)
 			break;
 
-		chunk.resize(bytesRead);
 		buffer.append(chunk);
 
 		size_t pos = buffer.find("\r\n\r\n");
+		if (pos == std::string::npos) {
+			pos = buffer.find("\n\n");
+		}
 		if (pos != std::string::npos) {
 			_bodyLeftover = buffer.substr(pos + 4);
 			buffer.resize(pos + 4);
@@ -661,18 +665,24 @@ void Response::buildCgiResponse() {
 		}
 	}
 	while (true) {
+		int delimiter = 2;
 		pos = buffer.find("\r\n");
 		if (pos == std::string::npos) {
-			// _errorCode = 502;
-			// std::cerr << "invalid response from the child process" << std::endl;
-			// ERROR();
-			// return ;
+			pos = buffer.find("\n");
+			delimiter = 1;
+		}
+		if (pos == std::string::npos) {
+			_errorCode = 502;
+			std::cerr << "invalid response from the child process" << std::endl;
+			ERROR();
+			return ;
 		}
 
 		std::string line = buffer.substr(index, pos - index);
-		index = pos + 2;
+		index = pos + delimiter;
 
-		if (line == "\r\n") {
+		std::cout << line << std::endl;
+		if (line == "\r\n" || line == "\n") {
 			_headers.append("\r\n");
 			break ;
 		}
@@ -682,10 +692,10 @@ void Response::buildCgiResponse() {
 			continue ;
 		}
 		else if (!addCgiHeaders(line)) {
-			// _errorCode = 502;
-			// std::cerr << "invalid response from the child process" << std::endl;
-			// ERROR();
-			// return ;
+			_errorCode = 502;
+			std::cerr << "invalid response from the child process" << std::endl;
+			ERROR();
+			return ;
 		}
 	}
 
@@ -974,7 +984,7 @@ void Response::REDIRECT() {
 	int status = _location->getReturn().first;
 	REDIRECTS _redirect;
 
-	_return.append("HTTP/1.1 " + intToString(status) +
+	_return.append("HTTP/1.0 " + intToString(status) +
 	" " + _redirect.getRedirectMsg(status) + "Location: " +
 	_location->getReturn().second + "\r\n" + "Content-Length: 0\r\n\r\n");
 }

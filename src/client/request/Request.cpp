@@ -37,8 +37,13 @@ void Request::parseData(const char* data, size_t len)
 		if (_parseState == REQUESLINE)
 		{
 			size_t pos = _buffer.find("\r\n");
-			if (pos == std::string::npos)
+			if (pos == std::string::npos) {
+				if (_buffer.size() >= 8000) {
+					_errorCode = 400;
+					throw (std::string) "Bad request";
+				}
 				break ;
+			}
 			addRequestLine( _buffer.substr(0, pos));
 			if (_errorCode == 400)
 				throw (std::string) "Bad request";
@@ -128,6 +133,9 @@ bool Request::isValidRequestLine(const std::string& line) {
 
 		if (method.empty() || path.empty())
 			return false;
+		if (path[0] != '/')
+			return false;
+		_simpleRequest = true;
 		return true;
 	}
 	if (line.find(' ', pos2 + 1) != std::string::npos)
@@ -137,6 +145,8 @@ bool Request::isValidRequestLine(const std::string& line) {
 	std::string version = line.substr(pos2 + 1);
 
 	if (method.empty() || path.empty() || version.empty())
+		return false;
+	if (path[0] != '/')
 		return false;
 	if (version != "HTTP/1.0" && version != "HTTP/1.1")
 		return false;

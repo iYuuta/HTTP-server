@@ -8,9 +8,9 @@ bool parseListen(Server& server, std::vector<Token>::iterator& it)
 		return (false);
 	const std::vector<std::string> s = split(it->getKey(), ':');
 	if (s.size() != 2)
-		return (std::cerr << "interface:port required for the listen value" << std::endl, false);
+		return (std::cerr << RED << "interface:port required for the listen value" << RESET << std::endl, false);
 	if (!isValidPort(s.at(1), port))
-		return (std::cerr << "Invalid port: " << s.at(1) << std::endl, false);
+		return (std::cerr << RED << "Invalid port: " << s.at(1) << RESET << std::endl, false);
 	server.setHost(s.at(0));
 	server.setPort(port);
 	return (true);
@@ -23,7 +23,7 @@ bool parseClientMaxBodySize(Server& server, std::vector<Token>::iterator& it)
 
 	const std::vector<std::string> s = splitNumber(it->getKey());
 	if (s.size() != 2) {
-		std::cerr << "Invalid " << (it - 1)->getKey() << std::endl;
+		std::cerr << RED << "Invalid " << (it - 1)->getKey() << RESET << std::endl;
 		return false;
 	}
 	const char* str = s.at(0).c_str();
@@ -33,11 +33,11 @@ bool parseClientMaxBodySize(Server& server, std::vector<Token>::iterator& it)
 	unsigned long long baseValue = std::strtoull(str, &endptr, 10);
 
 	if (errno == ERANGE || endptr == str) {
-		std::cerr << "Invalid numeric value: " << s.at(0) << std::endl;
+		std::cerr << RED << "Invalid numeric value: " << s.at(0) << RESET << std::endl;
 		return false;
 	}
 	if (*endptr != '\0') {
-		std::cerr << "Unexpected characters in number: " << s.at(0) << std::endl;
+		std::cerr << RED << "Unexpected characters in number: " << s.at(0) << RESET << std::endl;
 		return false;
 	}
 	unsigned long long multiplier = 1;
@@ -50,12 +50,12 @@ bool parseClientMaxBodySize(Server& server, std::vector<Token>::iterator& it)
 	else if (s.at(1) == "GB")
 		multiplier = 1000000000;
 	else {
-		std::cerr << (it - 1)->getKey() << " must be in a valid unit (KB, MB, GB)" << std::endl;
+		std::cerr << RED << (it - 1)->getKey() << " must be in a valid unit (KB, MB, GB)" << RESET << std::endl;
 		return false;
 	}
 
 	if (baseValue > ULLONG_MAX / multiplier) {
-		std::cerr << "Client body size is too large" << std::endl;
+		std::cerr << RED << "Client body size is too large" << RESET << std::endl;
 		return false;
 	}
 	size_t value = baseValue * multiplier;
@@ -71,12 +71,12 @@ bool parseErrorPage(Server& server, std::vector<Token>::iterator& it)
 	{
 		const long long value = atoill(it->getKey());
 		if (value >= 600 || value < 400)
-			return (std::cerr << "Invalid http error code " << value << std::endl, false);
+			return (std::cerr << RED << "Invalid http error code " << value << RESET << std::endl, false);
 		server.addErrorPage(static_cast<int>(value), (++it++)->getKey());
 	}
 	catch (std::exception& _)
 	{
-		return (std::cerr << "Invalid http code" << std::endl, false);
+		return (std::cerr << RED << "Invalid http code" << RESET << std::endl, false);
 	}
 	return (true);
 }
@@ -93,7 +93,7 @@ static bool parseLocationOption(Location& location, std::vector<Token>::iterator
 		if (keys[i] == it->getKey())
 			return (fn[i](location, ++it));
 	}
-	std::cerr << "Unknown key: " << it->getKey() << std::endl;
+	std::cerr << RED << "Unknown key: " << it->getKey() << RESET << std::endl;
 	return (false);
 }
 
@@ -107,7 +107,7 @@ bool parseLocation(Server& server, std::vector<Token>::iterator& it)
 	location.setUrl(it++->getKey());
 	if (server.isLocationExists(location.getUrl()))
 	{
-		std::cerr << "Duplicated location: " << location.getUrl() << std::endl;
+		std::cerr << RED << "Duplicated location: " << location.getUrl() << RESET << std::endl;
 		return (false);
 	}
 	++it;

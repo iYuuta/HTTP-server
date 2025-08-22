@@ -64,6 +64,7 @@ void HttpServer::removePollFd(const pollfd& pfd)
 	{
 		if (it->fd == pfd.fd)
 		{
+			std::cout << CYAN << "[" << it->fd << "] " << YELLOW << "Disconnected!" << RESET << std::endl;
 			closeFd(it);
 			_pollFds.erase(it);
 			return;
@@ -100,7 +101,7 @@ bool HttpServer::startAll()
 	}
 	catch (const std::exception& e)
 	{
-		std::cerr << e.what() << std::endl;
+		std::cerr << RED << e.what() << RESET << std::endl;
 		clean();
 		return (false);
 	}
@@ -144,6 +145,7 @@ void HttpServer::handleNewConnection(pollfd& pollFd)
 	if (clientFd < 0)
 		throw std::runtime_error("accept failed");
 
+	std::cout << CYAN << "[" << clientFd << "] " << GREEN << "Connected succesfully" << RESET << std::endl;
 	fcntl(clientFd, F_SETFL, O_NONBLOCK);
 
 	insertNewClient(clientFd, server);

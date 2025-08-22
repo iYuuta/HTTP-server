@@ -53,7 +53,7 @@ void Client::parseRequest()
 	catch (std::string error) {
 		response.setErrorCode(request.getErrorCode());
 		_requestDone = true;
-		std::cerr << "Error: " << error << std::endl;
+		std::cerr << RED << "Error: " << error << RESET << std::endl;
 	}
 }
 

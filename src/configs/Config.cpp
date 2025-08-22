@@ -13,7 +13,7 @@ void Config::parseConfig(const std::string& input)
 
 	if (conf.fail())
 	{
-		std::cerr << "Error: " << strerror(errno) << ": " << input << std::endl;
+		std::cerr << RED << "Error: " << strerror(errno) << ": " << input << RESET << std::endl;
 		_errorCode = 2;
 		return;
 	}

@@ -38,7 +38,7 @@ static bool parseOption(std::vector<Token>::iterator& it, Server& server)
 		if (keys[i] == it->getKey())
 			return (fn[i](server, ++it));
 	}
-	std::cerr << "Unknown key: " << it->getKey() << std::endl;
+	std::cerr << RED << "Unknown key: " << it->getKey() << RESET << std::endl;
 	return (false);
 }
 
@@ -48,7 +48,7 @@ static bool parseServer(std::vector<Token>::iterator& it, Config& conf)
 	size_t brackets = 1;
 
 	if (it->getKey() != "server")
-		return (std::cerr << "Invalid key in this context: " << it->getKey() << std::endl, false);
+		return (std::cerr << RED << "Invalid key in this context: " << it->getKey() << RESET << std::endl, false);
 	it += 2;
 	while (brackets)
 	{

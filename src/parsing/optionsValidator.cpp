@@ -4,7 +4,7 @@ bool validateOneArg(const std::vector<Token>::iterator& it)
 {
 	if ((it + 1)->getToken() == Semicolon)
 		return (true);
-	std::cerr << "Unsupported multiple arguments for key: " << (it - 1)->getKey() << std::endl;
+	std::cerr << RED << "Unsupported multiple arguments for key: " << (it - 1)->getKey() << RESET << std::endl;
 	return (false);
 }
 
@@ -12,7 +12,7 @@ bool validateArgBody(const std::vector<Token>::iterator& it)
 {
 	if ((it + 1)->getToken() == BracketStart)
 		return (true);
-	std::cerr << "key: " << (it - 1)->getKey() << " should have a body" << std::endl;
+	std::cerr << RED << "key: " << (it - 1)->getKey() << " should have a body" << RESET << std::endl;
 	return (false);
 }
 
@@ -38,7 +38,7 @@ bool validateMultiArgs(const std::vector<Token>::iterator& it, int args)
 	while ((it + size)->getToken() != Semicolon)
 		size++;
 	if (size != args)
-		std::cerr << "key: " << (it - 1)->getKey() << " requires " << args << " arguments" << std::endl;
+		std::cerr << RED << "key: " << (it - 1)->getKey() << " requires " << args << " arguments" << RESET << std::endl;
 	return (size == args);
 }
 
@@ -50,7 +50,7 @@ bool validateAtLeast(const std::vector<Token>::iterator& it, int min)
 		size++;
 	if (size < min)
 	{
-		std::cerr << "key: " << (it - 1)->getKey() << " requires at least " << min << " arguments" << std::endl;
+		std::cerr << RED << "key: " << (it - 1)->getKey() << " requires at least " << min << " arguments" << RESET << std::endl;
 		return (false);
 	}
 	return (true);

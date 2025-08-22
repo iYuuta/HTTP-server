@@ -663,10 +663,10 @@ void Response::buildCgiResponse() {
 	while (true) {
 		pos = buffer.find("\r\n");
 		if (pos == std::string::npos) {
-			_errorCode = 502;
-			std::cerr << "invalid response from the child process" << std::endl;
-			ERROR();
-			return ;
+			// _errorCode = 502;
+			// std::cerr << "invalid response from the child process" << std::endl;
+			// ERROR();
+			// return ;
 		}
 
 		std::string line = buffer.substr(index, pos - index);
@@ -682,10 +682,10 @@ void Response::buildCgiResponse() {
 			continue ;
 		}
 		else if (!addCgiHeaders(line)) {
-			_errorCode = 502;
-			std::cerr << "invalid response from the child process" << std::endl;
-			ERROR();
-			return ;
+			// _errorCode = 502;
+			// std::cerr << "invalid response from the child process" << std::endl;
+			// ERROR();
+			// return ;
 		}
 	}
 

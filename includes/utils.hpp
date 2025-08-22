@@ -100,12 +100,13 @@ std::string getContentType(const std::string& fileName);
 std::string trim(const std::string& s);
 std::string generateRandomName();
 bool isDirectory(const std::string& path);
-bool isExtension(const std::string& path, std::vector<std::string> _ext);
-std::string getExtension(const std::string& path);
+bool isExtension(const std::string& firstPath, const std::string& backUpPath, std::vector<std::string> _ext);
+std::string getExtension(const std::string& firstPath, const std::string& backUpPath);
 std::string methodToStr(HttpRequestMethod meth);
 bool isKeyValid(const std::string& line);
 char hexToAscii(char a, char b);
-std::string joinUrlPaths(const std::string &firstPath, const std::string &secondPath);
 bool validcontentLength(std::string& contentlen);
+std::string getFullPath(std::string root, std::string file);
+std::string removeLast(const std::string &str, const char &c);
 
 #endif

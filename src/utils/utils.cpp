@@ -211,7 +211,14 @@ bool isDirectory(const std::string& path) {
 	return (stat(path.c_str(), &st) == 0 && S_ISDIR(st.st_mode));
 }
 
-std::string getExtension(const std::string& path) {
+std::string getExtension(const std::string& firstPath, const std::string& backUpPath) {
+	std::string path;
+
+	if (isDirectory(firstPath))
+		path = backUpPath;
+	else
+		path = firstPath;
+
 	size_t dotPos = path.find_last_of('.');
 	std::string ext;
 
@@ -225,7 +232,12 @@ std::string getExtension(const std::string& path) {
 	return (executable);
 }
 
-bool isExtension(const std::string& path, std::vector<std::string> _ext) {
+bool isExtension(const std::string& firstPath, const std::string& backUpPath, std::vector<std::string> _ext) {
+	std::string path;
+	if (isDirectory(firstPath))
+		path = backUpPath;
+	else
+		path = firstPath;
 	size_t slashPos = path.find_last_of('/');
 	size_t dotPos = path.find_last_of('.');
 	std::string ext;
@@ -314,25 +326,30 @@ std::string MIME::getContentExt(const std::string &ContentType)
 	return (".bin");
 }
 
-std::string joinUrlPaths(const std::string &firstPath, const std::string &secondPath)
-{
-    std::string result = firstPath;
-
-    if (!result.empty() && result[result.length() - 1] == '/' &&
-        !secondPath.empty() && secondPath[0] == '/')
-        result.erase(result.length() - 1, 1);
-
-    result += secondPath;
-    if (result.empty() || result[result.length() - 1] != '/')
-        result += '/';
-
-    return (result);
-}
-
 bool validcontentLength(std::string& contentlen) {
 	for (size_t i = 0; i < contentlen.length(); i++) {
 		if (!std::isdigit(contentlen[i]))
 			return false;
 	}
 	return true;
+}
+
+std::string getFullPath(std::string root, std::string file) {
+	size_t pos = file.find_first_not_of('/');
+
+    if (pos != std::string::npos)
+        return root + file.substr(pos);
+	return root;
+}
+
+std::string removeLast(const std::string &str, const char &c)
+{
+ 	if (str.empty()) return str;
+    std::string::size_type end = str.size();
+
+    while (end > 1 && str[end - 1] == c)
+        --end;
+	if (end == 0)
+		return std::string("") + c;
+    return str.substr(0, end) + c;
 }

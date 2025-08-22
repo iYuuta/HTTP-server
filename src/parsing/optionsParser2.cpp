@@ -22,7 +22,7 @@ bool parseLocationRoot(Location& location, std::vector<Token>::iterator& it)
 {
 	if (!validateOneArg(it))
 		return (false);
-	location.setRoute(it->getKey());
+	location.setRoute(removeLast(it->getKey(), '/'));
 	return (true);
 }
 

@@ -14,6 +14,7 @@ _cgiPid(0),
 _cgiRunning(false),
 _cgiExecuted(false),
 _responseBuilt(false),
+_index(false),
 _isError(false),
 _isCgi(false),
 _isRedirect(false),
@@ -371,7 +372,7 @@ void Response::POST() {
 		std::string locationUrl;
 		if (created) {
 			if (_serverGeneratedName) {
-				std::string pathPart = joinUrlPaths(_location->getUrl(), _request.getPath());
+				std::string pathPart = getFullPath(_location->getUrl(), _request.getPath());
 				pathPart += _generatedUploadName;
 
 				std::string host = _request.getHeader("Host");
@@ -383,7 +384,7 @@ void Response::POST() {
 					_headers.append("Location: " + pathPart + "\r\n");
 				}
 			} else if (!_postIsMultipart) {
-				std::string pathPart = joinUrlPaths(_location->getUrl(), _request.getPath());
+				std::string pathPart = getFullPath(_location->getUrl(), _request.getPath());
 				std::string host = _request.getHeader("Host");
 				if (!host.empty()) {
 					locationUrl = "http://" + host + pathPart;
@@ -443,13 +444,28 @@ void Response::POST() {
 
 
 void Response::initCgi() {
-	_cgiExt = getExtension(_request.getPath());
+	_cgiExt = getExtension(_request.getPath(), _location->getIndex());
 	if (_cgiExt.empty()) {
 		_errorCode = 501;
 		throw (std::string) "unsupported cgi extention";
 	}
 	_env.clear();
 
+	std::string fullPath = getFullPath(_location->getRoute(), _request.getPath());
+	if (access(fullPath.c_str(), F_OK) == 0) {
+		if (isDirectory(fullPath)) {
+			if (_location->getIndex().empty()) {
+				_errorCode = 404;
+				throw (std::string) "file not found";
+			}
+			fullPath = getFullPath(_location->getRoute(), _location->getIndex());
+			_index = true;
+		}
+    }
+	else {
+		_errorCode = 404;
+		throw (std::string) "file not found";
+	}
 	_env.push_back("REQUEST_METHOD=" + methodToStr(_request.getMeth()));
 	_env.push_back("CONTENT_LENGTH=" + intToString(_request.getContentLen()));
 	_env.push_back("CONTENT_TYPE=" + _request.getHeader("Content-Type"));
@@ -544,8 +560,15 @@ void Response::executeCgi() {
 			}
 			dup2(_cgiFd, STDOUT_FILENO);
 			close(_cgiFd);
-			std::string file = _request.getPath();
-			file = file.erase(0, 1);
+			std::string file;
+			if (_index)
+				file = _location->getIndex();
+			else {
+				file = _request.getPath();
+				size_t pos = _request.getPath().find_first_not_of('/');
+				if (pos != std::string::npos)
+					file = file.erase(0, pos);
+			}
 			char *argv[] = {const_cast<char*>(_cgiExt.c_str()), const_cast<char*>(file.c_str()), NULL};
 			execve(_cgiExt.c_str(), argv, _envPtr.data());
 			std::exit (1);
@@ -818,7 +841,7 @@ void Response::buildIndex() {
 void Response::getBody() {
 
 	struct stat fileStat;
-	std::string fileName = _location->getRoute() + _request.getPath();
+	std::string fileName = getFullPath(_location->getRoute(), _request.getPath());
 
 	if (isDirectory(fileName)) {
 		if (!_location->getIndex().empty()) {
@@ -897,7 +920,7 @@ void Response::DELETE() {
 	}
  	try {
 		struct stat fileStat;
-		std::string fileName = _location->getRoute() + _request.getPath();
+		std::string fileName = getFullPath(_location->getRoute(), _request.getPath());
 
 		if (stat(fileName.c_str(), &fileStat) != 0) {
 			_errorCode = 404;
@@ -985,7 +1008,7 @@ void Response::buildResponse() {
 		return;
 	}
 
-	if (isExtension(_request.getPath(), _location->getExt())) {
+	if (isExtension(_request.getPath(), _location->getIndex(), _location->getExt())) {
 		if (_request.isSimpleRequest()) {
 			_errorCode = 400;
 			ERROR();

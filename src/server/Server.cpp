@@ -96,35 +96,25 @@ static struct addrinfo *getAddressInfo(const int &port, const std::string &host)
 
 void Server::setup()
 {
-	sockaddr_in _address;
-
 	const int fd = socket(SOCKET_DOMAIN, SOCKET_TYPE, 0);
 
 	if (fd < 0)
 		throw std::runtime_error("Socket creation failed");
-
 	setFd(fd);
-	
 	resuseSocketAddr(fd);
 
 	struct addrinfo *res = getAddressInfo(_port, _host);
 	struct addrinfo *p = res;
 
 	for (p = res; p != NULL; p = p->ai_next) {
-		const sockaddr_in* sockAddr = reinterpret_cast<sockaddr_in *>(p->ai_addr);
-		_address.sin_addr = sockAddr->sin_addr;
-		_address.sin_port = sockAddr->sin_port;
-		_address.sin_family = sockAddr->sin_family;
-		if (bind(fd, reinterpret_cast<sockaddr *>(&_address), sizeof(_address)) >= 0)
+		if (bind(fd, p->ai_addr, p->ai_addrlen) >= 0)
 			break ;
 	}
-
 	if (!p)
 	{
 		freeaddrinfo(res);
 		throw std::runtime_error(std::string("Socket bind failed: ") + strerror(errno));
 	}
-
 	freeaddrinfo(res);
 
 	if (listen(fd, SOMAXCONN) < 0)

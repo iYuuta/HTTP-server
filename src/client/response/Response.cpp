@@ -796,21 +796,40 @@ void Response::buildIndex() {
 	out << "<!DOCTYPE html>\n<html lang=\"en\" class=\"h-full\">\n<head>\n"
 		<< "<meta charset=\"UTF-8\" />\n"
 		<< "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n"
+		<< "<meta name=\"color-scheme\" content=\"light dark\" />\n"
 		<< "<title>Index of " << path << "</title>\n"
-		<< "<script src=\"https://cdn.tailwindcss.com\"></script>\n"
+		<< "<style>\n"
+		<< ":root{color-scheme:light dark;}\n"
+		<< "html,body{height:100%;}body{margin:0;font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji';background:linear-gradient(135deg,#f8fafc,#f1f5f9);color:#0f172a;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}\n"
+		<< "@media (prefers-color-scheme: dark){body{background:linear-gradient(135deg,#0f172a,#020617);color:#e2e8f0;}}\n"
+		<< ".container{max-width:72rem;margin:0 auto;padding:1.5rem;}\n"
+		<< ".card{border-radius:1rem;border:1px solid rgba(15,23,42,0.12);background:rgba(255,255,255,0.7);padding:1.5rem;box-shadow:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -4px rgba(0,0,0,.1);}\n"
+		<< "@media (prefers-color-scheme: dark){.card{background:rgba(2,6,23,.7);border-color:rgba(148,163,184,.2);}}\n"
+		<< ".section-title{display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;}\n"
+		<< ".icon{display:inline-flex;height:2.5rem;width:2.5rem;border-radius:.5rem;align-items:center;justify-content:center;}\n"
+		<< ".icon.blue{background:#dbeafe;color:#2563eb;}\n"
+		<< "@media (prefers-color-scheme: dark){.icon.blue{background:rgba(37,99,235,.2);color:#93c5fd;}}\n"
+		<< ".h2{font-size:1.125rem;font-weight:600;margin:0;}\n"
+		<< ".table{width:100%;border-collapse:collapse;text-align:left;}\n"
+		<< ".table thead th{padding:.75rem;border-bottom:1px solid rgba(15,23,42,0.2);font-weight:600;}\n"
+		<< ".table tbody td{padding:.75rem;border-bottom:1px solid rgba(15,23,42,0.12);}\n"
+		<< ".row{cursor:pointer;}\n"
+		<< ".row:hover td{background:rgba(15,23,42,.03);}\n"
+		<< "@media (prefers-color-scheme: dark){.table tbody td{border-color:#1f2937;}.row:hover td{background:rgba(255,255,255,.05);}}\n"
+		<< ".h-5{height:1.25rem;}.w-5{width:1.25rem;}\n"
+		<< "</style>\n"
 		<< "</head>\n"
-		<< "<body class=\"min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 text-slate-800 antialiased dark:from-slate-900 dark:to-slate-950 dark:text-slate-200\">\nld"
-		<< "<main class=\"mx-auto max-w-6xl p-6\">\n"
-		<< "<div class=\"rounded-2xl border border-slate-200/60 bg-white/70 p-6 shadow-lg ring-1 ring-black/5 backdrop-blur dark:border-slate-800 dark:bg-slate-900/70\">\n"
-		<< "<div class=\"mb-4 flex items-center gap-3\">\n"
-		<< "<span class=\"inline-flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300\">\n"
-		<< "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-5 w-5\" viewBox=\"0 0 24 24\" fill=\"currentColor\""
-		<< "><path d=\"M3 6a3 3 0 0 1 3-3h4l2 2h6a3 3 0 0 1 3 3v1H3V6Zm0 3h18v9a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V9Zm4 2v2h10v-2H7Z\" /></svg>\n"
+		<< "<body>\n"
+		<< "<main class=\"container\">\n"
+		<< "<div class=\"card\">\n"
+		<< "<div class=\"section-title\">\n"
+		<< "<span class=\"icon icon-sm blue\">\n"
+		<< "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-5 w-5\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M3 6a3 3 0 0 1 3-3h4l2 2h6a3 3 0 0 1 3 3v1H3V6Zm0 3h18v9a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V9Zm4 2v2h10v-2H7Z\" /></svg>\n"
 		<< "</span>\n"
-		<< "<h1 class=\"text-2xl font-semibold tracking-tight\">Index of " << path << "</h1>\n"
+		<< "<h1 class=\"h2\">Index of " << path << "</h1>\n"
 		<< "</div>\n"
-		<< "<table class=\"w-full text-left\">\n"
-		<< "<thead><tr class=\"border-b border-slate-200/60 dark:border-slate-800\"><th class=\"p-3\">Name</th></tr></thead>\n"
+		<< "<table class=\"table\">\n"
+		<< "<thead><tr><th>Name</th></tr></thead>\n"
 		<< "<tbody>\n";
 
 	dirent *entry;
@@ -819,9 +838,8 @@ void Response::buildIndex() {
 
 		if (name == "." || name == "..")
 			continue;
-		out << "<tr class=\"border-b border-slate-200/60 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer\" onclick=\"window.location.href+='"
-		<< name << (isDirectory((_location->getRoute() + _request.getPath() + name).c_str()) ? "/" : "") << "'\">"
-			<< "<td class=\"p-3\">" << name << "</td></tr>\n";
+			out << "<tr class=\"row\" onclick=\"window.location.href+='" << name << (isDirectory((_location->getRoute() + _request.getPath() + name).c_str()) ? "/" : "") << "'\">"
+			<< "<td>" << name << "</td></tr>\n";
 	}
 	out << "</tbody>\n</table>\n</div>\n</main>\n</body>\n</html>\n";
 	closedir(dir);

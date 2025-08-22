@@ -223,11 +223,11 @@ void Request::addHeaders(std::string buff)
 			_errorCode = 400;
 			return ;
 		}
-		char* endptr = NULL;
 		if (!validcontentLength(value)) {
 			_errorCode = 400;
 			return ;
 		}
+		char* endptr = NULL;
 		unsigned long long len = std::strtoull(value.c_str(), &endptr, 10);
 		if (endptr == value.c_str() || *endptr != '\0') {
 			_errorCode = 400;

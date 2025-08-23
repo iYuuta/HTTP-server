@@ -76,13 +76,13 @@ MIME::MIME() {
 }
 
 Exec::Exec() {
-	_exec[".sh"]	= "/usr/bin/bash";
-	_exec[".bash"]  = "/usr/bin/bash";
-	_exec[".zsh"]   = "/usr/bin/zsh";
+	_exec[".sh"]	= "/bin/sh";
+	_exec[".bash"]  = "/bin/bash";
+	_exec[".zsh"]   = "/bin/zsh";
 	_exec[".py"]	= "/usr/bin/python3";
 	_exec[".php"]   = "/usr/bin/php";
 	_exec[".pl"]	= "/usr/bin/perl";
-	_exec[".js"]	= "/usr/bin/node";
+	_exec[".js"]	= "/usr/local/bin/node";
 	_exec[".awk"]   = "/usr/bin/awk";
 }
 

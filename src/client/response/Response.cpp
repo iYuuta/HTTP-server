@@ -911,6 +911,10 @@ void Response::getBody() {
 	}
 	_body.open(fileName.c_str(), std::ios::in | std::ios::binary);
 	if (!_body.is_open()) {
+		if (access(fileName.c_str(), F_OK) == 0) {
+			_errorCode = 403;
+			throw (std::string) "Forbidden";
+		}
 		_errorCode = 500;
 		throw (std::string) "failed to open a file";
 	}

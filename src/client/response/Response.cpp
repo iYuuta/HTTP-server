@@ -146,7 +146,7 @@ void Response::parsePartHeaders(const std::string& headerStr, Multipart& part) {
 			std::string name = line.substr(0, colonPos);
 			if (!isKeyValid(name)) {
 				_errorCode = 400;
-				throw std::string("Bad request");
+				throw std::runtime_error("Bad request");
 			}
 			std::string value = trim(line.substr(colonPos + 1));
 
@@ -173,11 +173,11 @@ void Response::parsePartHeaders(const std::string& headerStr, Multipart& part) {
 		else {
 			if (line.empty() || (line[0] != ' ' && line[0] != '\t')) {
 				_errorCode = 400;
-				throw std::string("Bad request");
+				throw std::runtime_error("Bad request");
 			}
 			if (part.headers.empty()) {
 				_errorCode = 400;
-				throw std::string("Bad request");
+				throw std::runtime_error("Bad request");
 			}
 			if (!part.headers.empty())
 				part.headers.rbegin()->second = part.headers.rbegin()->second + " " + trim(line);

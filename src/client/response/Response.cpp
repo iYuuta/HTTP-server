@@ -438,7 +438,7 @@ void Response::POST() {
 			std::remove(_request.getFileName().c_str());
 
 		ERROR();
-		std::cerr << RED << "Error: " << e.what() << RESET << std::endl;
+		std::cerr << "Error: " << e.what() << std::endl;
 	}
 }
 
@@ -551,7 +551,7 @@ void Response::executeCgi() {
 			if (chdir(_location->getRoute().c_str()) < 0) {
 				if (fd != 0)
 					close(fd);
-				std::cerr << RED << "failed to change cwd in the child process\n";
+				std::cerr << "failed to change cwd in the child process\n";
 				std::remove(_cgiFile.c_str());
 				close(_cgiFd);
 				std::exit(500);
@@ -639,7 +639,7 @@ void Response::buildCgiResponse() {
 	size_t fileSize = st.st_size;
 	if (!_body.is_open()) {
 		_errorCode = 500;
-		std::cerr << RED << "Error: Failed to open a file" << RESET << std::endl;
+		std::cerr << "Error: Failed to open a file" << std::endl;
 		ERROR();
 		return ;
 	}
@@ -675,7 +675,7 @@ void Response::buildCgiResponse() {
 		}
 		if (pos == std::string::npos) {
 			_errorCode = 502;
-			std::cerr << RED << "invalid response from the child process" << RESET << std::endl;
+			std::cerr << "invalid response from the child process" << std::endl;
 			ERROR();
 			return ;
 		}
@@ -694,7 +694,7 @@ void Response::buildCgiResponse() {
 		}
 		else if (!addCgiHeaders(line)) {
 			_errorCode = 502;
-			std::cerr << RED << "invalid response from the child process" << RESET << std::endl;
+			std::cerr << "invalid response from the child process" << std::endl;
 			ERROR();
 			return ;
 		}
@@ -715,12 +715,12 @@ void Response::CGI() {
 	if (_cgiRunning) {
 		monitorCgi();
 		if (_errorCode == 500) {
-			std::cerr << RED << "child process terminated with a failure" << RESET << std::endl;
+			std::cerr << "child process terminated with a failure" << std::endl;
 			ERROR();
 			return ;
 		}
 		if (_cgiRunning && !checkTimeOut()) {
-			std::cerr << RED << "child process terminated due to a time out" << RESET << std::endl;
+			std::cerr << "child process terminated due to a time out" << std::endl;
 			ERROR();
 			return ;
 		}
@@ -735,7 +735,7 @@ void Response::CGI() {
 		executeCgi();
 	}
 	catch (std::string err) {
-		std::cerr << RED << "Error: " << err << RESET << std::endl;
+		std::cerr << "Error: " << err << std::endl;
 		ERROR();
 		return ;
 	}
@@ -935,7 +935,7 @@ void Response::GET() {
 		_responseBuilt = true;
 	}
 	catch (std::string error) {
-		std::cerr << RED << "Error: " << error << RESET << std::endl;
+		std::cerr << "Error: " << error << std::endl;
 		ERROR();
 	}
 }
@@ -977,7 +977,7 @@ void Response::DELETE() {
 	}
 	catch (std::string error) {
 		ERROR();
-		std::cerr << RED << "Error: " << error << RESET << std::endl;
+		std::cerr << "Error: " << error << std::endl;
 	}
 }
 
@@ -997,7 +997,7 @@ void Response::simpleReqsponse() {
 			return ;
 		}
 		catch (std::string err) {
-			std::cerr << RED << "Error: " << err << RESET << std::endl;
+			std::cerr << "Error: " << err << std::endl;
 			ERROR();
 		}
 	}

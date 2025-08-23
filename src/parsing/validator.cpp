@@ -2,7 +2,7 @@
 
 static bool requiredValue(const std::string &key)
 {
-	std::cerr << RED <<  key << " is required!" << RESET << std::endl;
+	std::cerr <<  key << " is required!" << std::endl;
 	return (false);
 }
 
@@ -25,6 +25,6 @@ static bool isValidRedirect(int status)
 bool validateLocation(Location &location)
 {
 	if (location.isRedirect() && !isValidRedirect(location.getReturn().first))
-		return (std::cerr << RED << "Invalid redirect code (301~308)" << RESET << std::endl, false);
+		return (std::cerr << "Invalid redirect code (301~308)" << std::endl, false);
 	return (true);
 }

@@ -8,7 +8,7 @@ int main (int ac, char **av)
     if (ac == 2)
         path = av[1];
     else if (ac != 1)
-        return (std::cerr << RED << "usage: ./webserv config_file_path" << RESET << std::endl, 1);
+        return (std::cerr << "usage: ./webserv config_file_path" << std::endl, 1);
 
     Config conf(path);
     if (conf.fail())

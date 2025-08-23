@@ -12,7 +12,7 @@ bool parseLocationMethods(Location& location, std::vector<Token>::iterator& it)
 		else if (it->getKey() == "POST")
 			location.addMethod(Post);
 		else
-			return (std::cerr << RED << "Unknown method: " << it->getKey() << RESET << std::endl, false);
+			return (std::cerr << "Unknown method: " << it->getKey() << std::endl, false);
 		++it;
 	}
 	return (true);
@@ -35,7 +35,7 @@ bool parseLocationAutoindex(Location& location, std::vector<Token>::iterator& it
 	else if (it->getKey() == "off")
 		location.setAutoIndex(false);
 	else
-		return (std::cerr << RED << "Unknown value " << it->getKey() << " for key " << (it - 1)->getKey() << RESET << std::endl, false);
+		return (std::cerr << "Unknown value " << it->getKey() << " for key " << (it - 1)->getKey() << std::endl, false);
 	return (true);
 }
 
@@ -73,12 +73,12 @@ bool parseLocationReturn(Location& location, std::vector<Token>::iterator& it)
 	{
 		const long long value = atoill(it->getKey());
 		if (value >= 600 || value < 100)
-			return (std::cerr << RED << "Invalid http code " << value << RESET << std::endl, false);
+			return (std::cerr << "Invalid http code " << value << std::endl, false);
 		location.setReturn(static_cast<int>(value), (++it++)->getKey());
 	}
 	catch (std::exception& _)
 	{
-		return (std::cerr << RED << "Invalid http code" << RESET << std::endl, false);
+		return (std::cerr << "Invalid http code" << std::endl, false);
 	}
 	return (true);
 }

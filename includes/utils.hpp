@@ -20,7 +20,7 @@
 # include "HttpRequestMethod.hpp"
 # include "Location.hpp"
 
-#define BUFFER_SIZE 100000
+#define BUFFER_SIZE 8000
 
 #define ERROR_PAGE_START "<!DOCTYPE html>\n" \
 "<html lang=\"en\">\n" \
@@ -73,6 +73,15 @@ struct ERRORS {
 		std::string getErrorMsg(int errorCode);
 };
 
+struct REDIRECTS {
+	private:
+		std::map<int, std::string> _redirect;
+
+	public:
+		REDIRECTS();
+		std::string getRedirectMsg(int code);
+};
+
 struct Exec {
 	private:
 		std::map<std::string, std::string> _exec;
@@ -85,17 +94,20 @@ struct Exec {
 
 std::vector<std::string> split(const std::string& s, char delimiter);
 std::vector<std::string> splitNumber(const std::string& s);
-unsigned long atoiul(const std::string& s);
+long long atoill(const std::string& s);
 std::string intToString(int n);
 std::string getContentType(const std::string& fileName);
 std::string trim(const std::string& s);
 std::string generateRandomName();
 bool isDirectory(const std::string& path);
-bool isExtension(const std::string& path, std::vector<std::string> _ext);
-std::string getExtension(const std::string& path);
+bool isExtension(const std::string& firstPath, const std::string& backUpPath, std::vector<std::string> _ext);
+std::string getExtension(const std::string& firstPath, const std::string& backUpPath);
 std::string methodToStr(HttpRequestMethod meth);
 bool isKeyValid(const std::string& line);
 char hexToAscii(char a, char b);
-std::string joinUrlPaths(const std::string &firstPath, const std::string &secondPath);
+bool validcontentLength(std::string& contentlen);
+std::string getFullPath(std::string root, std::string file);
+std::string removeLast(const std::string &str, const char &c);
+std::string strToLower(const std::string& header);
 
 #endif

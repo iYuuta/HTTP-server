@@ -30,6 +30,11 @@ void Client::parseRequest()
 		_clientFailed = true;
 		return ;
 	}
+	if (len == 0 && request.getParseState() != DONE) {
+		response.setErrorCode(400);
+		_requestDone = true;
+		return ;
+	}
 	try {
 		request.parseData(buffer, len);
 		if ((request.getParseState() == DONE || request.getParseState() == BODY) && !_validRequest)
@@ -56,9 +61,11 @@ void Client::createResponse() {
 	response.buildResponse();
 }
 
-void Client::writeData() {
+void Client::sendResponse() {
+	int status;
 	const std::string& buff = response.getResponse();
-	if (write(_fd, buff.c_str(), buff.size()) == -1)
+	status = write(_fd, buff.c_str(), buff.size());
+	if (status <= 0)
 		_clientFailed = true;
 }
 

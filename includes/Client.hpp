@@ -45,7 +45,7 @@ class Client {
 		bool isResponseDone();
 		bool isResponseBuilt();
 
-		void writeData();
+		void sendResponse();
 		bool clientFailed();
 		enums getResponseState();
 		enums getRequestState();

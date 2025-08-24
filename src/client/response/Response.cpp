@@ -14,6 +14,7 @@ _cgiPid(0),
 _cgiRunning(false),
 _cgiExecuted(false),
 _responseBuilt(false),
+_index(false),
 _isError(false),
 _isCgi(false),
 _isRedirect(false),
@@ -145,7 +146,7 @@ void Response::parsePartHeaders(const std::string& headerStr, Multipart& part) {
 			std::string name = line.substr(0, colonPos);
 			if (!isKeyValid(name)) {
 				_errorCode = 400;
-				throw std::string("Bad request");
+				throw std::runtime_error("Bad request");
 			}
 			std::string value = trim(line.substr(colonPos + 1));
 
@@ -172,11 +173,11 @@ void Response::parsePartHeaders(const std::string& headerStr, Multipart& part) {
 		else {
 			if (line.empty() || (line[0] != ' ' && line[0] != '\t')) {
 				_errorCode = 400;
-				throw std::string("Bad request");
+				throw std::runtime_error("Bad request");
 			}
 			if (part.headers.empty()) {
 				_errorCode = 400;
-				throw std::string("Bad request");
+				throw std::runtime_error("Bad request");
 			}
 			if (!part.headers.empty())
 				part.headers.rbegin()->second = part.headers.rbegin()->second + " " + trim(line);
@@ -184,7 +185,6 @@ void Response::parsePartHeaders(const std::string& headerStr, Multipart& part) {
 		}
 	}
 }
-
 
 bool Response::stepMultipartUpload()
 {
@@ -351,7 +351,6 @@ void Response::POST() {
 	if (_errorCode != 200 && _errorCode != -1)
 		return;
 	try {
-
 		if (_postState == POST_IDLE) {
 			postInit();
 		}
@@ -373,7 +372,7 @@ void Response::POST() {
 		std::string locationUrl;
 		if (created) {
 			if (_serverGeneratedName) {
-				std::string pathPart = joinUrlPaths(_location->getUrl(), _request.getPath());
+				std::string pathPart = getFullPath(_location->getUrl(), _request.getPath());
 				pathPart += _generatedUploadName;
 
 				std::string host = _request.getHeader("Host");
@@ -385,7 +384,7 @@ void Response::POST() {
 					_headers.append("Location: " + pathPart + "\r\n");
 				}
 			} else if (!_postIsMultipart) {
-				std::string pathPart = joinUrlPaths(_location->getUrl(), _request.getPath());
+				std::string pathPart = getFullPath(_location->getUrl(), _request.getPath());
 				std::string host = _request.getHeader("Host");
 				if (!host.empty()) {
 					locationUrl = "http://" + host + pathPart;
@@ -445,13 +444,28 @@ void Response::POST() {
 
 
 void Response::initCgi() {
-	_cgiExt = getExtension(_request.getPath());
+	_cgiExt = getExtension(_request.getPath(), _location->getIndex());
 	if (_cgiExt.empty()) {
 		_errorCode = 501;
 		throw (std::string) "unsupported cgi extention";
 	}
 	_env.clear();
 
+	std::string fullPath = getFullPath(_location->getRoute(), _request.getPath());
+	if (access(fullPath.c_str(), F_OK) == 0) {
+		if (isDirectory(fullPath)) {
+			if (_location->getIndex().empty()) {
+				_errorCode = 404;
+				throw (std::string) "file not found";
+			}
+			fullPath = getFullPath(_location->getRoute(), _location->getIndex());
+			_index = true;
+		}
+    }
+	else {
+		_errorCode = 404;
+		throw (std::string) "file not found";
+	}
 	_env.push_back("REQUEST_METHOD=" + methodToStr(_request.getMeth()));
 	_env.push_back("CONTENT_LENGTH=" + intToString(_request.getContentLen()));
 	_env.push_back("CONTENT_TYPE=" + _request.getHeader("Content-Type"));
@@ -484,20 +498,22 @@ bool Response::addCgiHeaders(const std::string& line) {
 	std::string key = line.substr(0, pos);
 
 	if (!isKeyValid(key))
-		return false;	
+		return false;
 	std::string value = trim(line.substr(pos + 1));
-	if (key == "Status" && _statusLine.empty())
+	if (strToLower(key) == "status" && _statusLine.empty()) {
 		_statusLine.append("HTTP/1.0 " + value + "\r\n");
-	_headers += key + ": " + value + "\r\n";
-	if (key == "Content-Length") {
+		return true;
+	}
+	if (strToLower(key) == "content-length") {
 		if (value.empty())
-			return false;
+			return true;
 		char* endptr = NULL;
 		unsigned long long len = std::strtoull(value.c_str(), &endptr, 10);
 		if (endptr == value.c_str() || *endptr != '\0')
-			return false;		
+			return false;	
 		_contentLen = static_cast<size_t>(len);
 	}
+	_headers += key + ": " + value + "\r\n";
 	return true;
 }
 
@@ -546,8 +562,15 @@ void Response::executeCgi() {
 			}
 			dup2(_cgiFd, STDOUT_FILENO);
 			close(_cgiFd);
-			std::string file = _request.getPath();
-			file = file.erase(0, 1);
+			std::string file;
+			if (_index)
+				file = _location->getIndex();
+			else {
+				file = _request.getPath();
+				size_t pos = _request.getPath().find_first_not_of('/');
+				if (pos != std::string::npos)
+					file = file.erase(0, pos);
+			}
 			char *argv[] = {const_cast<char*>(_cgiExt.c_str()), const_cast<char*>(file.c_str()), NULL};
 			execve(_cgiExt.c_str(), argv, _envPtr.data());
 			std::exit (1);
@@ -609,6 +632,7 @@ void Response::buildCgiResponse() {
 	size_t pos = 0;
 	size_t index = 0;
 	struct stat st;
+	int delimiter = 4;
 
 	stat(_cgiFile.c_str(), &st);
 	std::remove(_cgiFile.c_str());
@@ -622,25 +646,33 @@ void Response::buildCgiResponse() {
 	
 	std::string buffer;
 	while (!_body.eof()) {
-		std::string chunk(512, '\0');
-		_body.read(&chunk[0], chunk.size());
+		char chunk[512];
+		_body.read(&chunk[0], 512);
 		bytesRead = _body.gcount();
 		readBytes += bytesRead;
 		if (bytesRead <= 0)
 			break;
 
-		chunk.resize(bytesRead);
 		buffer.append(chunk);
 
 		size_t pos = buffer.find("\r\n\r\n");
+		if (pos == std::string::npos) {
+			pos = buffer.find("\n\n");
+			delimiter = 2;
+		}
 		if (pos != std::string::npos) {
-			_bodyLeftover = buffer.substr(pos + 4);
-			buffer.resize(pos + 4);
+			_bodyLeftover = buffer.substr(pos + delimiter);
+			buffer.resize(pos + delimiter);
 			break;
 		}
 	}
 	while (true) {
+		delimiter = 2;
 		pos = buffer.find("\r\n");
+		if (pos == std::string::npos) {
+			pos = buffer.find("\n");
+			delimiter = 1;
+		}
 		if (pos == std::string::npos) {
 			_errorCode = 502;
 			std::cerr << "invalid response from the child process" << std::endl;
@@ -649,9 +681,9 @@ void Response::buildCgiResponse() {
 		}
 
 		std::string line = buffer.substr(index, pos - index);
-		index = pos + 2;
+		index = pos + delimiter;
 
-		if (line == "\r\n") {
+		if (line == "\r\n" || line == "\n") {
 			_headers.append("\r\n");
 			break ;
 		}
@@ -683,12 +715,12 @@ void Response::CGI() {
 	if (_cgiRunning) {
 		monitorCgi();
 		if (_errorCode == 500) {
-			std::cout << "child process terminated with a failure" << std::endl;
+			std::cerr << "child process terminated with a failure" << std::endl;
 			ERROR();
 			return ;
 		}
 		if (_cgiRunning && !checkTimeOut()) {
-			std::cout << "child process terminated due to a time out" << std::endl;
+			std::cerr << "child process terminated due to a time out" << std::endl;
 			ERROR();
 			return ;
 		}
@@ -775,21 +807,40 @@ void Response::buildIndex() {
 	out << "<!DOCTYPE html>\n<html lang=\"en\" class=\"h-full\">\n<head>\n"
 		<< "<meta charset=\"UTF-8\" />\n"
 		<< "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n"
+		<< "<meta name=\"color-scheme\" content=\"light dark\" />\n"
 		<< "<title>Index of " << path << "</title>\n"
-		<< "<script src=\"https://cdn.tailwindcss.com\"></script>\n"
+		<< "<style>\n"
+		<< ":root{color-scheme:light dark;}\n"
+		<< "html,body{height:100%;}body{margin:0;font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji', 'Segoe UI Emoji';background:linear-gradient(135deg,#f8fafc,#f1f5f9);color:#0f172a;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}\n"
+		<< "@media (prefers-color-scheme: dark){body{background:linear-gradient(135deg,#0f172a,#020617);color:#e2e8f0;}}\n"
+		<< ".container{max-width:72rem;margin:0 auto;padding:1.5rem;}\n"
+		<< ".card{border-radius:1rem;border:1px solid rgba(15,23,42,0.12);background:rgba(255,255,255,0.7);padding:1.5rem;box-shadow:0 10px 15px -3px rgba(0,0,0,.1),0 4px 6px -4px rgba(0,0,0,.1);}\n"
+		<< "@media (prefers-color-scheme: dark){.card{background:rgba(2,6,23,.7);border-color:rgba(148,163,184,.2);}}\n"
+		<< ".section-title{display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;}\n"
+		<< ".icon{display:inline-flex;height:2.5rem;width:2.5rem;border-radius:.5rem;align-items:center;justify-content:center;}\n"
+		<< ".icon.blue{background:#dbeafe;color:#2563eb;}\n"
+		<< "@media (prefers-color-scheme: dark){.icon.blue{background:rgba(37,99,235,.2);color:#93c5fd;}}\n"
+		<< ".h2{font-size:1.125rem;font-weight:600;margin:0;}\n"
+		<< ".table{width:100%;border-collapse:collapse;text-align:left;}\n"
+		<< ".table thead th{padding:.75rem;border-bottom:1px solid rgba(15,23,42,0.2);font-weight:600;}\n"
+		<< ".table tbody td{padding:.75rem;border-bottom:1px solid rgba(15,23,42,0.12);}\n"
+		<< ".row{cursor:pointer;}\n"
+		<< ".row:hover td{background:rgba(15,23,42,.03);}\n"
+		<< "@media (prefers-color-scheme: dark){.table tbody td{border-color:#1f2937;}.row:hover td{background:rgba(255,255,255,.05);}}\n"
+		<< ".h-5{height:1.25rem;}.w-5{width:1.25rem;}\n"
+		<< "</style>\n"
 		<< "</head>\n"
-		<< "<body class=\"min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 text-slate-800 antialiased dark:from-slate-900 dark:to-slate-950 dark:text-slate-200\">\nld"
-		<< "<main class=\"mx-auto max-w-6xl p-6\">\n"
-		<< "<div class=\"rounded-2xl border border-slate-200/60 bg-white/70 p-6 shadow-lg ring-1 ring-black/5 backdrop-blur dark:border-slate-800 dark:bg-slate-900/70\">\n"
-		<< "<div class=\"mb-4 flex items-center gap-3\">\n"
-		<< "<span class=\"inline-flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300\">\n"
-		<< "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-5 w-5\" viewBox=\"0 0 24 24\" fill=\"currentColor\""
-		<< "><path d=\"M3 6a3 3 0 0 1 3-3h4l2 2h6a3 3 0 0 1 3 3v1H3V6Zm0 3h18v9a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V9Zm4 2v2h10v-2H7Z\" /></svg>\n"
+		<< "<body>\n"
+		<< "<main class=\"container\">\n"
+		<< "<div class=\"card\">\n"
+		<< "<div class=\"section-title\">\n"
+		<< "<span class=\"icon icon-sm blue\">\n"
+		<< "<svg xmlns=\"http://www.w3.org/2000/svg\" class=\"h-5 w-5\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M3 6a3 3 0 0 1 3-3h4l2 2h6a3 3 0 0 1 3 3v1H3V6Zm0 3h18v9a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V9Zm4 2v2h10v-2H7Z\" /></svg>\n"
 		<< "</span>\n"
-		<< "<h1 class=\"text-2xl font-semibold tracking-tight\">Index of " << path << "</h1>\n"
+		<< "<h1 class=\"h2\">Index of " << path << "</h1>\n"
 		<< "</div>\n"
-		<< "<table class=\"w-full text-left\">\n"
-		<< "<thead><tr class=\"border-b border-slate-200/60 dark:border-slate-800\"><th class=\"p-3\">Name</th></tr></thead>\n"
+		<< "<table class=\"table\">\n"
+		<< "<thead><tr><th>Name</th></tr></thead>\n"
 		<< "<tbody>\n";
 
 	dirent *entry;
@@ -798,9 +849,8 @@ void Response::buildIndex() {
 
 		if (name == "." || name == "..")
 			continue;
-		out << "<tr class=\"border-b border-slate-200/60 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer\" onclick=\"window.location.href+='"
-		<< name << (isDirectory((_location->getRoute() + _request.getPath() + name).c_str()) ? "/" : "") << "'\">"
-			<< "<td class=\"p-3\">" << name << "</td></tr>\n";
+			out << "<tr class=\"row\" onclick=\"window.location.href+='" << name << (isDirectory((_location->getRoute() + _request.getPath() + name).c_str()) ? "/" : "") << "'\">"
+			<< "<td>" << name << "</td></tr>\n";
 	}
 	out << "</tbody>\n</table>\n</div>\n</main>\n</body>\n</html>\n";
 	closedir(dir);
@@ -820,7 +870,7 @@ void Response::buildIndex() {
 void Response::getBody() {
 
 	struct stat fileStat;
-	std::string fileName = _location->getRoute() + _request.getPath();
+	std::string fileName = getFullPath(_location->getRoute(), _request.getPath());
 
 	if (isDirectory(fileName)) {
 		if (!_location->getIndex().empty()) {
@@ -828,6 +878,15 @@ void Response::getBody() {
 			if (isDirectory(fileName)) {
 				_errorCode = 403;
 				throw (std::string) "index is directory";
+			}
+			if (access(fileName.c_str(), F_OK) != 0 && _location->autoIndex()) {
+				try {
+					buildIndex();
+					return ;
+				}
+				catch (std::string err) {
+					throw err;
+				}
 			}
 		}
 		else if (_location->autoIndex()) {
@@ -852,6 +911,10 @@ void Response::getBody() {
 	}
 	_body.open(fileName.c_str(), std::ios::in | std::ios::binary);
 	if (!_body.is_open()) {
+		if (access(fileName.c_str(), F_OK) == 0) {
+			_errorCode = 403;
+			throw (std::string) "Forbidden";
+		}
 		_errorCode = 500;
 		throw (std::string) "failed to open a file";
 	}
@@ -890,7 +953,7 @@ void Response::DELETE() {
 	}
  	try {
 		struct stat fileStat;
-		std::string fileName = _location->getRoute() + _request.getPath();
+		std::string fileName = getFullPath(_location->getRoute(), _request.getPath());
 
 		if (stat(fileName.c_str(), &fileStat) != 0) {
 			_errorCode = 404;
@@ -924,9 +987,10 @@ void Response::DELETE() {
 
 void Response::REDIRECT() {
 	int status = _location->getReturn().first;
+	REDIRECTS _redirect;
 
-	_return.append("HTTP/1.1 " + intToString(status) +
-	" Moved Permanently\r\n" + "Location: " +
+	_return.append("HTTP/1.0 " + intToString(status) +
+	" " + _redirect.getRedirectMsg(status) + "Location: " +
 	_location->getReturn().second + "\r\n" + "Content-Length: 0\r\n\r\n");
 }
 
@@ -977,7 +1041,7 @@ void Response::buildResponse() {
 		return;
 	}
 
-	if (isExtension(_request.getPath(), _location->getExt())) {
+	if (isExtension(_request.getPath(), _location->getIndex(), _location->getExt())) {
 		if (_request.isSimpleRequest()) {
 			_errorCode = 400;
 			ERROR();
@@ -1071,7 +1135,6 @@ std::string Response::getResponse() {
 				}
 				return std::string(buffer, actuallyRead);
 			}
-			std::cout << "response done\n";
 			_responseState = DONE;
 			return "";
 		}

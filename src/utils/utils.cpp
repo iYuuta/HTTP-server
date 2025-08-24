@@ -76,13 +76,13 @@ MIME::MIME() {
 }
 
 Exec::Exec() {
-	_exec[".sh"]	= "/usr/bin/bash";
-	_exec[".bash"]  = "/usr/bin/bash";
-	_exec[".zsh"]   = "/usr/bin/zsh";
+	_exec[".sh"]	= "/bin/sh";
+	_exec[".bash"]  = "/bin/bash";
+	_exec[".zsh"]   = "/bin/zsh";
 	_exec[".py"]	= "/usr/bin/python3";
 	_exec[".php"]   = "/usr/bin/php";
 	_exec[".pl"]	= "/usr/bin/perl";
-	_exec[".js"]	= "/usr/bin/node";
+	_exec[".js"]	= "/usr/local/bin/node";
 	_exec[".awk"]   = "/usr/bin/awk";
 }
 
@@ -97,6 +97,18 @@ ERRORS::ERRORS() {
 	_errors[502] = "HTTP/1.0 502 Bad Gateway\r\n";
 	_errors[504] = "HTTP/1.0 504 Gateway Timeout\r\n";
 	_errors[500] = "HTTP/1.0 500 Internal Server Error\r\n";
+}
+
+REDIRECTS::REDIRECTS() {
+	_redirect[300] = "Multiple Choices\r\n";
+	_redirect[301] = "Moved Permanently\r\n";
+	_redirect[302] = "Found\r\n";
+	_redirect[303] = "See Other\r\n";
+	_redirect[304] = "Not Modified\r\n";
+	_redirect[305] = "Use Proxy\r\n";
+	_redirect[306] = "Switch Proxy\r\n";
+	_redirect[307] = "Temporary Redirect\r\n";
+	_redirect[308] = "Permanent Redirect\r\n";
 }
 
 std::vector<std::string> split(const std::string& s, const char delimiter)
@@ -138,15 +150,16 @@ std::string intToString(int n) {
 	return oss.str();
 }
 
-unsigned long atoiul(const std::string& s)
+long long atoill(const std::string& s)
 {
 	errno = 0;
 	char* ptr;
-	const unsigned long value = std::strtoul(s.c_str(), &ptr, 10);
+	const long long value = std::strtoll(s.c_str(), &ptr, 10);
 	if (errno != 0 || *ptr != '\0')
 		throw std::invalid_argument(s);
 	return (value);
 }
+
 
 std::string getContentType(const std::string& fileName) {
 	size_t pos = fileName.find_last_of('.');
@@ -198,7 +211,14 @@ bool isDirectory(const std::string& path) {
 	return (stat(path.c_str(), &st) == 0 && S_ISDIR(st.st_mode));
 }
 
-std::string getExtension(const std::string& path) {
+std::string getExtension(const std::string& firstPath, const std::string& backUpPath) {
+	std::string path;
+
+	if (isDirectory(firstPath))
+		path = backUpPath;
+	else
+		path = firstPath;
+
 	size_t dotPos = path.find_last_of('.');
 	std::string ext;
 
@@ -212,7 +232,12 @@ std::string getExtension(const std::string& path) {
 	return (executable);
 }
 
-bool isExtension(const std::string& path, std::vector<std::string> _ext) {
+bool isExtension(const std::string& firstPath, const std::string& backUpPath, std::vector<std::string> _ext) {
+	std::string path;
+	if (isDirectory(firstPath))
+		path = backUpPath;
+	else
+		path = firstPath;
 	size_t slashPos = path.find_last_of('/');
 	size_t dotPos = path.find_last_of('.');
 	std::string ext;
@@ -279,6 +304,13 @@ std::string Exec::getExec(std::string extension) {
 	return "";
 }
 
+
+std::string REDIRECTS::getRedirectMsg(int code) {
+	if (_redirect.find(code) != _redirect.end())
+		return _redirect[code];
+	return "";
+}
+
 std::string ERRORS::getErrorMsg(int errorCode) {
 	if (_errors.find(errorCode) != _errors.end())
 		return _errors[errorCode];
@@ -294,17 +326,37 @@ std::string MIME::getContentExt(const std::string &ContentType)
 	return (".bin");
 }
 
-std::string joinUrlPaths(const std::string &firstPath, const std::string &secondPath)
+bool validcontentLength(std::string& contentlen) {
+	for (size_t i = 0; i < contentlen.length(); i++) {
+		if (!std::isdigit(contentlen[i]))
+			return false;
+	}
+	return true;
+}
+
+std::string getFullPath(std::string root, std::string file) {
+	size_t pos = file.find_first_not_of('/');
+
+    if (pos != std::string::npos)
+        return root + file.substr(pos);
+	return root;
+}
+
+std::string removeLast(const std::string &str, const char &c)
 {
-    std::string result = firstPath;
+ 	if (str.empty()) return str;
+    std::string::size_type end = str.size();
 
-    if (!result.empty() && result[result.length() - 1] == '/' &&
-        !secondPath.empty() && secondPath[0] == '/')
-        result.erase(result.length() - 1, 1);
+    while (end > 1 && str[end - 1] == c)
+        --end;
+	if (end == 0)
+		return std::string("") + c;
+    return str.substr(0, end) + c;
+}
 
-    result += secondPath;
-    if (result.empty() || result[result.length() - 1] != '/')
-        result += '/';
-
-    return (result);
+std::string strToLower(const std::string& header) {
+	std::string newHeader;
+	for (size_t i = 0; i < header.length(); i++)
+		newHeader += std::tolower(header[i]);
+	return newHeader;
 }

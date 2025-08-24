@@ -21,6 +21,7 @@ class Client {
 		int								_fd;
 		std::string						_buffer;
 		int								_errorCode;
+		std::time_t						_lastActivity; 
 		bool							_validRequest;
 		bool							_clientFailed;
 
@@ -49,6 +50,7 @@ class Client {
 		bool clientFailed();
 		enums getResponseState();
 		enums getRequestState();
+		std::time_t getLastActivity();
 
 };
 

@@ -160,7 +160,6 @@ long long atoill(const std::string& s)
 	return (value);
 }
 
-
 std::string getContentType(const std::string& fileName) {
 	size_t pos = fileName.find_last_of('.');
 
@@ -285,8 +284,8 @@ int hexCharToInt(char c) {
 }
 
 char hexToAscii(char a, char b) {
-	int hi = hexCharToInt(toupper(a));
-	int lo = hexCharToInt(toupper(b));
+	int hi = hexCharToInt(std::toupper(a));
+	int lo = hexCharToInt(std::toupper(b));
 	if (hi == -1 || lo == -1)
 		return 0;
 	return static_cast<char>((hi << 4) | lo);
@@ -337,8 +336,9 @@ bool validcontentLength(std::string& contentlen) {
 std::string getFullPath(std::string root, std::string file) {
 	size_t pos = file.find_first_not_of('/');
 
-    if (pos != std::string::npos)
-        return root + file.substr(pos);
+    if (pos != std::string::npos) {
+		return root + file.substr(pos);
+	}
 	return root;
 }
 
@@ -347,8 +347,9 @@ std::string removeLast(const std::string &str, const char &c)
  	if (str.empty()) return str;
     std::string::size_type end = str.size();
 
-    while (end > 1 && str[end - 1] == c)
+    while (end > 1 && str[end - 1] == c) {
         --end;
+	}
 	if (end == 0)
 		return std::string("") + c;
     return str.substr(0, end) + c;

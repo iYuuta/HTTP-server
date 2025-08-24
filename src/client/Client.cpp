@@ -13,6 +13,7 @@ _requestDone(false),
 request(),
 response(request, _server.getErrorPages(), _location)
 {
+	_lastActivity = std::time(NULL);
 }
 
 Client::~Client()
@@ -36,6 +37,7 @@ void Client::parseRequest()
 		return ;
 	}
 	try {
+		_lastActivity = std::time(NULL);
 		request.parseData(buffer, len);
 		if ((request.getParseState() == DONE || request.getParseState() == BODY) && !_validRequest)
 		{
@@ -91,4 +93,8 @@ enums Client::getRequestState() {
 
 enums Client::getResponseState() {
 	return (response.getResponseState());
+}
+
+std::time_t Client::getLastActivity() {
+	return _lastActivity;
 }

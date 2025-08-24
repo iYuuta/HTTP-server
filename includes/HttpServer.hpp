@@ -19,6 +19,7 @@ class HttpServer
 		void handleNewConnection(pollfd& pollFd);
 		void handleClientRequest(pollfd& pollFd);
 		void handleClientResponse(pollfd& pollFd);
+		void handleTimeOut();
 		Server& getServerByFd(const int &fd);
 		void insertNewClient(const int& clientId, Server &server);
 		bool isClientExists(const int& clientId);

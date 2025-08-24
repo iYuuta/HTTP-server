@@ -112,12 +112,12 @@ void HttpServer::listen()
 {
 	while (true)
 	{
-		const int rt = poll(_pollFds.data(), _pollFds.size(), -1);
+		const int rt = poll(_pollFds.data(), _pollFds.size(), 30000);
 
 		if (rt < 0)
 			throw std::runtime_error("poll failed");
 		if (rt == 0)
-			throw std::runtime_error("TIMEOUT");
+			handleTimeOut();
 
 		for (size_t i = 0; i < _pollFds.size(); i++)
 		{
@@ -133,6 +133,16 @@ void HttpServer::listen()
 			else if (pollFd.revents & POLLOUT)
 				handleClientResponse(pollFd);
 		}
+	}
+}
+
+void HttpServer::handleTimeOut() {
+	for (size_t i = 0; i < _pollFds.size(); i++)
+	{
+		if (i < _config.getServers().size())
+			continue ;
+		else if (std::time(NULL) - _clients[_pollFds[i].fd]->getLastActivity() >= 30)
+			removePollFd(_pollFds[i]);
 	}
 }
 

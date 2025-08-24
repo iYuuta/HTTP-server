@@ -30,7 +30,7 @@ bool Client::isTargetValid() {
 }
 
 bool Client::isMethodValid() {
-	if (_location->isMethodValid(request.getMeth()) || _location->isRedirect())
+	if (_location->isMethodValid(request.getMeth()))
 		return true;
 	_errorCode = 405;
 	return false;

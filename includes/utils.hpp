@@ -106,6 +106,7 @@ std::string methodToStr(HttpRequestMethod meth);
 bool isKeyValid(const std::string& line);
 char hexToAscii(char a, char b);
 bool validcontentLength(std::string& contentlen);
+bool locationExists(const std::string &path);
 std::string getFullPath(std::string root, std::string file);
 std::string removeLast(const std::string &str, const char &c);
 std::string strToLower(const std::string& header);

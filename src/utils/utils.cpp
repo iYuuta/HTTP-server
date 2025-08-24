@@ -205,6 +205,10 @@ std::string generateRandomName() {
 	}
 }
 
+bool locationExists(const std::string &path) {
+	return (access(path.c_str(), F_OK) == 0);
+}
+
 bool isDirectory(const std::string& path) {
 	struct stat st;
 	return (stat(path.c_str(), &st) == 0 && S_ISDIR(st.st_mode));
@@ -336,7 +340,7 @@ bool validcontentLength(std::string& contentlen) {
 std::string getFullPath(std::string root, std::string file) {
 	size_t pos = file.find_first_not_of('/');
 
-    if (pos != std::string::npos) {
+	if (pos != std::string::npos) {
 		return root + file.substr(pos);
 	}
 	return root;
@@ -345,14 +349,14 @@ std::string getFullPath(std::string root, std::string file) {
 std::string removeLast(const std::string &str, const char &c)
 {
  	if (str.empty()) return str;
-    std::string::size_type end = str.size();
+	std::string::size_type end = str.size();
 
-    while (end > 1 && str[end - 1] == c) {
-        --end;
+	while (end > 1 && str[end - 1] == c) {
+		--end;
 	}
 	if (end == 0)
 		return std::string("") + c;
-    return str.substr(0, end) + c;
+	return str.substr(0, end) + c;
 }
 
 std::string strToLower(const std::string& header) {

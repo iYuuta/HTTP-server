@@ -60,7 +60,7 @@ void Response::validateUploadPath(const std::string& uploadPath) {
 
 	struct stat dirStat;
 	if (stat(uploadPath.c_str(), &dirStat) != 0)
-			throw std::runtime_error("Upload directory does not exist.");
+		throw std::runtime_error("Upload directory does not exist.");
 
 	else if (!S_ISDIR(dirStat.st_mode)) {
 		_errorCode = 500;

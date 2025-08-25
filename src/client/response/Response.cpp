@@ -623,7 +623,7 @@ bool Response::checkTimeOut() {
 	if (stat(_cgiFile.c_str(), &st) == 0) {
 		time_t mtime = st.st_mtime;
 		time_t now = time(NULL);
-		if (now - mtime > 5) {
+		if (now - mtime > 15) {
 			kill(_cgiPid, SIGTERM);
 			close(_cgiFd);
 			std::remove(_cgiFile.c_str());

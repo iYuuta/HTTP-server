@@ -115,7 +115,7 @@ void HttpServer::listen()
 		const int rt = poll(_pollFds.data(), _pollFds.size(), 500);
 
 		if (rt < 0)
-			throw std::runtime_error("poll failed");
+			continue ;
 		if (rt == 0) {
 			handleTimeOut();
 			continue ;

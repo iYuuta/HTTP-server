@@ -121,6 +121,26 @@ bool Response::stepRawUpload() {
 	return (false);
 }
 
+static bool validBoundaryChar(char c)
+{
+	std::string forbidden = "()<>@,;:\\\"/[]?=";
+	if (c < 32 || c > 126 || forbidden.find(c) != std::string::npos)
+		return (false);
+	return (true);
+}
+
+static bool validBoundary(const std::string &boundary)
+{
+	if (boundary.empty() || boundary.length() > 70 || boundary.back() == ' ')
+		return (false);
+	for (size_t i = 0; i < boundary.length(); i++)
+	{
+		if (!validBoundaryChar(boundary[i]))
+			return (false);
+	}
+	return (true);
+}
+
 bool Response::extractBoundary(const std::string& contentTypeHeader, std::string& boundary) {
 	size_t boundaryPos = contentTypeHeader.find("boundary=");
 	if (boundaryPos == std::string::npos) {
@@ -130,6 +150,10 @@ bool Response::extractBoundary(const std::string& contentTypeHeader, std::string
 	boundary = contentTypeHeader.substr(boundaryPos + 9);
 	if (boundary.length() > 1 && boundary[0] == '"' && boundary[boundary.length() - 1] == '"')
 		boundary = boundary.substr(1, boundary.length() - 2);
+	if (!validBoundary(boundary)) {
+		_errorCode = 400;
+		return (false);
+	}
 	return (true);
 }
 

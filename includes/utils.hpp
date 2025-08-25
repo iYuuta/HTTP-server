@@ -105,6 +105,7 @@ std::string getExtension(const std::string& firstPath, const std::string& backUp
 std::string methodToStr(HttpRequestMethod meth);
 bool isKeyValid(const std::string& line);
 char hexToAscii(char a, char b);
+bool normalizePath(std::string& path, std::string dir);
 bool validcontentLength(std::string& contentlen);
 bool locationExists(const std::string &path);
 std::string getFullPath(std::string root, std::string file);

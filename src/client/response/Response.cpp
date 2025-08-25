@@ -200,7 +200,14 @@ bool Response::stepMultipartUpload()
     if (_multipartState == LOOKING_FOR_START_BOUNDARY) {
         size_t pos = _multipartBuffer.find(_multipartStartBoundary);
         if (pos == std::string::npos)
+		{
+			if (!_postBodyStream && _multipartBuffer.find(_multipartStartBoundary) == std::string::npos)
+			{
+				_errorCode = 400;
+				throw std::runtime_error("Bad Request");
+			}
             return false;
+		}
     
         _multipartBuffer.erase(0, pos + _multipartStartBoundary.length());
         if (_multipartBuffer.find("\r\n") == 0)

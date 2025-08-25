@@ -60,7 +60,7 @@ void Response::validateUploadPath(const std::string& uploadPath) {
 
 	struct stat dirStat;
 	if (stat(uploadPath.c_str(), &dirStat) != 0)
-		throw std::runtime_error("Upload directory does not exist.");
+			throw std::runtime_error("Upload directory does not exist.");
 
 	else if (!S_ISDIR(dirStat.st_mode)) {
 		_errorCode = 500;
@@ -554,7 +554,7 @@ void Response::executeCgi() {
 				std::cerr << "failed to change cwd in the child process\n";
 				std::remove(_cgiFile.c_str());
 				close(_cgiFd);
-				std::exit(1);
+				std::exit(500);
 			}
 			if (fd != 0) {
 				dup2(fd, STDIN_FILENO);
@@ -589,7 +589,7 @@ bool Response::checkTimeOut() {
 
 	if (stat(_cgiFile.c_str(), &st) == 0) {
 		time_t mtime = st.st_mtime;
-		time_t now = std::time(NULL);
+		time_t now = time(NULL);
 		if (now - mtime > 5) {
 			kill(_cgiPid, SIGTERM);
 			close(_cgiFd);
@@ -849,8 +849,8 @@ void Response::buildIndex() {
 
 		if (name == "." || name == "..")
 			continue;
-		out << "<tr class=\"row\" onclick=\"window.location.href+='" << name << (isDirectory((_location->getRoute() + _request.getPath() + name).c_str()) ? "/" : "") << "'\">"
-		<< "<td>" << name << "</td></tr>\n";
+			out << "<tr class=\"row\" onclick=\"window.location.href+='" << name << (isDirectory((_location->getRoute() + _request.getPath() + name).c_str()) ? "/" : "") << "'\">"
+			<< "<td>" << name << "</td></tr>\n";
 	}
 	out << "</tbody>\n</table>\n</div>\n</main>\n</body>\n</html>\n";
 	closedir(dir);
@@ -1057,7 +1057,6 @@ void Response::buildResponse() {
 	}
 	else if (_request.isSimpleRequest()) {
 		simpleReqsponse();
-		_responseState = BODY;
 		_responseBuilt = true;
 		return ;
 	}
@@ -1083,6 +1082,30 @@ std::string Response::getResponse() {
 			_body.close();
 		_responseState = DONE;
 		return _errorResponse;
+	}
+	if (_request.isSimpleRequest()) {
+		if (_contentLen == 0) {
+			_responseState = DONE;
+			return "";
+		}
+		if (_bytesSent < _contentLen) {
+			char buffer[BUFFER_SIZE];
+			size_t toRead = std::min(static_cast<ssize_t>(BUFFER_SIZE), _contentLen - _bytesSent);
+
+			_body.read(buffer, toRead);
+			size_t actuallyRead = _body.gcount();
+			_bytesSent += actuallyRead;
+
+			if (_bytesSent >= _contentLen) {
+				_body.close();
+				_responseState = DONE;
+			}
+			return std::string(buffer, actuallyRead);
+		}
+		if (_body.is_open())
+			_body.close();
+		_responseState = DONE;
+		return "";
 	}
 	if (_isRedirect) {
 		_responseState = DONE;

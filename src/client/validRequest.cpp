@@ -20,7 +20,11 @@ bool Client::isTargetValid() {
 		std::string newPath = path.substr(bestLength);
 		if (newPath.empty() || newPath[0] != '/')
 			newPath = "/" + newPath;
-		if (!normalizePath(newPath, _location->getRoute())){
+		if (!normalizePath(newPath, _location->getRoute())) {
+			_errorCode = 403;
+			return false;
+		}
+		if (!_location->isRedirect() && access(_location->getRoute().c_str(), X_OK) != 0) {
 			_errorCode = 403;
 			return false;
 		}

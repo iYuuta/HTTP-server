@@ -131,8 +131,9 @@ static bool validBoundaryChar(char c)
 
 static bool validBoundary(const std::string &boundary)
 {
-	if (boundary.empty() || boundary.length() > 70 || boundary.back() == ' ')
+	if (boundary.empty() || boundary.length() > 70 || boundary[boundary.length() - 1] == ' ') {
 		return (false);
+	}
 	for (size_t i = 0; i < boundary.length(); i++)
 	{
 		if (!validBoundaryChar(boundary[i]))
@@ -880,8 +881,8 @@ void Response::buildIndex() {
 
 		if (name == "." || name == "..")
 			continue;
-			out << "<tr class=\"row\" onclick=\"window.location.href+='" << name << (isDirectory((_location->getRoute() + _request.getPath() + name).c_str()) ? "/" : "") << "'\">"
-			<< "<td>" << name << "</td></tr>\n";
+		out << "<tr class=\"row\" onclick=\"window.location.href+='" << name << (isDirectory((_location->getRoute() + _request.getPath() + name).c_str()) ? "/" : "") << "'\">"
+		<< "<td>" << name << "</td></tr>\n";
 	}
 	out << "</tbody>\n</table>\n</div>\n</main>\n</body>\n</html>\n";
 	closedir(dir);

@@ -115,7 +115,10 @@ void HttpServer::listen()
 		const int rt = poll(_pollFds.data(), _pollFds.size(), 500);
 
 		if (rt < 0)
+		{
+			std::cerr << "Error: poll failed, retying..." << std::endl;
 			continue ;
+		}
 		if (rt == 0) {
 			handleTimeOut();
 			continue ;

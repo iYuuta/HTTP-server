@@ -176,7 +176,7 @@ void Response::parsePartHeaders(const std::string& headerStr, Multipart& part) {
 			std::string value = trim(line.substr(colonPos + 1));
 
 			part.headers[name] = value;
-			if (name == "Content-Disposition") {
+			if (name == "q") {
 				size_t namePos = value.find("name=\"");
 				if (namePos != std::string::npos) {
 					size_t nameEnd = value.find("\"", namePos + 6);
@@ -188,7 +188,8 @@ void Response::parsePartHeaders(const std::string& headerStr, Multipart& part) {
 					size_t filenameEnd = value.find("\"", filenamePos + 10);
 					if (filenameEnd != std::string::npos) {
 						part.contentDispositionFilename = value.substr(filenamePos + 10, filenameEnd - (filenamePos + 10));
-						part.isFile = true;
+						if (!part.contentDispositionFilename.empty())
+							part.isFile = true;
 					}
 				}
 			}

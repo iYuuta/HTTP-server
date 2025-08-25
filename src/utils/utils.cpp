@@ -209,6 +209,39 @@ bool locationExists(const std::string &path) {
 	return (access(path.c_str(), F_OK) == 0);
 }
 
+bool normalizePath(std::string& path, std::string dir) {
+	std::string newPath, tmpDir, tmp;
+	size_t slashPos = 0, pos = 0;
+
+	tmpDir = dir.substr(0, dir.length() - 1);
+	while (true) {
+		slashPos = path.find('/', pos);
+		if (slashPos == std::string::npos) {
+			break ;
+		}
+		pos = path.find('/', slashPos + 1);
+		if (pos == std::string::npos)
+			pos = path.length();
+		tmp = path.substr(slashPos, pos - slashPos);
+		if (tmp == "/..") {
+			size_t end;
+
+			end = tmpDir.find_last_of('/');
+			if (end == 0 || end == std::string::npos)
+				return false;
+			tmpDir = tmpDir.substr(0, end);
+		}
+		else
+			tmpDir += tmp;
+		newPath += tmp;
+		if (tmpDir.length() < dir.length() - 1) {
+			return false;
+		}
+	}
+	path = newPath;
+	return true;
+}
+
 bool isDirectory(const std::string& path) {
 	struct stat st;
 	return (stat(path.c_str(), &st) == 0 && S_ISDIR(st.st_mode));

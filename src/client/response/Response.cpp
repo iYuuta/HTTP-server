@@ -2,7 +2,12 @@
 
 #include <signal.h>
 
-Response::~Response() {}
+Response::~Response() {
+	if (_cgiRunning) {
+		kill(_cgiPid, SIGTERM);
+		std::remove(_cgiFile.c_str());
+	}
+}
 
 Response::Response(Request& req, std::map<int, std::string>& error, std::vector<Location>::iterator& location):
 _request(req),

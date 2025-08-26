@@ -88,7 +88,7 @@ class Response {
 		bool         						_postCreatedNew;
 		bool        						_multipartAnyCreated;
 	
-		std::vector<std::string>	_cookies;
+		std::vector<std::string>			_cookies;
 		bool _cookiesBuilt;
 
 		void ERROR();

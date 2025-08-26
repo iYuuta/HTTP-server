@@ -19,6 +19,8 @@ _simpleRequest(false)
 
 Request::~Request()
 {
+	if (!_bodyFileName.empty() && access(_bodyFileName.c_str(), F_OK) == 0)
+		std::remove(_bodyFileName.c_str());
 }
 
 void Request::parseData(const char* data, size_t len)
@@ -97,7 +99,7 @@ void Request::parseData(const char* data, size_t len)
 				break ;
 			}
 			size_t LeftOver = _contentLen - _receivedBytes;
-			size_t ReadLen = std::min(LeftOver, _buffer.size() - 1);
+			size_t ReadLen = std::min(LeftOver, _buffer.size());
 
 			if (ReadLen == 0)
 				break ;

@@ -108,6 +108,13 @@ bool HttpServer::startAll()
 	return (true);
 }
 
+void HttpServer::onError(const size_t &i, pollfd& pollFd)
+{
+	if (i < _config.getServers().size())
+		return ;
+	removePollFd(pollFd);
+}
+
 void HttpServer::listen()
 {
 	while (true)
@@ -128,7 +135,9 @@ void HttpServer::listen()
 		{
 			pollfd& pollFd = _pollFds[i];
 
-			if (pollFd.revents & POLLIN)
+			if (pollFd.revents & (POLLHUP | POLLERR | POLLNVAL))
+				onError(i, pollFd);
+			else if (pollFd.revents & POLLIN)
 			{
 				if (i < _config.getServers().size())
 					handleNewConnection(pollFd);
@@ -147,7 +156,7 @@ void HttpServer::handleTimeOut() {
 		if (std::time(NULL) - _clients[_pollFds[i].fd]->getLastActivity() >= 30) {
 			removePollFd(_pollFds[i]);
 		}
-		
+
 	}
 }
 

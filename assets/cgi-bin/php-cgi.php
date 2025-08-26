@@ -1,9 +1,5 @@
 #!/usr/bin/env php
 <?php
-    $cmd="curl -X POST 127.0.0.1:8080/index.php";
+    $cmd="curl 127.0.0.1:8090/cgi-bin/php-cgi.php";
     $out=shell_exec($cmd);
-
-
-    while (1)
-    
 ?>

@@ -336,6 +336,7 @@ void Response::postInit()
 	validateUploadPath(uploadPath);
     _postUploadPath = uploadPath;
 
+
     std::string contentType = _request.getHeader("Content-Type");
     _postIsMultipart = (contentType.find("multipart/form-data") != std::string::npos);
 
@@ -421,6 +422,20 @@ void Response::POST() {
 					locationUrl = pathPart;
 					_headers.append("Location: " + pathPart + "\r\n");
 				}
+			} else if (!_postIsMultipart) {
+				std::string pathPart = getFullPath(_location->getUrl(), _request.getPath());
+
+				std::cout << "pathPart before: " << _location->getUrl() + _request.getPath() << std::endl;
+				std::cout << "pathPart after: " << pathPart << std::endl;
+				
+				std::string host = _request.getHeader("Host");
+				if (!host.empty()) {
+					locationUrl = "http://" + host + pathPart;
+					_headers.append("Location: " + locationUrl + "\r\n");
+				} else {
+					locationUrl = pathPart;
+					_headers.append("Location: " + pathPart + "\r\n");
+				}
 			}
 			_statusLine.append("HTTP/1.0 201 Created\r\n");
 		} else {
@@ -470,6 +485,7 @@ void Response::POST() {
 	}
 }
 
+
 void Response::initCgi() {
 	_cgiExt = getExtension(_request.getPath(), _location->getIndex());
 	if (_cgiExt.empty()) {
@@ -485,6 +501,9 @@ void Response::initCgi() {
 				_errorCode = 404;
 				throw (std::string) "file not found";
 			}
+			fullPath = getFullPath(_location->getRoute(), _location->getIndex());
+			std::cout << "fullPath before: " << _location->getRoute() + _request.getPath() << std::endl;
+			std::cout << "fullPath after: " << fullPath << std::endl;
 			_index = true;
 		}
     }
@@ -616,7 +635,7 @@ bool Response::checkTimeOut() {
 	if (stat(_cgiFile.c_str(), &st) == 0) {
 		time_t mtime = st.st_mtime;
 		time_t now = time(NULL);
-		if (now - mtime > 10) {
+		if (now - mtime > 15) {
 			kill(_cgiPid, SIGTERM);
 			close(_cgiFd);
 			std::remove(_cgiFile.c_str());
@@ -640,7 +659,6 @@ void Response::monitorCgi() {
 
 	_cgiRunning = false;
 	_cgiExecuted = true;
-	
 	if (status != 0) {
 		std::remove(_cgiFile.c_str());
 		close(_cgiFd);

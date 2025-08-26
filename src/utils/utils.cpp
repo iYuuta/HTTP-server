@@ -379,17 +379,24 @@ std::string getFullPath(std::string root, std::string file) {
 	return root;
 }
 
-std::string removeLast(const std::string &str, const char &c)
+std::string removeRepeating(std::string str, const char &c)
 {
- 	if (str.empty()) return str;
-	std::string::size_type end = str.size();
-
-	while (end > 1 && str[end - 1] == c) {
-		--end;
-	}
-	if (end == 0)
-		return std::string("") + c;
-	return str.substr(0, end) + c;
+  	std::string result;
+    bool lastWasSlash = false;
+    for (std::string::const_iterator it = str.begin(); it != str.end(); ++it) {
+        if (*it == c) {
+            if (!lastWasSlash) {
+                result += *it;
+                lastWasSlash = true;
+            }
+        } else {
+            result += *it;
+            lastWasSlash = false;
+        }
+    }
+	if (result[result.size() - 1] == c)
+		return result;
+	return result + c;
 }
 
 std::string strToLower(const std::string& header) {

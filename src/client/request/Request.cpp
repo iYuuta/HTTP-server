@@ -174,6 +174,10 @@ void Request::decodeUrl() {
 		}
 		else
 			newPath += _path[i];
+		if (!std::isprint(newPath[newPath.length() - 1])) {
+			_errorCode = 400;
+			return ;
+		}
 	}
 	_path = newPath;
 }
@@ -203,6 +207,8 @@ void Request::addRequestLine(const std::string &buff) {
 		_queryString = _path.substr(pos + 1);
 		_path = _path.substr(0, pos);
 	}
+	if (_path.find_first_of("\"#<>{}|\\^[]`' \t\n\r\v") != std::string::npos)
+		_errorCode = 400;
 	if (_path.find('%') != std::string::npos)
 		decodeUrl();
 }

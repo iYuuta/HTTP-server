@@ -209,34 +209,64 @@ bool locationExists(const std::string &path) {
 	return (access(path.c_str(), F_OK) == 0);
 }
 
-bool normalizePath(std::string& path, std::string dir) {
-	std::string newPath, tmpDir, tmp;
-	size_t slashPos = 0, pos = 0;
+void removeSegment(std::string& buff) {
+	size_t pos;
 
-	tmpDir = dir.substr(0, dir.length() - 1);
+	if (buff.empty())
+		return ;
+	pos = buff.find_last_of('/');
+	if (pos == std::string::npos) {
+		buff = "";
+		return ;
+	}
+	buff.resize(pos);
+}
+
+bool normalizePath(std::string& path) {
+	std::string newPath, buff, tmpPath;
+	size_t slashPos = 0, pos;
+	bool lastSlash = false;
+
+	for (size_t i = 0; i < path.length(); i++) {
+		if (path[i] == '/' && !lastSlash) {
+			lastSlash = true;
+			tmpPath += path[i];
+		}
+		else if (path[i] != '/') {
+			lastSlash = false;
+			tmpPath += path[i];
+		}
+	}
+
+	if (tmpPath.size() > 1 && tmpPath[tmpPath.length() - 1] == '/')
+		tmpPath.resize(tmpPath.size() - 1);
+
+    if (tmpPath.empty())
+		tmpPath = "/";
+
+	while (((pos = tmpPath.find("../", 0)) == 1) || ((pos = tmpPath.find("./", 0)) == 1)) {
+		if ((pos = tmpPath.find("../", 0)) == 1)
+			tmpPath = "/" + tmpPath.substr(4);
+		else if ((pos = tmpPath.find("./", 0)) == 1)
+			tmpPath = "/" + tmpPath.substr(3);
+	}
+
 	while (true) {
-		slashPos = path.find('/', pos);
-		if (slashPos == std::string::npos) {
+		slashPos = tmpPath.find('/');
+		if (slashPos == std::string::npos)
 			break ;
-		}
-		pos = path.find('/', slashPos + 1);
+		pos = tmpPath.find('/', slashPos + 1);
 		if (pos == std::string::npos)
-			pos = path.length();
-		tmp = path.substr(slashPos, pos - slashPos);
-		if (tmp == "/..") {
-			size_t end;
-
-			end = tmpDir.find_last_of('/');
-			if (end == 0 || end == std::string::npos)
-				return false;
-			tmpDir = tmpDir.substr(0, end);
-		}
+			pos = tmpPath.size();
+		buff = tmpPath.substr(slashPos, pos);
+		tmpPath = tmpPath.substr(pos);
+		if (buff == "/..")
+			removeSegment(newPath);
+		else if (buff == "/.")
+			continue;
 		else
-			tmpDir += tmp;
-		newPath += tmp;
-		if (tmpDir.length() < dir.length() - 1) {
-			return false;
-		}
+			newPath += buff;
+		
 	}
 	path = newPath;
 	return true;

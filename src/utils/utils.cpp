@@ -222,7 +222,7 @@ void removeSegment(std::string& buff) {
 	buff.resize(pos);
 }
 
-bool normalizePath(std::string& path) {
+void normalizePath(std::string& path) {
 	std::string newPath, buff, tmpPath;
 	size_t slashPos = 0, pos;
 	bool lastSlash = false;
@@ -269,7 +269,6 @@ bool normalizePath(std::string& path) {
 		
 	}
 	path = newPath;
-	return true;
 }
 
 bool isDirectory(const std::string& path) {

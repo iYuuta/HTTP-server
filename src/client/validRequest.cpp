@@ -7,7 +7,7 @@ bool Client::isTargetValid() {
 	size_t bestLength = 0;
 
 	for (std::vector<Location>::iterator it = locations.begin(); it != locations.end(); ++it) {
-		const std::string& locUrl = it->getUrl();
+		const std::string& locUrl = it->getUrl();\
 		if (path.compare(0, locUrl.size(), locUrl) == 0) {
 			if (locUrl.size() > bestLength) {
 				bestLength = locUrl.size();
@@ -20,10 +20,6 @@ bool Client::isTargetValid() {
 		std::string newPath = path.substr(bestLength);
 		if (newPath.empty() || newPath[0] != '/')
 			newPath = "/" + newPath;
-		if (!normalizePath(newPath)) {
-			_errorCode = 403;
-			return false;
-		}
 		request.checkForPathInfo(newPath, _location);
 		if (!_location->isRedirect() && access(_location->getRoute().c_str(), X_OK) != 0) {
 			_errorCode = 403;

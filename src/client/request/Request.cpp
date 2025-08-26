@@ -211,6 +211,7 @@ void Request::addRequestLine(const std::string &buff) {
 		_errorCode = 400;
 	if (_path.find('%') != std::string::npos)
 		decodeUrl();
+	normalizePath(_path);
 }
 
 void Request::addHeaders(std::string buff)

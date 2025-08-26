@@ -181,7 +181,7 @@ void Response::parsePartHeaders(const std::string& headerStr, Multipart& part) {
 			std::string value = trim(line.substr(colonPos + 1));
 
 			part.headers[name] = value;
-			if (name == "q") {
+			if (name == "Content-Disposition") {
 				size_t namePos = value.find("name=\"");
 				if (namePos != std::string::npos) {
 					size_t nameEnd = value.find("\"", namePos + 6);

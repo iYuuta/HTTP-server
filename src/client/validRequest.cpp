@@ -24,6 +24,7 @@ bool Client::isTargetValid() {
 			_errorCode = 403;
 			return false;
 		}
+		request.checkForPathInfo(newPath, _location);
 		if (!_location->isRedirect() && access(_location->getRoute().c_str(), X_OK) != 0) {
 			_errorCode = 403;
 			return false;

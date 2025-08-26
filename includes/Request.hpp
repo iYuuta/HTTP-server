@@ -34,7 +34,7 @@ class Request {
 		void					addBody(const std::string& buff, size_t len);
 		void					setPath(const std::string& path);
 		void					decodeUrl();
-		void 					checkForPathInfo(std::vector<Location>::iterator& location);
+		void 					checkForPathInfo(std::string& path, std::vector<Location>::iterator& location);
 
 
 		bool					isValidRequestLine(const std::string& line);

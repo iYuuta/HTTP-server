@@ -264,25 +264,25 @@ void Request::addBody(const std::string& buff, size_t len) {
 	_bodyOut.write(buff.data(), len);
 }
 
-void Request::checkForPathInfo(std::vector<Location>::iterator& location) {
+void Request::checkForPathInfo(std::string& path, std::vector<Location>::iterator& location) {
 	size_t index = 1;
 	std::string ext;
 	std::vector<std::string> exts = location->getExt();
 	
 	while (true) {
-		size_t slash_pos = _path.find('/', index);
-
+		size_t slash_pos = path.find('/', index);
+		
 		if (slash_pos == std::string::npos)
 			return ;
-		size_t dot_pos = _path.find('.', index);
-
+		size_t dot_pos = path.find('.', index);
+		
 		if (dot_pos != std::string::npos && dot_pos < slash_pos)
-			ext = _path.substr(dot_pos, slash_pos - dot_pos);
+			ext = path.substr(dot_pos, slash_pos - dot_pos);
 		index = slash_pos + 1;
 		for (std::vector<std::string>::iterator it = exts.begin(); it != exts.end(); it++) {
 			if (*it == ext) {
-				_pathInfo = _path.substr(slash_pos + 1);
-				_path = _path.substr(0, slash_pos);
+				_pathInfo = path.substr(slash_pos + 1);
+				path = path.substr(0, slash_pos);
 				return ;
 			}
 		}

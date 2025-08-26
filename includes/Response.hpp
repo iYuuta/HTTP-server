@@ -115,8 +115,6 @@ class Response {
 		
 		void parseMultipartBody(const std::string& uploadPath);
 
-		void checkUploadFile(const std::string &path);
-		
 		Response();
 		
 		bool stepRawUpload();

@@ -29,9 +29,7 @@ const std::pair<int, std::string>&	Location::getReturn() {
 }
 
 bool Location::isRedirect() {
-	if (_return.second.empty())
-		return false;
-	return true;
+	return !_return.second.empty();
 }
 
 

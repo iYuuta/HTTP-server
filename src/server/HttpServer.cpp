@@ -76,6 +76,7 @@ void HttpServer::newPollFd(const int& fd, const short& events)
 	pollfd pollFd;
 	pollFd.fd = fd;
 	pollFd.events = events;
+	pollFd.revents = 0; 
 	_pollFds.push_back(pollFd);
 }
 
@@ -107,22 +108,36 @@ bool HttpServer::startAll()
 	return (true);
 }
 
+void HttpServer::onError(const size_t &i, pollfd& pollFd)
+{
+	if (i < _config.getServers().size())
+		return ;
+	removePollFd(pollFd);
+}
+
 void HttpServer::listen()
 {
 	while (true)
 	{
-		const int rt = poll(_pollFds.data(), _pollFds.size(), -1);
+		const int rt = poll(_pollFds.data(), _pollFds.size(), 500);
 
 		if (rt < 0)
-			throw std::runtime_error("poll failed");
-		if (rt == 0)
-			throw std::runtime_error("TIMEOUT");
+		{
+			std::cerr << "Error: poll failed, retying..." << std::endl;
+			continue ;
+		}
+		if (rt == 0) {
+			handleTimeOut();
+			continue ;
+		}
 
 		for (size_t i = 0; i < _pollFds.size(); i++)
 		{
 			pollfd& pollFd = _pollFds[i];
 
-			if (pollFd.revents & POLLIN)
+			if (pollFd.revents & (POLLHUP | POLLERR | POLLNVAL))
+				onError(i, pollFd);
+			else if (pollFd.revents & POLLIN)
 			{
 				if (i < _config.getServers().size())
 					handleNewConnection(pollFd);
@@ -135,14 +150,23 @@ void HttpServer::listen()
 	}
 }
 
+void HttpServer::handleTimeOut() {
+	for (size_t i = _config.getServers().size(); i < _pollFds.size(); i++)
+	{
+		if (std::time(NULL) - _clients[_pollFds[i].fd]->getLastActivity() >= 30) {
+			removePollFd(_pollFds[i]);
+		}
+
+	}
+}
+
 void HttpServer::handleNewConnection(pollfd& pollFd)
 {
 	Server& server = getServerByFd(pollFd.fd);
 	const int clientFd = accept(pollFd.fd, NULL, NULL);
 
-
 	if (clientFd < 0)
-		throw std::runtime_error("accept failed");
+		return ;
 
 	fcntl(clientFd, F_SETFL, O_NONBLOCK);
 
@@ -158,15 +182,11 @@ void HttpServer::handleClientRequest(pollfd& pollFd)
 	if (!client.isRequestDone())
 		client.parseRequest();
 
-	if (client.clientFailed()) {
-		removePollFd(pollFd);
-		return ;
-	}
+	if (client.clientFailed())
+		return (removePollFd(pollFd));
 
 	if (client.isRequestDone())
 		pollFd.events = POLLOUT;
-	else
-		pollFd.events = POLLIN;
 }
 
 void HttpServer::handleClientResponse(pollfd& pollFd)
@@ -175,10 +195,9 @@ void HttpServer::handleClientResponse(pollfd& pollFd)
 
 	if (!client.isResponseBuilt())
 		client.createResponse();
-	else if (client.getResponseState() != DONE) {
-		client.writeData();
-		pollFd.events = POLLOUT;
-	}
+	else if (client.getResponseState() != DONE)
+		client.sendResponse();
+
 	if (client.clientFailed() || client.getResponseState() == DONE) 
 		removePollFd(pollFd);
 }

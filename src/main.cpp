@@ -15,5 +15,5 @@ int main (int ac, char **av)
         return (conf.getErrorCode());
     signal(SIGPIPE, SIG_IGN);
     HttpServer  server(conf);
-    return (server.startAll());
+    return (server.startAll() ? 0 : 69);
 }

@@ -51,6 +51,7 @@ class Response {
 		bool								_cgiRunning;
 		bool								_cgiExecuted;
 		bool								_responseBuilt;
+		bool								_index;
 
 		std::string 						_errorResponse;
 		std::string 						_return;
@@ -87,7 +88,7 @@ class Response {
 		bool         						_postCreatedNew;
 		bool        						_multipartAnyCreated;
 	
-		std::vector<std::string>	_cookies;
+		std::vector<std::string>			_cookies;
 		bool _cookiesBuilt;
 
 		void ERROR();

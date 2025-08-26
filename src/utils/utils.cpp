@@ -423,9 +423,7 @@ std::string removeRepeating(std::string str, const char &c)
             lastWasSlash = false;
         }
     }
-	if (result[result.size() - 1] == c)
-		return result;
-	return result + c;
+	return result;
 }
 
 std::string strToLower(const std::string& header) {

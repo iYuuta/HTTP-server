@@ -39,8 +39,6 @@ _bytesSent(0) {
 	_statusLine.clear();
 	_boundary.clear();
 	_multiparts.clear();
-	_cookies.clear();
-	_cookiesBuilt = false;
 
 	_postState = POST_IDLE;
 	_postIsMultipart = false;
@@ -418,9 +416,6 @@ void Response::POST() {
 			_contentLen = 0;
 		}
 
-        for (size_t i = 0; i < _cookies.size(); i++)
-            _headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
-
         _headers.append("Connection: Close\r\n\r\n");
 
 		_postState = POST_DONE;
@@ -504,8 +499,8 @@ bool Response::addCgiHeaders(const std::string& line) {
 			return true;
 		char* endptr = NULL;
 		unsigned long long len = std::strtoull(value.c_str(), &endptr, 10);
-		if (endptr == value.c_str() || *endptr != '\0')
-			return false;	
+		// if (endptr == value.c_str() || *endptr != '\0')
+		// 	return false;
 		_contentLen = static_cast<size_t>(len);
 	}
 	_headers += key + ": " + value + "\r\n";
@@ -556,6 +551,7 @@ void Response::executeCgi() {
 				close(fd);
 			}
 			dup2(_cgiFd, STDOUT_FILENO);
+			dup2(_cgiFd, STDERR_FILENO);
 			close(_cgiFd);
 			std::string file;
 			if (_index)
@@ -609,7 +605,7 @@ void Response::monitorCgi() {
 
 	_cgiRunning = false;
 	_cgiExecuted = true;
-	
+
 	if (status != 0) {
 		std::remove(_cgiFile.c_str());
 		close(_cgiFd);
@@ -649,7 +645,7 @@ void Response::buildCgiResponse() {
 		if (bytesRead <= 0)
 			break;
 
-		buffer.append(chunk);
+		buffer.append(chunk, 512);
 
 		delimiter = 4;
 		size_t pos = buffer.find("\r\n\r\n", 0);
@@ -671,15 +667,18 @@ void Response::buildCgiResponse() {
 			pos = buffer.find("\n");
 			delimiter = 1;
 		}
-		if (pos == std::string::npos) {
+		if (pos == std::string::npos) {	
 			_errorCode = 502;
 			std::cerr << "invalid response from the child process" << std::endl;
 			ERROR();
 			return ;
 		}
+		std::cout << "pos: " << pos << std::endl;
 
 		std::string line = buffer.substr(index, pos - index);
 		index = pos + delimiter;
+
+		std::cout << line << std::endl;
 
 		if (line == "\r\n" || line == "\n") {
 			_headers.append("\r\n");
@@ -691,6 +690,7 @@ void Response::buildCgiResponse() {
 			continue ;
 		}
 		else if (!addCgiHeaders(line)) {
+			std::cout << line << std::endl;
 			_errorCode = 502;
 			std::cerr << "invalid response from the child process" << std::endl;
 			ERROR();
@@ -770,9 +770,6 @@ void Response::ERROR() {
 	}
 	_errorResponse.append("Content-Type: text/html\r\n");
 	_errorResponse.append("Content-Length: " + intToString(_contentLen) + "\r\n");
-
-	for (size_t i = 0; i < _cookies.size(); i++)
-		_errorResponse.append("Set-Cookie: " + _cookies[i] + "\r\n");
 
 	_errorResponse.append("Connection: Close\r\n\r\n");
 	std::ostringstream ss;
@@ -930,9 +927,6 @@ void Response::GET() {
 		_headers.append("Content-Type: " + _contentType + "\r\n");
 		_headers.append("Content-Length: " + intToString(_contentLen) + "\r\n");
 
-		for (size_t i = 0; i < _cookies.size(); i++)
-			_headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
-
 		_headers.append("Connection: Close\r\n\r\n");
 		_responseBuilt = true;
 	}
@@ -970,9 +964,6 @@ void Response::DELETE() {
 
 		_statusLine.append("HTTP/1.0 204 No Content\r\n");
 
-		for (size_t i = 0; i < _cookies.size(); i++)
-		 _headers.append("Set-Cookie: " + _cookies[i] + "\r\n");
-
 		_headers.append("Connection: Close\r\n\r\n");
 		_contentLen = 0;
 		_responseBuilt = true;
@@ -1009,33 +1000,10 @@ void Response::simpleReqsponse() {
 	}
 }
 
-void Response::buildCookies() 
-{
-	if (_cookiesBuilt)
-		return;
-	std::string sessionId = _request.getCookie("session-id");
-	if (sessionId.empty())
-	{
-		std::stringstream ss;
-		ss << "user-" << rand();
-		std::string newSessionId = ss.str();
-
-		std::string cookie = "session-id=" + newSessionId + "; Path=/";
-		
-		addCookie(cookie);
-		std::cout << "New session created: " << newSessionId << std::endl;
-	}
-	else
-		std::cout << "Welcome back " << sessionId << std::endl;
-	_cookiesBuilt = true;
-}
-
 void Response::buildResponse() {
 	if (_responseBuilt) {
 		return;
 	}
-
-	buildCookies();
 	
 	if (_errorCode != 200) {
 		ERROR();
@@ -1155,11 +1123,6 @@ void Response::isRedirect() {
 
 enums Response::getResponseState() const {
 	return _responseState;
-}
-
-void Response::addCookie(const std::string &cookie)
-{
-	_cookies.push_back(cookie);
 }
 
 bool Response::isResponseBuilt() {

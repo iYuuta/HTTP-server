@@ -22,8 +22,6 @@ class Request {
 		std::string							_bodyFileName;
 		std::ofstream						_bodyOut;
 
-		std::map<std::string, std::string>	_cookies;
-
 	public:
 		Request();
 		~Request();
@@ -52,9 +50,6 @@ class Request {
 		bool					isSimpleRequest();
 		
 		std::map<std::string, std::string>&	getHeaders();
-
-		void parseCookie(const std::string &cookie);
-		std::string getCookie(const std::string &key);
 };
 
 

@@ -87,9 +87,6 @@ class Response {
     	std::string 						_generatedUploadName;
 		bool         						_postCreatedNew;
 		bool        						_multipartAnyCreated;
-	
-		std::vector<std::string>			_cookies;
-		bool _cookiesBuilt;
 
 		void ERROR();
 		void GET();
@@ -130,9 +127,6 @@ class Response {
 		enums getResponseState() const ;
 		bool isResponseBuilt();
 		std::string getResponse();
-
-		void	addCookie(const std::string &cookie);
-		void	buildCookies();
 
 };
 

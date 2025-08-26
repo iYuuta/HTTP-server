@@ -14,7 +14,6 @@ _simpleRequest(false)
 	_headers.clear();
 	_queryString.clear();
 	_bodyFileName.clear();
-	_cookies.clear();
 }
 
 Request::~Request()
@@ -255,15 +254,6 @@ void Request::addHeaders(std::string buff)
 		_headers["Content-Length"] = value;
 		return ;
 	}
-	else if (strToLower(key) == "cookie") {
-		if (value.empty()) {
-			_errorCode = 400;
-			return ;
-		}
-		_headers["Cookie"] = value;
-		parseCookie(value);
-		return ;
-	}
 	_headers[key] = value;
 }
 
@@ -364,30 +354,3 @@ bool Request::isSimpleRequest() {
 	return _simpleRequest;
 }
 
-
-void Request::parseCookie(const std::string &cookie)
-{
-	std::stringstream ss(cookie);
-	std::string		  part;
-	
-	while(std::getline(ss, part, ';'))
-	{
-		size_t start = part.find_first_not_of(" \t");
-		if (start != std::string::npos)
-			part = part.substr(start);
-		
-		size_t equal = part.find('=');
-		if (equal != std::string::npos)
-		{
-			std::string key = part.substr(0, equal);
-			std::string value = part.substr(equal + 1);
-			_cookies[key] = value;
-		} 
-	}
-}
-
-
-std::string Request::getCookie(const std::string &key)
-{
-	return (_cookies[key]);
-}

@@ -97,7 +97,7 @@ void Request::parseData(const char* data, size_t len)
 				break ;
 			}
 			size_t LeftOver = _contentLen - _receivedBytes;
-			size_t ReadLen = std::min(LeftOver, _buffer.size());
+			size_t ReadLen = std::min(LeftOver, _buffer.size() - 1);
 
 			if (ReadLen == 0)
 				break ;

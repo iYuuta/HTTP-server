@@ -688,9 +688,10 @@ void Response::buildCgiResponse() {
 
 		buffer.append(chunk);
 
-		size_t pos = buffer.find("\r\n\r\n");
-		if (pos == std::string::npos) {
-			pos = buffer.find("\n\n");
+		delimiter = 4;
+		size_t pos = buffer.find("\r\n\r\n", 0);
+		if (pos == std::string::npos || pos > buffer.find("\n\n", 0)) {
+			pos = buffer.find("\n\n", 0);
 			delimiter = 2;
 		}
 		if (pos != std::string::npos) {
@@ -699,10 +700,11 @@ void Response::buildCgiResponse() {
 			break;
 		}
 	}
+	index = 0;
 	while (true) {
 		delimiter = 2;
-		pos = buffer.find("\r\n");
-		if (pos == std::string::npos) {
+		pos = buffer.find("\r\n", index);
+		if (pos == std::string::npos || pos > buffer.find("\n")) {
 			pos = buffer.find("\n");
 			delimiter = 1;
 		}

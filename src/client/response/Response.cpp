@@ -9,7 +9,8 @@ Response::~Response() {
 	}
 	if (!_cgiFile.empty())
 		std::remove(_cgiFile.c_str());
-	_body.close();
+	if (_body.is_open())
+		_body.close();
 }
 
 Response::Response(Request& req, std::map<int, std::string>& error, std::vector<Location>::iterator& location):
@@ -570,10 +571,8 @@ void Response::executeCgi() {
 			std::exit (1);
 		}
 		else {
-			if (fd != 0) {
+			if (fd != 0)
 				close(fd);
-				fd = -1;
-			}
 		}
 	}
 }

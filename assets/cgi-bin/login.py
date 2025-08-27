@@ -5,325 +5,299 @@ import fcntl
 import hashlib
 import json
 import os
-import re
-import secrets
 import sys
-from datetime import datetime, timezone
 from urllib.parse import parse_qs
 
 
-# ---------------- Send pages ----------------
 def send(content, set_cookie_value=None):
-    """Send HTTP response with optional Set-Cookie header and content."""
     body_bytes = content.encode("utf-8")
     print("Content-Type: text/html")
     if set_cookie_value is not None:
-        # Only servers send Set-Cookie; never send a "Cookie" header in responses
-        # Add secure-ish attributes as appropriate for your environment (add 'Secure' if HTTPS)
         print(f"Set-Cookie: token={set_cookie_value}; Path=/; HttpOnly; SameSite=Strict")
     print(f"Content-Length: {len(body_bytes)}")
     print()
-    # Write bytes to avoid accidental encoding issues with large bodies
     sys.stdout.flush()
     sys.stdout.buffer.write(body_bytes)
 
-# ---------------- HTML pages ----------------
+
 def get_login_page():
     return """<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<title>Login</title>
+<meta charset="utf-8" />
+<title>Secure Login</title>
 <style>
-    body {
-        background: linear-gradient(to bottom, #0b3d2e, #14532d, #0b3d2e);
-        font-family: 'Segoe UI', sans-serif;
-        color: #e0e0e0;
-        padding: 40px;
-        margin: 0;
-    }
-    .container {
-        max-width: 500px;
-        margin: auto;
-        background: rgba(0, 0, 0, 0.25);
-        padding: 30px;
-        border-radius: 12px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(10px);
-        animation: fadeIn 0.6s ease-in-out;
-        text-align: center;
-    }
-    h1 {
-        color: #a5d6a7;
-        margin-bottom: 20px;
-        text-shadow: 0 0 10px rgba(165, 214, 167, 0.8);
-        animation: slideDown 0.5s ease-in-out;
-    }
-    label {
-        display: block;
-        margin: 15px 0 10px;
-        font-weight: bold;
-        color: #c8e6c9;
-    }
-    input[type="text"],
-    input[type="password"] {
-        width: 100%;
-        padding: 10px;
-        border-radius: 6px;
-        border: none;
-        margin-top: 5px;
-        box-sizing: border-box;
-        background: rgba(255, 255, 255, 0.1);
-        color: #fff;
-        font-size: 1em;
-    }
-    input[type="submit"] {
-        margin-top: 20px;
-        padding: 10px 20px;
-        background: #43a047;
-        border: none;
-        border-radius: 6px;
-        color: #fff;
-        font-weight: bold;
-        cursor: pointer;
-        transition: background 0.3s ease;
-        font-size: 1em;
-    }
-    input[type="submit"]:hover {
-        background: #4caf50;
-    }
+  body {
+    background: linear-gradient(135deg, #004d40 0%, #00695c 100%);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #e0f2f1;
+  }
+.login-container {
+    background: rgba(38, 50, 56, 0.85);
+    padding: 30px 40px;
+    border-radius: 12px;
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.6);
+    width: 480px;
+    display: flex;
+    flex-direction: column;
+}
 
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-    @keyframes slideDown {
-        from { transform: translateY(-20px); opacity: 0; }
-        to { transform: translateY(0); opacity: 1; }
-    }
+  form {
+    display: flex;
+    justify-content: space-between;
+  }
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    width: 48%;
+  }
+  label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #80cbc4;
+  }
+  input[type="text"],
+  input[type="password"] {
+    padding: 10px 12px;
+    border-radius: 6px;
+    border: none;
+    background: #004d40;
+    color: #a7ffeb;
+    font-size: 1em;
+    outline-offset: 2px;
+    outline-color: transparent;
+    transition: outline-color 0.25s ease;
+  }
+  input[type="text"]:focus,
+  input[type="password"]:focus {
+    outline-color: #26a69a;
+  }
+  .submit-btn {
+    align-self: flex-end;
+    margin-top: 25px;
+    padding: 10px 28px;
+    background: #26a69a;
+    border: none;
+    border-radius: 8px;
+    color: #004d40;
+    font-weight: 700;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  .submit-btn:hover {
+    background-color: #4db6ac;
+  }
+  .login-title {
+    margin-top: 30px;
+    text-align: center;
+    font-size: 1.8em;
+    font-weight: 700;
+    color: #b2dfdb;
+    letter-spacing: 1.1px;
+    user-select: none;
+  }
 </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🔐 Login</h1>
-        <form action="" method="POST">
-            <label>Username:
-                <input type="text" name="username" required>
-            </label>
-            <label>Password:
-                <input type="password" name="password" required>
-            </label>
-            <input type="submit" value="Login">
-        </form>
+    <div class="login-container">
+    <form method="POST">
+        <div class="form-group">
+        <label for="username">Username</label>
+        <input id="username" type="text" name="username" autocomplete="username" required />
+        </div>
+        <div class="form-group">
+        <label for="password">Password</label>
+        <input id="password" type="password" name="password" autocomplete="current-password" required />
+        </div>
+        <button class="submit-btn" type="submit">Login</button>
+    </form>
+    <div class="login-title">🔐 Login Portal</div>
     </div>
 </body>
 </html>
 """
 
 
-
-def styled_message_page(title: str, message: str):
+def styled_message_page(title, message):
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
+<meta charset="utf-8" />
 <title>{title}</title>
 <style>
-    body {{
-        background: linear-gradient(to bottom, #0b3d2e, #14532d, #0b3d2e);
-        font-family: 'Segoe UI', sans-serif;
-        color: #e0e0e0;
-        padding: 40px;
-        margin: 0;
-    }}
-    .container {{
-        max-width: 600px;
-        margin: auto;
-        background: rgba(0, 0, 0, 0.25);
-        padding: 30px;
-        border-radius: 12px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-        backdrop-filter: blur(10px);
-        text-align: center;
-        animation: fadeIn 0.6s ease-in-out;
-    }}
-    h1 {{
-        color: #a5d6a7;
-        margin-bottom: 20px;
-        text-shadow: 0 0 10px rgba(165, 214, 167, 0.8);
-        animation: slideDown 0.5s ease-in-out;
-    }}
-    p {{
-        font-size: 1.2em;
-        margin-top: 10px;
-        color: #c8e6c9;
-    }}
-    a {{
-        display: inline-block;
-        margin-top: 20px;
-        padding: 10px 20px;
-        background: #2e7d32;
-        color: #fff;
-        text-decoration: none;
-        border-radius: 6px;
-        transition: background 0.3s ease;
-        font-weight: bold;
-    }}
-    a:hover {{
-        background: #388e3c;
-    }}
-    @keyframes fadeIn {{
-        from {{ opacity: 0; }}
-        to {{ opacity: 1; }}
-    }}
-    @keyframes slideDown {{
-        from {{ transform: translateY(-20px); opacity: 0; }}
-        to {{ transform: translateY(0); opacity: 1; }}
-    }}
+  body {{
+    background: linear-gradient(135deg, #004d40 0%, #00695c 100%);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #e0f2f1;
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }}
+  .message-box {{
+    background: rgba(38, 50, 56, 0.9);
+    padding: 30px 40px;
+    border-radius: 12px;
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.6);
+    max-width: 480px;
+    text-align: center;
+  }}
+  h1 {{
+    margin-bottom: 20px;
+    font-weight: 700;
+    font-size: 2em;
+    color: #80cbc4;
+  }}
+  p {{
+    font-size: 1.2em;
+    line-height: 1.4;
+  }}
 </style>
 </head>
 <body>
-    <div class="container">
-        <h1>{title}</h1>
-        <p>{message}</p>
-    </div>
+  <div class="message-box">
+    <h1>{title}</h1>
+    <p>{message}</p>
+  </div>
 </body>
-</html>"""
+</html>
+"""
 
 
-# ---------------- Post data ----------------
 def get_post_body():
-    """Read exact bytes from stdin as given by CONTENT_LENGTH."""
     clen = os.environ.get('CONTENT_LENGTH', '')
     try:
-        length = int(clen) if clen else 0
+        length = int(clen)
     except ValueError:
         length = 0
-    if length > 0:
-        return sys.stdin.read(length)
-    return ''
+    return sys.stdin.read(length) if length > 0 else ''
 
-# ------------------ Hash password ---------------
-def hash_password(password: str) -> str:
+
+def hash_password(password):
     return hashlib.sha256(password.encode('utf-8')).hexdigest()
+
 
 def base64url_encode(data):
     if isinstance(data, str):
         data = data.encode('utf-8')
     return base64.urlsafe_b64encode(data).decode('utf-8').rstrip('=')
 
+
 def base64url_decode(data):
     padding = '=' * (-len(data) % 4)
     return base64.urlsafe_b64decode(data + padding)
 
+
 def token_create(username):
-    """Create a simple unsigned token containing the username (base64url of JSON)."""
-    payload = {'username': str(username)}
+    payload = {'username': username}
     return base64url_encode(json.dumps(payload))
 
-def store_token(username, password_hash, token_value):
-    """Append 'username,password_hash,token' to CookiesData.txt with a lock."""
-    with open('CookiesData.txt', 'a') as f:
-        fcntl.flock(f.fileno(), fcntl.LOCK_EX)
-        f.write(f"{username},{password_hash},{token_value}\n")
-        fcntl.flock(f.fileno(), fcntl.LOCK_UN)
-
-def file_read_lines_locked():
-    try:
-        with open("CookiesData.txt", 'r') as f:
-            fcntl.flock(f.fileno(), fcntl.LOCK_SH)
-            lines = f.readlines()
-            fcntl.flock(f.fileno(), fcntl.LOCK_UN)
-            return [ln.rstrip('\n') for ln in lines]
-    except FileNotFoundError:
-        return []
 
 def token_parse(token):
-    """Return payload dict or None on error."""
     try:
         decoded = base64url_decode(token)
         return json.loads(decoded)
-    except Exception:
+    except:
         return None
 
+
+def store_token(username, password_hash, token):
+    with open('LoginData.txt', 'a') as f:
+        fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+        f.write(f"{username},{password_hash},{token}\n")
+        fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+
+
+def file_read_lines_locked():
+    try:
+        with open("LoginData.txt", 'r') as f:
+            fcntl.flock(f.fileno(), fcntl.LOCK_SH)
+            lines = f.readlines()
+            fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+            return [line.strip() for line in lines]
+    except FileNotFoundError:
+        return []
+
+
 def validate_token(token):
-    """Return line 'username,password_hash,token' if token exists and parses, else None."""
     payload = token_parse(token)
     if not payload or 'username' not in payload:
         return None
-    for ln in file_read_lines_locked():
-        # Strict token match in the 3rd CSV field
-        parts = ln.split(",", 2)
+    for line in file_read_lines_locked():
+        parts = line.split(",", 2)
         if len(parts) == 3 and parts[2] == token:
-            return ln
+            return parts
     return None
 
+
 def extract_token_from_cookie(cookie_header):
-    """Extract 'token' value from HTTP_COOKIE header."""
     if not cookie_header:
         return None
-    # Split on ';' and strip spaces
     for part in cookie_header.split(';'):
         part = part.strip()
         if part.startswith('token='):
             return part[len('token='):]
     return None
 
+
 def find_user_by_username(username):
-    """Return (username, password_hash, token) or None."""
-    for ln in file_read_lines_locked():
-        parts = ln.split(",", 2)
+    for line in file_read_lines_locked():
+        parts = line.split(",", 2)
         if len(parts) == 3 and parts[0] == username:
-            return tuple(parts)
+            return parts
     return None
 
-def is_alphanumeric(s: str) -> bool:
-    """Return True if the string contains only alphanumeric characters."""
+
+def is_alphanumeric(s):
     return s.isalnum()
+
 
 def main():
     cookie_header = os.environ.get("HTTP_COOKIE", "")
     method = os.environ.get("REQUEST_METHOD", "GET").upper()
 
     if method == "POST":
-        raw_body = get_post_body()
-        parsed = parse_qs(raw_body, keep_blank_values=True)
-        username = parsed.get('username', [''])[0]
-        password = parsed.get('password', [''])[0]
+        body = get_post_body()
+        data = parse_qs(body)
+        username = data.get("username", [""])[0]
+        password = data.get("password", [""])[0]
 
         if not username or not password:
-            send(styled_message_page("Login Failed", "Missing username or password"))
+            send(styled_message_page("Login Failed", "Username and password are required."))
             return
-        if not (is_alphanumeric(username)):
-            send(styled_message_page("Invalid Username", "Username must be alphanumeric only"))
-            return
-        found = find_user_by_username(username)
-        if found:
-            # Existing user
-            userna, stored_pwd_hash, existing_token = found
-            if hash_password(password) == stored_pwd_hash:
-                # Valid login; refresh cookie (optional) by re-setting it
-                send(styled_message_page("Welcome Back", f"Welcome back, <strong>{userna}</strong>!"), set_cookie_value=existing_token)
-            else:
-                send(styled_message_page("Incorrect Password", f"Incorrect password for user <strong>{userna}</strong>"))
-            return
-        else:
-            # New user: create account and set cookie
-            token = token_create(username)
-            store_token(username, hash_password(password), token)
-            send(styled_message_page("Login Successful", f"Welcome, new user <strong>{username}</strong>!"), set_cookie_value=token)
+        if not is_alphanumeric(username):
+            send(styled_message_page("Invalid Username", "Username must be alphanumeric only."))
             return
 
-    # GET
-    token = extract_token_from_cookie(cookie_header)
-    valid_line = validate_token(token) if token else None
-    if valid_line:
-        user, pswd_hash, tok = valid_line.split(",", 2)
-        send(styled_message_page("Welcome", f"Welcome back, <strong>{user}</strong>!"))
+        user_data = find_user_by_username(username)
+        if user_data:
+            uname, pwd_hash, token = user_data
+            if hash_password(password) == pwd_hash:
+                send(styled_message_page("Welcome Back", f"Welcome back, <strong>{uname}</strong>!"), set_cookie_value=token)
+            else:
+                send(styled_message_page("Incorrect Password", "Password is incorrect."))
+        else:
+            new_token = token_create(username)
+            store_token(username, hash_password(password), new_token)
+            send(styled_message_page("Account Created", f"Welcome, <strong>{username}</strong>! Your account has been created."), set_cookie_value=new_token)
         return
 
-    login_page = get_login_page()
-    send(login_page)
+    # GET request
+    token = extract_token_from_cookie(cookie_header)
+    valid_user = validate_token(token)
+    if valid_user:
+        uname = valid_user[0]
+        send(styled_message_page("Welcome", f"Welcome back, <strong>{uname}</strong>!"))
+    else:
+        send(get_login_page())
+
 
 if __name__ == "__main__":
     main()

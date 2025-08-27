@@ -16,7 +16,7 @@
 # include <unistd.h>
 # include <fcntl.h>
 # include <sys/wait.h>
- #include <string.h>
+ #include <cstring>
 # include <dirent.h>
 # include "HttpRequestMethod.hpp"
 # include "Location.hpp"

@@ -216,6 +216,7 @@ bool Response::stepMultipartUpload()
     if (_multipartBuffer.size() < BUFFER_SIZE * 2 && _postBodyStream)
     {
         char chunk[BUFFER_SIZE];
+
         _postBodyStream.read(chunk, BUFFER_SIZE);
         std::streamsize n = _postBodyStream.gcount();
         if (n > 0)
@@ -635,9 +636,9 @@ void Response::readCgiResponse() {
 		return ;
 	}
 	
-	char chunk[512];
-	memset(chunk, 0, 512);
-	_body.read(chunk, 512);
+	char chunk[BUFFER_SIZE];
+	std::memset(chunk, 0, BUFFER_SIZE);
+	_body.read(chunk, BUFFER_SIZE);
 	bytesRead = _body.gcount();
 	_cgiReadBytes += bytesRead;
 	if (bytesRead <= 0) {

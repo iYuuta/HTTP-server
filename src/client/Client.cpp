@@ -24,6 +24,7 @@ Client::~Client()
 void Client::parseRequest()
 {
 	char buffer[BUFFER_SIZE];
+	std::memset(buffer, 0, BUFFER_SIZE);
 	ssize_t len;
 
 	len = read(_fd, buffer, BUFFER_SIZE);

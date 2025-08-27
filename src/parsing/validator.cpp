@@ -25,7 +25,7 @@ static bool isValidRedirect(int status)
 bool validateLocation(Location &location)
 {
 	if (!location.isRedirect() && !isDirectory(location.getRoute()))
-		return (std::cerr << "Root makaynach wla ma3ndoch permission" << std::endl, false);
+		return (std::cerr << "Invalid root path: " << location.getRoute() << std::endl, false);
 	if (location.isRedirect() && !isValidRedirect(location.getReturn().first))
 		return (std::cerr << "Invalid redirect code (301~308)" << std::endl, false);
 	return (true);

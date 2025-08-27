@@ -16,12 +16,13 @@ from urllib.parse import parse_qs
 def send(content, set_cookie_value=None):
     """Send HTTP response with optional Set-Cookie header and content."""
     body_bytes = content.encode("utf-8")
-    print("Content-Type: text/html\n")
+    print("Content-Type: text/html")
     if set_cookie_value is not None:
         # Only servers send Set-Cookie; never send a "Cookie" header in responses
         # Add secure-ish attributes as appropriate for your environment (add 'Secure' if HTTPS)
         print(f"Set-Cookie: token={set_cookie_value}; Path=/; HttpOnly; SameSite=Strict")
-    # print()
+    print(f"Content-Length: {len(body_bytes)}")
+    print()
     # Write bytes to avoid accidental encoding issues with large bodies
     sys.stdout.flush()
     sys.stdout.buffer.write(body_bytes)

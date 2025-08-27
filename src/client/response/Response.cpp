@@ -499,8 +499,8 @@ bool Response::addCgiHeaders(const std::string& line) {
 			return true;
 		char* endptr = NULL;
 		unsigned long long len = std::strtoull(value.c_str(), &endptr, 10);
-		// if (endptr == value.c_str() || *endptr != '\0')
-		// 	return false;
+		if (endptr == value.c_str() || *endptr != '\0')
+			return false;
 		_contentLen = static_cast<size_t>(len);
 	}
 	_headers += key + ": " + value + "\r\n";
@@ -639,13 +639,23 @@ void Response::buildCgiResponse() {
 	std::string buffer;
 	while (!_body.eof()) {
 		char chunk[512];
-		_body.read(&chunk[0], 512);
+		memset(chunk, 0, 512);
+		if (fileSize < 512)
+			_body.read(chunk, fileSize);
+		else
+			_body.read(chunk, 512);
 		bytesRead = _body.gcount();
 		readBytes += bytesRead;
-		if (bytesRead <= 0)
+		if (bytesRead <= 0) {
+			if (readBytes == 0) {
+				_errorCode = 502;
+				std::cerr << "invalid response from the child process" << std::endl;
+				ERROR();
+				return ;
+			}
 			break;
-
-		buffer.append(chunk, 512);
+		}
+		buffer.append(chunk, bytesRead);
 
 		delimiter = 4;
 		size_t pos = buffer.find("\r\n\r\n", 0);
@@ -655,7 +665,7 @@ void Response::buildCgiResponse() {
 		}
 		if (pos != std::string::npos) {
 			_bodyLeftover = buffer.substr(pos + delimiter);
-			buffer.resize(pos + delimiter);
+			buffer.resize(pos + (delimiter / 2));
 			break;
 		}
 	}
@@ -664,33 +674,27 @@ void Response::buildCgiResponse() {
 		delimiter = 2;
 		pos = buffer.find("\r\n", index);
 		if (pos == std::string::npos || pos > buffer.find("\n")) {
-			pos = buffer.find("\n");
+			pos = buffer.find("\n", index);
 			delimiter = 1;
 		}
-		if (pos == std::string::npos) {	
-			_errorCode = 502;
-			std::cerr << "invalid response from the child process" << std::endl;
-			ERROR();
-			return ;
+		if (pos == std::string::npos) {
+			_headers.append("\r\n");
+			break ;
 		}
-		std::cout << "pos: " << pos << std::endl;
 
 		std::string line = buffer.substr(index, pos - index);
 		index = pos + delimiter;
 
-		std::cout << line << std::endl;
-
-		if (line == "\r\n" || line == "\n") {
-			_headers.append("\r\n");
-			break ;
-		}
+		// if (line == "\r\n" || line == "\n") {
+		// 	_headers.append("\r\n");
+		// 	break ;
+		// }
 
 		if (!_statusLine.empty() && line.find("HTTP/1.") != std::string::npos) {
 			_statusLine.append(line + "\r\n");
 			continue ;
 		}
 		else if (!addCgiHeaders(line)) {
-			std::cout << line << std::endl;
 			_errorCode = 502;
 			std::cerr << "invalid response from the child process" << std::endl;
 			ERROR();
@@ -1083,6 +1087,8 @@ std::string Response::getResponse() {
 	switch (_responseState) {
 		case STATUSLINE_HEADERS: {
 			_responseState = BODY;
+			if (_contentLen < (ssize_t)_bodyLeftover.size())
+				_bodyLeftover.resize(_contentLen);
 			return (_statusLine + _headers + _bodyLeftover);
 		}
 		case BODY: {

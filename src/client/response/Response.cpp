@@ -585,7 +585,7 @@ bool Response::checkTimeOut() {
 
 	if (stat(_cgiFile.c_str(), &st) == 0) {
 		time_t mtime = st.st_mtime;
-		time_t now = time(NULL);
+		time_t now = std::time(NULL);
 		if (now - mtime > 10) {
 			kill(_cgiPid, SIGTERM);
 			close(_cgiFd);

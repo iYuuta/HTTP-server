@@ -58,6 +58,9 @@ class Response {
 		std::string							_headers;
 		std::string							_statusLine;
 		std::string							_bodyLeftover;
+		std::string							_cgiBuffer;
+		size_t								_cgiReadBytes;
+		bool								_cgiRead;
 		std::ifstream						_body;
 		
 		bool								_isError;
@@ -98,6 +101,7 @@ class Response {
 
 		void getBody();
 		void buildCgiResponse();
+		void readCgiResponse();
 		void buildIndex();
 		void initCgi();
 		void executeCgi();

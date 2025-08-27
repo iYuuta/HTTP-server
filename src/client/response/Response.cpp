@@ -24,6 +24,8 @@ _cgiRunning(false),
 _cgiExecuted(false),
 _responseBuilt(false),
 _index(false),
+_cgiReadBytes(0),
+_cgiRead(false),
 _isError(false),
 _isCgi(false),
 _isRedirect(false),
@@ -619,10 +621,53 @@ void Response::monitorCgi() {
 	close(_cgiFd);
 }
 
-void Response::buildCgiResponse() {
-	_body.open(_cgiFile.c_str(), std::ios::binary);
-	size_t readBytes = 0;
+void Response::readCgiResponse() {
 	size_t bytesRead = 0;
+	size_t pos = 0;
+	int delimiter = 4;
+
+	if (!_body.is_open())
+		_body.open(_cgiFile.c_str(), std::ios::binary);
+	if (!_body.is_open()) {
+		_errorCode = 500;
+		std::cerr << "Error: Failed to open a file" << std::endl;
+		ERROR();
+		return ;
+	}
+	
+	char chunk[512];
+	memset(chunk, 0, 512);
+	_body.read(chunk, 512);
+	bytesRead = _body.gcount();
+	_cgiReadBytes += bytesRead;
+	if (bytesRead <= 0) {
+		_errorCode = 502;
+		std::cerr << "invalid response from the child process" << std::endl;
+		ERROR();
+		return ;
+	}
+	_cgiBuffer.append(chunk, bytesRead);
+	if (_cgiBuffer.size() > 8000) {
+		_errorCode = 502;
+		std::cerr << "invalid response from the child process" << std::endl;
+		ERROR();
+		return ;
+	}
+
+	delimiter = 4;
+	pos = _cgiBuffer.find("\r\n\r\n", 0);
+	if (pos == std::string::npos || pos > _cgiBuffer.find("\n\n", 0)) {
+		pos = _cgiBuffer.find("\n\n", 0);
+		delimiter = 2;
+	}
+	if (pos != std::string::npos) {
+		_bodyLeftover = _cgiBuffer.substr(pos + delimiter);
+		_cgiBuffer.resize(pos + (delimiter / 2));
+		_cgiRead = true;
+	}
+}
+
+void Response::buildCgiResponse() {
 	size_t pos = 0;
 	size_t index = 0;
 	struct stat st;
@@ -631,52 +676,12 @@ void Response::buildCgiResponse() {
 	stat(_cgiFile.c_str(), &st);
 	std::remove(_cgiFile.c_str());
 	size_t fileSize = st.st_size;
-	if (!_body.is_open()) {
-		_errorCode = 500;
-		std::cerr << "Error: Failed to open a file" << std::endl;
-		ERROR();
-		return ;
-	}
-	
-	std::string buffer;
-	while (!_body.eof()) {
-		char chunk[512];
-		memset(chunk, 0, 512);
-		if (fileSize < 512)
-			_body.read(chunk, fileSize);
-		else
-			_body.read(chunk, 512);
-		bytesRead = _body.gcount();
-		readBytes += bytesRead;
-		if (bytesRead <= 0) {
-			if (readBytes == 0) {
-				_errorCode = 502;
-				std::cerr << "invalid response from the child process" << std::endl;
-				ERROR();
-				return ;
-			}
-			break;
-		}
-		buffer.append(chunk, bytesRead);
-
-		delimiter = 4;
-		size_t pos = buffer.find("\r\n\r\n", 0);
-		if (pos == std::string::npos || pos > buffer.find("\n\n", 0)) {
-			pos = buffer.find("\n\n", 0);
-			delimiter = 2;
-		}
-		if (pos != std::string::npos) {
-			_bodyLeftover = buffer.substr(pos + delimiter);
-			buffer.resize(pos + (delimiter / 2));
-			break;
-		}
-	}
 	index = 0;
 	while (true) {
 		delimiter = 2;
-		pos = buffer.find("\r\n", index);
-		if (pos == std::string::npos || pos > buffer.find("\n")) {
-			pos = buffer.find("\n", index);
+		pos = _cgiBuffer.find("\r\n", index);
+		if (pos == std::string::npos || pos > _cgiBuffer.find("\n")) {
+			pos = _cgiBuffer.find("\n", index);
 			delimiter = 1;
 		}
 		if (pos == std::string::npos) {
@@ -684,10 +689,10 @@ void Response::buildCgiResponse() {
 			break ;
 		}
 
-		std::string line = buffer.substr(index, pos - index);
+		std::string line = _cgiBuffer.substr(index, pos - index);
 		index = pos + delimiter;
 
-		if (!_statusLine.empty() && line.find("HTTP/1.") != std::string::npos) {
+		if (_statusLine.empty() && line.find("HTTP/1.") != std::string::npos) {
 			_statusLine.append(line + "\r\n");
 			continue ;
 		}
@@ -702,9 +707,9 @@ void Response::buildCgiResponse() {
 	if (_statusLine.empty())
 		_statusLine.append("HTTP/1.0 200 OK\r\n");
 	if (_bodyLeftover.empty())
-		_bodyLeftover = buffer.substr(index);
+		_bodyLeftover = _cgiBuffer.substr(index);
 	if (_contentLen == -1)
-		_contentLen = fileSize - readBytes + _bodyLeftover.size();
+		_contentLen = fileSize - _cgiReadBytes + _bodyLeftover.size();
 	_bytesSent += _bodyLeftover.size();
 	_responseBuilt = true;
 	return ;
@@ -726,7 +731,10 @@ void Response::CGI() {
 		return ;
 	}
 	if (_cgiExecuted) {
-		buildCgiResponse();
+		if (!_cgiRead)
+			readCgiResponse();
+		else
+			buildCgiResponse();
 		return ;
 	}
 	try {

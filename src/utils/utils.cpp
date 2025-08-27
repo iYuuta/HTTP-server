@@ -83,7 +83,6 @@ Exec::Exec() {
 	_exec[".php"]   = "/usr/bin/php";
 	_exec[".pl"]	= "/usr/bin/perl";
 	_exec[".js"]	= "/usr/local/bin/node";
-	_exec[".awk"]   = "/usr/bin/awk";
 }
 
 ERRORS::ERRORS() {

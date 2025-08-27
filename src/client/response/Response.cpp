@@ -5,8 +5,11 @@
 Response::~Response() {
 	if (_cgiRunning) {
 		kill(_cgiPid, SIGTERM);
-		std::remove(_cgiFile.c_str());
+		close(_cgiFd);
 	}
+	if (!_cgiFile.empty())
+		std::remove(_cgiFile.c_str());
+	_body.close();
 }
 
 Response::Response(Request& req, std::map<int, std::string>& error, std::vector<Location>::iterator& location):
@@ -684,11 +687,6 @@ void Response::buildCgiResponse() {
 
 		std::string line = buffer.substr(index, pos - index);
 		index = pos + delimiter;
-
-		// if (line == "\r\n" || line == "\n") {
-		// 	_headers.append("\r\n");
-		// 	break ;
-		// }
 
 		if (!_statusLine.empty() && line.find("HTTP/1.") != std::string::npos) {
 			_statusLine.append(line + "\r\n");
